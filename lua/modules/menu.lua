@@ -721,14 +721,60 @@ btnContentParentDidResize = function(self)
 		padding = PADDING
 	end
 	local parent = self.parent
-	self.Width = parent.Width - PADDING * 2
+	local ratio = self.Width / self.Height
 	self.Height = parent.Height - padding * 2
-	self.pos = { PADDING, padding }
+	self.Width = ratio * self.Height
+	self.pos = { self.parent.Width * 0.5 - self.Width * 0.5, padding }
+end
+
+function createButtonFrame(config)
+	local defaultConfig = { first = false, last = false }
+	config = require("config"):merge(defaultConfig, config)
+
+	local btnFrame = ui:createFrame(Color(30, 30, 34))
+
+	-- Color(81, 165, 242, 0.3)
+	local topBorder = ui:createFrame(Color(45, 70, 96))
+	topBorder.Height = 2
+	topBorder:setParent(btnFrame)
+	local rightBorder = ui:createFrame(Color(45, 70, 96))
+	rightBorder.Width = 2
+	rightBorder:setParent(btnFrame)
+
+	local bottomBorder = ui:createFrame(Color(20, 20, 24))
+	bottomBorder.Height = 2
+	bottomBorder:setParent(btnFrame)
+	local leftBorder = ui:createFrame(Color(20, 20, 24))
+	leftBorder.Width = 2
+	leftBorder:setParent(btnFrame)
+
+	btnFrame.parentDidResize = function(self)
+		self.Width = self.parent.Width - (config.first == true and 2 or 0)
+		self.Height = self.parent.Height - 4
+		self.pos = { config.first == true and 2 or 0, 2 }
+
+		topBorder.Width = self.Width
+		topBorder.pos.Y = self.Height - 2
+
+		rightBorder.Height = self.Height - 4
+		rightBorder.pos = { self.Width - 2, 2 }
+
+		bottomBorder.Width = self.Width
+
+		leftBorder.Height = self.Height - 4
+		leftBorder.pos = { 0, 2 }
+	end
+
+	return btnFrame
 end
 
 -- MAIN MENU BTN
 
 cubzhBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
+
+cubzhBtnFrame = createButtonFrame({ last = true })
+cubzhBtnFrame:setParent(cubzhBtn)
+
 cubzhBtn:setParent(topBar)
 
 uiBadge = require("ui_badge")
@@ -744,7 +790,7 @@ function showBadge(str)
 		self.pos.Y = 0
 		self:internalParentDidResize()
 	end
-	cubhBtnBadge:setParent(cubzhBtn)
+	cubhBtnBadge:setParent(cubzhBtnFrame)
 end
 
 function removeBadge()
@@ -756,31 +802,35 @@ end
 
 cubzhLogo = logo:createShape()
 cubzhBtnShape = ui:createShape(cubzhLogo, { doNotFlip = true })
-cubzhBtnShape:setParent(cubzhBtn)
+cubzhBtnShape:setParent(cubzhBtnFrame)
 cubzhBtnShape.parentDidResize = btnContentParentDidResize
 cubzhBtnShape:parentDidResize()
 
 -- CONNECTIVITY BTN
 
 connBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
+
+connBtnFrame = createButtonFrame()
+connBtnFrame:setParent(connBtn)
+
 connBtn:setParent(topBar)
 connBtn:hide()
 connBtn.onRelease = connect
 
 connShape = System.ShapeFromBundle("aduermael.connection_indicator")
 connectionIndicator = ui:createShape(connShape, { doNotFlip = true })
-connectionIndicator:setParent(connBtn)
+connectionIndicator:setParent(connBtnFrame)
 connectionIndicator:hide()
 connectionIndicator.parentDidResize = function(self)
 	local parent = self.parent
 	self.Height = parent.Height * 0.4
 	self.Width = self.Height
-	self.pos = { parent.Width - self.Width - PADDING, parent.Height * 0.5 - self.Height * 0.5 }
+	self.pos = { parent.Width * 0.5 - self.Width * 0.5, parent.Height * 0.5 - self.Height * 0.5 }
 end
 
 noConnShape = System.ShapeFromBundle("aduermael.no_conn_indicator")
 noConnectionIndicator = ui:createShape(noConnShape)
-noConnectionIndicator:setParent(connBtn)
+noConnectionIndicator:setParent(connBtnFrame)
 noConnectionIndicator:hide()
 noConnectionIndicator.parentDidResize = function(self)
 	local parent = self.parent
@@ -855,10 +905,14 @@ function connectionIndicatorStartAnimation()
 end
 
 chatBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
+
+chatButtonFrame = createButtonFrame()
+chatButtonFrame:setParent(chatBtn)
+
 chatBtn:setParent(topBar)
 
 textBubbleShape = ui:createShape(System.ShapeFromBundle("aduermael.textbubble"))
-textBubbleShape:setParent(chatBtn)
+textBubbleShape:setParent(chatButtonFrame)
 textBubbleShape.parentDidResize = function(self)
 	local parent = self.parent
 	self.Height = parent.Height - PADDING_BIG * 2
@@ -867,10 +921,14 @@ textBubbleShape.parentDidResize = function(self)
 end
 
 friendsBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
+
+friendsButtonFrame = createButtonFrame()
+friendsButtonFrame:setParent(friendsBtn)
+
 friendsBtn:setParent(topBar)
 
 friendsShape = ui:createShape(System.ShapeFromBundle("aduermael.friends_icon"))
-friendsShape:setParent(friendsBtn)
+friendsShape:setParent(friendsButtonFrame)
 friendsShape.parentDidResize = btnContentParentDidResize
 
 cubzhBtn.onRelease = function()
@@ -893,15 +951,36 @@ friendsBtn.onRelease = function()
 	showModal(MODAL_KEYS.FRIENDS)
 end
 
+friendsBtn.onPress = function()
+	print("FRIENDS")
+end
+
 profileFrame = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
+
+profileButtonFrame = createButtonFrame({ first = true })
+profileButtonFrame:setParent(profileFrame)
+
 profileFrame:setParent(topBar)
 profileFrame.onRelease = function(_)
 	showModal(MODAL_KEYS.PROFILE)
 end
 
 avatar = ui:createFrame(Color.transparent)
-avatar:setParent(profileFrame)
+avatar:setParent(profileButtonFrame)
 avatar.parentDidResize = btnContentParentDidResize
+
+-- PEZH
+
+pezhBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
+
+pezhBtnFrame = createButtonFrame()
+pezhBtnFrame:setParent(pezhBtn)
+
+pezhBtn:setParent(topBar)
+
+pezhShape = ui:createShape(System.ShapeFromBundle("aduermael.pezh_coin"))
+pezhShape:setParent(pezhBtnFrame)
+pezhShape.parentDidResize = btnContentParentDidResize
 
 -- CHAT
 
@@ -1532,34 +1611,40 @@ topBar.parentDidResize = function(self)
 	local height = TOP_BAR_HEIGHT
 
 	cubzhBtn.Height = height
-	cubzhBtn.Width = cubzhBtn.Height
+	cubzhBtn.Width = height - 4
 
 	connBtn.Height = height
-	connBtn.Width = connBtn.Height
+	connBtn.Width = height - 4
 
 	self.Width = Screen.Width
 	self.Height = System.SafeAreaTop + height
 	self.pos.Y = Screen.Height - self.Height
 
-	cubzhBtn.pos.X = self.Width - Screen.SafeArea.Right - cubzhBtn.Width
+	cubzhBtn.pos.X = self.Width - Screen.SafeArea.Right - cubzhBtn.Width - 2
 	connBtn.pos.X = cubzhBtn.pos.X - connBtn.Width
 
 	-- PROFILE BUTTON
 
 	profileFrame.Height = height
-	profileFrame.Width = profileFrame.Height
+	profileFrame.Width = height - 2
 
 	-- FRIENDS BUTTON
 
 	friendsBtn.Height = height
-	friendsBtn.Width = friendsBtn.Height - (PADDING_BIG - PADDING) * 2
+	friendsBtn.Width = height - 4
 	friendsBtn.pos.X = profileFrame.pos.X + profileFrame.Width
+
+	-- PEZH BUTTON
+
+	pezhBtn.Height = height
+	pezhBtn.Width = height - 4
+	pezhBtn.pos.X = friendsBtn.pos.X + friendsBtn.Width
 
 	-- CHAT BUTTON
 
 	chatBtn.Height = height
-	chatBtn.pos.X = friendsBtn.pos.X + friendsBtn.Width
-	chatBtn.Width = connBtn.pos.X - chatBtn.pos.X
+	chatBtn.pos.X = pezhBtn.pos.X + pezhBtn.Width
+	chatBtn.Width = connBtn:isVisible() and (connBtn.pos.X - chatBtn.pos.X) or (cubzhBtn.pos.X - chatBtn.pos.X)
 
 	-- CHAT MESSAGES
 

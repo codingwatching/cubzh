@@ -1,3 +1,5 @@
+-- ADD FRIENDS TOAST -> faster
+
 Dev.DisplayColliders = false
 local DEBUG_AMBIENCES = false
 local DEBUG_ITEMS = false
@@ -833,10 +835,14 @@ local JUMP_VELOCITY = 82
 local MAX_AIR_JUMP_VELOCITY = 85
 initPlayer = function(p)
 	if p == Player then -- Player properties for local simulation
-		require("camera_modes"):setThirdPerson({
-			rigidity = 0.4,
+		-- require("camera_modes"):setThirdPerson({
+		-- 	rigidity = 0.4,
+		-- 	target = p,
+		-- 	collidesWithGroups = CAMERA_COLLIDES_WITH_GROUPS,
+		-- })
+
+		require("ccc"):set({
 			target = p,
-			collidesWithGroups = CAMERA_COLLIDES_WITH_GROUPS,
 		})
 
 		jumpParticles = particles:newEmitter({
@@ -883,6 +889,10 @@ initPlayer = function(p)
 			jumpParticles:spawn(10)
 			sfx("walk_concrete_2", { Position = o.Position, Volume = 0.2 })
 		end
+		skills.addStepClimbing(Player, {
+			mapScale = MAP_SCALE,
+			collisionGroups = Map.CollisionGroups + ITEM_COLLISION_GROUPS + BUILDING_COLLISION_GROUPS,
+		})
 		skills.addJump(Player, {
 			maxGroundDistance = 1.0,
 			airJumps = 1,
@@ -908,11 +918,6 @@ initPlayer = function(p)
 
 		p.Head:AddChild(AudioListener) -- Adding an audio listener to the player
 	end
-
-	skills.addStepClimbing(p, {
-		mapScale = MAP_SCALE,
-		collisionGroups = Map.CollisionGroups + ITEM_COLLISION_GROUPS + BUILDING_COLLISION_GROUPS,
-	})
 
 	World:AddChild(p) -- Adding the player to the world
 	p.Physics = PhysicsMode.Dynamic
@@ -1456,13 +1461,13 @@ playerControls.walk = function(self, player)
 
 	if player == Player then
 		self.onDrag = function(pe)
-			Player.LocalRotation = Rotation(0, pe.DX * 0.01, 0) * Player.LocalRotation
-			Player.Head.LocalRotation = Rotation(-pe.DY * 0.01, 0, 0) * Player.Head.LocalRotation
-			local dpad = require("controls").DirectionalPadValues
-			Player.Motion = (Player.Forward * dpad.Y + Player.Right * dpad.X) * 50
+			-- Player.LocalRotation = Rotation(0, pe.DX * 0.01, 0) * Player.LocalRotation
+			-- Player.Head.LocalRotation = Rotation(-pe.DY * 0.01, 0, 0) * Player.Head.LocalRotation
+			-- local dpad = require("controls").DirectionalPadValues
+			-- Player.Motion = (Player.Forward * dpad.Y + Player.Right * dpad.X) * 50
 		end
 		self.dirPad = function(x, y)
-			Player.Motion = (Player.Forward * y + Player.Right * x) * 50
+			-- Player.Motion = (Player.Forward * y + Player.Right * x) * 50
 		end
 		updateSync()
 	end
