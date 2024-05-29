@@ -1,8 +1,10 @@
 
+
 # ------------------------------
-# Android
+# Platforms
 # ------------------------------
 
+# Android
 platform(
     name = "android_armv7",
     constraint_values = [
@@ -10,7 +12,6 @@ platform(
         "@platforms//cpu:armv7",
     ],
 )
-
 platform(
     name = "android_arm64",
     constraint_values = [
@@ -18,7 +19,6 @@ platform(
         "@platforms//cpu:arm64",
     ],
 )
-
 platform(
     name = "android_x86_32",
     constraint_values = [
@@ -34,14 +34,71 @@ platform(
     ],
 )
 
-# ------------------------------
 # Linux
-# ------------------------------
+platform(
+    name = "linux_arm64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:arm64",
+    ],
+)
+platform(
+    name = "linux_x86_64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
 
-# ------------------------------
 # macOS
-# ------------------------------
+platform(
+    name = "macos_arm64",
+    constraint_values = [
+        "@platforms//os:darwin",
+        "@platforms//cpu:arm64",
+    ],
+)
+platform(
+    name = "macos_x86_64",
+    constraint_values = [
+        "@platforms//os:darwin",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+# Windows
+
+
+# # Define the condition for macOS
+# config_setting(
+#     name = "is_macos",
+#     values = {"host_os": "darwin"},
+# )
+
+# # Define the condition for non-macOS (for completeness)
+# config_setting(
+#     name = "is_not_macos",
+#     values = {"host_os": "linux"},  # adjust this for other OS if needed
+# )
 
 # ------------------------------
-# Windows
+# Toolchains
 # ------------------------------
+
+# toolchain(
+#     name = "linux_toolchain",
+#     toolchain_type = "//my_toolchains:toolchain_type",
+#     toolchain = select({
+#         "//:is_not_macos": "//my_toolchains:linux_toolchain_impl",
+#         "//conditions:default": None,
+#     }),
+# )
+
+# toolchain(
+#     name = "macos_toolchain",
+#     toolchain_type = "//my_toolchains:toolchain_type",
+#     toolchain = select({
+#         "//:is_macos": "//my_toolchains:macos_toolchain_impl",
+#         "//conditions:default": None,
+#     }),
+# )
