@@ -40,6 +40,30 @@ android_ndk_repository(
 # register_toolchains("@androidndk//:all")
 
 # --------------------
+# WASM
+# --------------------
+
+RULES_EMSDK_COMMIT = "0329dbaa2593dcb6604caf38893f276b06cc04ef"
+RULES_EMSDK_SHA = "7d1825e545d5d98ab6e46317cc55ab85cfa8a5593e9397a71681dd16c27efefd"
+RULES_EM_VERSION = "3.1.38"
+
+http_archive(
+    name = "emsdk",
+    url = "https://github.com/emscripten-core/emsdk/archive/%s.tar.gz" % RULES_EMSDK_COMMIT,
+    sha256 = RULES_EMSDK_SHA,
+    strip_prefix = "emsdk-%s/bazel" % RULES_EMSDK_COMMIT,
+)
+
+load("@emsdk//:deps.bzl", emsdk_deps = "deps")
+emsdk_deps()
+
+load("@emsdk//:emscripten_deps.bzl", emsdk_emscripten_deps = "emscripten_deps")
+emsdk_emscripten_deps(emscripten_version = RULES_EM_VERSION)
+
+load("@emsdk//:toolchains.bzl", "register_emscripten_toolchains")
+register_emscripten_toolchains()
+
+# --------------------
 # Linux toolchain
 # --------------------
 
