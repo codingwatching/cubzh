@@ -68,7 +68,9 @@ profile.create = function(_, config)
 	profileNode.Height = 200
 
 	local content = modal:createContent()
-	content.title = username
+
+	local title = username
+	content.title = title
 	content.icon = "😛"
 	content.node = profileNode
 
@@ -135,6 +137,7 @@ profile.create = function(_, config)
 		github = "",
 		nbFriends = 0,
 		created = nil,
+		verified = false,
 	}
 
 	-- functions to create each node
@@ -630,7 +633,7 @@ profile.create = function(_, config)
 			content:getModalIfContentIsActive():push(require("coins"):createModalContent({ uikit = ui }))
 		end
 
-		api.getBalance(function(err, balance)
+		api:getBalance(function(err, balance)
 			if not coinsBtn.Text then
 				return
 			end
@@ -638,7 +641,7 @@ profile.create = function(_, config)
 				coinsBtn.Text = "🇵 0"
 				return
 			end
-			coinsBtn.Text = "🇵 " .. math.floor(balance.total)
+			coinsBtn.Text = "🇵 " .. math.floor(balance.totalCoins)
 		end)
 	else
 		creationsBtn = ui:buttonSecondary({ content = "🛠️ Creations", textSize = "small" })
@@ -926,6 +929,13 @@ profile.create = function(_, config)
 			userInfo.github = usr.github or ""
 			userInfo.nbFriends = usr.nbFriends or 0
 			userInfo.created = usr.created
+			userInfo.verified = usr.HasVerifiedPhoneNumber == true or usr.hasEmail == true
+
+			if userInfo.verified then
+				content.title = username .. " 🇻"
+			else
+				content.title = username
+			end
 
 			infoNode:setUserInfo()
 			content:refreshModal()
@@ -939,6 +949,8 @@ profile.create = function(_, config)
 			"x",
 			"tiktok",
 			"github",
+			"hasVerifiedPhoneNumber",
+			"hasEmail",
 		})
 		table.insert(requests, req)
 

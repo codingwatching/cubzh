@@ -164,7 +164,7 @@ bool CookieStore::saveToDisk() {
         // create JSON representation of the cookie
         cJSON *obj = cJSON_CreateObject();
         if (obj == nullptr) {
-            cJSON_free(arr);
+            cJSON_Delete(arr);
             return false;
         }
         vx::json::writeStringField(obj, _domainFieldName, c.getDomain());
@@ -178,7 +178,7 @@ bool CookieStore::saveToDisk() {
 
     // generate JSON string and free JSON resources
     char *jsonCStr = cJSON_Print(arr);
-    cJSON_free(arr);
+    cJSON_Delete(arr);
     arr = nullptr;
 
     if (jsonCStr == nullptr) {
@@ -216,8 +216,7 @@ bool CookieStore::_loadFromDisk() {
         return false;
     }
     std::string jsonStr;
-    const bool ok = vx::fs::getFileTextContentAsString(fd, jsonStr);
-    fclose(fd);
+    const bool ok = vx::fs::getFileTextContentAsStringAndClose(fd, jsonStr);
     fd = nullptr;
     if (ok == false) {
         return false;
@@ -229,7 +228,7 @@ bool CookieStore::_loadFromDisk() {
         return false;
     }
     if (cJSON_IsArray(arr) == false) {
-        cJSON_free(arr);
+        cJSON_Delete(arr);
         return false;
     }
 
@@ -263,7 +262,7 @@ bool CookieStore::_loadFromDisk() {
         _cookies.insert(c);
     }
 
-    cJSON_free(arr);
+    cJSON_Delete(arr);
     return true;
 }
 

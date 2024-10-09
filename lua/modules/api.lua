@@ -658,33 +658,65 @@ mod.getAvatar = function(usernameOrId, cb)
 	return req
 end
 
-mod.getBalance = function(usernameOrCb, cb)
-	if type(usernameOrCb) == "function" then -- if self
-		cb = usernameOrCb
-		local url = mod.kApiAddr .. "/users/self/balance"
-		HTTP:Get(url, function(res)
-			if res.StatusCode ~= 200 then
-				cb("Error (" .. res.StatusCode .. "): can't get balance.")
-				return
-			end
-			cb(nil, JSON:Decode(res.Body))
-		end)
-		return
+-- callback(error string or nil, balance object or nil)
+--
+-- balance object:
+-- {
+-- 	"userID": "000000000-0000-0000-0000-000000000000",
+-- 	"grantedCoins": 0,
+-- 	"purchasedCoins": 0,
+-- 	"earnedCoins": 0,
+-- 	"totalCoins": 0,
+-- }
+mod.getBalance = function(_, cb)
+	local cbType = type(cb)
+	if cbType ~= "function" and cbType ~= "nil" then
+		error("getBalance(cb) - cb must be a function or nil", 2)
 	end
-	local username = usernameOrCb
-	mod.getUserId(username, function(err, id)
-		if err then
-			return cb(err)
+
+	local url = mod.kApiAddr .. "/users/self/balance"
+	local req = HTTP:Get(url, function(res)
+		if res.StatusCode ~= 200 then
+			cb("Error (" .. res.StatusCode .. "): can't get balance.")
+			return
 		end
-		local url = mod.kApiAddr .. "/users/" .. id .. "/balance"
-		HTTP:Get(url, function(res)
-			if res.StatusCode ~= 200 then
-				cb("Error (" .. res.StatusCode .. "): can't get balance.")
-				return
-			end
-			cb(nil, JSON:Decode(res.Body))
-		end)
+		cb(nil, JSON:Decode(res.Body))
 	end)
+	return req
+end
+
+mod.getTransactions = function(self, config)
+	if self ~= mod then
+		error("api:getTransactions(config): use `:`", 2)
+	end
+	local defaultConfig = {
+		limit = 100,
+		callback = function() end, -- callback(transactions, error)
+	}
+
+	local ok, err = pcall(function()
+		config = require("config"):merge(defaultConfig, config)
+	end)
+
+	if not ok then
+		error("api:getTransactions(config): config error (" .. err .. ")", 2)
+	end
+
+	local url = mod.kApiAddr .. "/users/self/transactions?limit=" .. math.floor(config.limit)
+
+	local req = HTTP:Get(url, function(res)
+		if res.StatusCode ~= 200 then
+			config.callback(nil, mod:error(res.StatusCode, "status code: " .. res.StatusCode))
+			return
+		end
+		local transactions, err = JSON:Decode(res.Body)
+		if err ~= nil then
+			config.callback(nil, mod:error(res.StatusCode, "getTransactions JSON decode error: " .. err))
+			return
+		end
+		config.callback(transactions)
+	end)
+	return req
 end
 
 mod.getItem = function(self, itemId, fields, callback)

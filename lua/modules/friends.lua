@@ -48,6 +48,23 @@ mt.__index.create = function(_, maxWidth, maxHeight, position, uikit)
 	content.title = "Friends"
 	content.icon = "😛"
 
+	content.didBecomeActive = function()
+		systemApi:readNotifications({
+			category = "social",
+			callback = function(err)
+				if err == nil then
+					LocalEvent:Send(LocalEvent.Name.NotificationCountDidChange)
+					systemApi:getNotifications({ returnCount = true, read = false }, function(count, err)
+						if err == nil then
+							-- NOTE: on macOS, setting count to whatever value removes the badge
+							System.NotificationCount = count
+						end
+					end)
+				end
+			end,
+		})
+	end
+
 	local scroll
 	local searchText
 	local loading = true
@@ -84,16 +101,6 @@ mt.__index.create = function(_, maxWidth, maxHeight, position, uikit)
 		width = math.min(width, 500)
 		width = math.max(minWidth, width)
 		return Number2(width, height)
-	end
-
-	local function sortByLastSeenUsernameOrID(a, b)
-		if a.lastSeen ~= nil and b.lastSeen ~= nil then
-			return a.lastSeen > b.lastSeen
-		end
-		if a.username ~= nil and b.username ~= nil then
-			return a.username > b.username
-		end
-		return a.id > b.id
 	end
 
 	local node = ui:createFrame(Color(0, 0, 0, 0))
@@ -203,7 +210,6 @@ mt.__index.create = function(_, maxWidth, maxHeight, position, uikit)
 							table.insert(list, usr)
 						end
 					end
-					table.sort(list, sortByLastSeenUsernameOrID)
 					newListResponse(listID, list)
 				end)
 				table.insert(requests, req)
@@ -220,16 +226,14 @@ mt.__index.create = function(_, maxWidth, maxHeight, position, uikit)
 					return
 				end
 				for _, usr in ipairs(users) do
-					if usr.username ~= "" then
-						-- if search, match the username
-						if not searchText or string.find(usr.username, searchText) then
-							table.insert(list, usr)
-						end
+					-- if search, match the username
+					if usr.username == "" then
+						usr.username = Players.DefaultUsername
+					end
+					if not searchText or string.find(usr.username, searchText) then
+						table.insert(list, usr)
 					end
 				end
-
-				table.sort(list, sortByLastSeenUsernameOrID)
-
 				newListResponse(listID, list)
 			end)
 			table.insert(requests, req)
@@ -384,8 +388,7 @@ mt.__index.create = function(_, maxWidth, maxHeight, position, uikit)
 				avatar = cachedAvatars[user.username]
 				if avatar == nil then
 					local requests
-					avatar, requests =
-						uiAvatar:get({ usernameOrId = user.id, size = cell.Height * 0.95, ui = ui })
+					avatar, requests = uiAvatar:get({ usernameOrId = user.id, size = cell.Height * 0.95, ui = ui })
 
 					cell.avatarRequests = requests
 					avatar.body.pivot.LocalRotation = Rotation(math.rad(-22), 0, 0) * Rotation(0, math.rad(145), 0)

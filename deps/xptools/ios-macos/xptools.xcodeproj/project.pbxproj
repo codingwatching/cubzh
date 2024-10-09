@@ -17,6 +17,10 @@
 		101554E72C04D57E001E9057 /* cJSON.c in Sources */ = {isa = PBXBuildFile; fileRef = 101554DD2C04D57E001E9057 /* cJSON.c */; };
 		101554E82C04D57E001E9057 /* cJSON.h in Headers */ = {isa = PBXBuildFile; fileRef = 101554DE2C04D57E001E9057 /* cJSON.h */; };
 		101554E92C04D57E001E9057 /* cJSON.h in Headers */ = {isa = PBXBuildFile; fileRef = 101554DE2C04D57E001E9057 /* cJSON.h */; };
+		101758B92C99C254008318A8 /* notifications.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 101758B82C99C24E008318A8 /* notifications.cpp */; };
+		101758BA2C99C254008318A8 /* notifications.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 101758B82C99C24E008318A8 /* notifications.cpp */; };
+		101758BB2C99C254008318A8 /* notifications.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 101758B82C99C24E008318A8 /* notifications.cpp */; };
+		101758BC2C99C254008318A8 /* notifications.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 101758B82C99C24E008318A8 /* notifications.cpp */; };
 		102144F92C75E0C000099E38 /* strings.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 10C63D2B246C4F61003DEC3E /* strings.hpp */; };
 		102144FA2C75E0C000099E38 /* BZMD5.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 101554DC2C04D57E001E9057 /* BZMD5.hpp */; };
 		102144FB2C75E0C000099E38 /* tracking.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 853C93A325A384070030C45D /* tracking.hpp */; };
@@ -109,6 +113,10 @@
 		10974C8B244D690C008153FE /* filesystem.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10974C89244D690C008153FE /* filesystem.mm */; };
 		10974C8F244D6AB1008153FE /* device-ios.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10974C8C244D6916008153FE /* device-ios.mm */; };
 		10974C90244D6D69008153FE /* device.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 10974C88244D66B6008153FE /* device.hpp */; };
+		10C541292CA70FBD008CB6C7 /* HttpRequest.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10C541282CA70FBD008CB6C7 /* HttpRequest.mm */; };
+		10C5412A2CA70FBD008CB6C7 /* HttpRequest.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10C541282CA70FBD008CB6C7 /* HttpRequest.mm */; };
+		10C5412B2CA70FBD008CB6C7 /* HttpRequest.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10C541282CA70FBD008CB6C7 /* HttpRequest.mm */; };
+		10C5412C2CA70FBD008CB6C7 /* HttpRequest.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10C541282CA70FBD008CB6C7 /* HttpRequest.mm */; };
 		10C63D2C246C4F61003DEC3E /* strings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 10C63D2A246C4F61003DEC3E /* strings.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		10C63D2D246C4F61003DEC3E /* strings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 10C63D2A246C4F61003DEC3E /* strings.cpp */; };
 		10C63D2E246C4F61003DEC3E /* strings.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 10C63D2B246C4F61003DEC3E /* strings.hpp */; };
@@ -305,6 +313,7 @@
 		101554DC2C04D57E001E9057 /* BZMD5.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = BZMD5.hpp; sourceTree = "<group>"; };
 		101554DD2C04D57E001E9057 /* cJSON.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cJSON.c; sourceTree = "<group>"; };
 		101554DE2C04D57E001E9057 /* cJSON.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cJSON.h; sourceTree = "<group>"; };
+		101758B82C99C24E008318A8 /* notifications.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = notifications.cpp; sourceTree = "<group>"; };
 		1021453B2C75E0C000099E38 /* libxptools-macos-ci.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libxptools-macos-ci.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1022D09628AFBB5C00C1F1E9 /* process.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = process.cpp; sourceTree = "<group>"; };
 		102B2A1A2BD6A011006AF4F6 /* textinput.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = textinput.hpp; sourceTree = "<group>"; };
@@ -314,6 +323,7 @@
 		10974C88244D66B6008153FE /* device.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = device.hpp; sourceTree = "<group>"; };
 		10974C89244D690C008153FE /* filesystem.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = filesystem.mm; sourceTree = "<group>"; };
 		10974C8C244D6916008153FE /* device-ios.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "device-ios.mm"; sourceTree = "<group>"; };
+		10C541282CA70FBD008CB6C7 /* HttpRequest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = HttpRequest.mm; sourceTree = "<group>"; };
 		10C63D2A246C4F61003DEC3E /* strings.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = strings.cpp; sourceTree = "<group>"; };
 		10C63D2B246C4F61003DEC3E /* strings.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = strings.hpp; sourceTree = "<group>"; };
 		10C63D2F246C59FD003DEC3E /* strings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = strings.h; sourceTree = "<group>"; };
@@ -520,8 +530,8 @@
 				8506231628770DB700B270A6 /* audio.cpp */,
 				85471B3D27E3E4AA000575D5 /* Connection.cpp */,
 				853C93FE25A3C2470030C45D /* crypto.cpp */,
-				8534FDD7240E9EAE004B3494 /* device_c.cpp */,
 				85E6380B28F703C3001FC12F /* device.cpp */,
+				8534FDD7240E9EAE004B3494 /* device_c.cpp */,
 				10E793642450137900B7E2E2 /* filesystem.cpp */,
 				85BB0187279EFA0E000F1B10 /* HttpClient.cpp */,
 				851F2A412B63C45E00E2863F /* HttpCookie.cpp */,
@@ -530,6 +540,7 @@
 				85BB0194279F3BAD000F1B10 /* HttpResponse.cpp */,
 				8518D09C27BA6DD900A438D6 /* json.cpp */,
 				85471B3C27E3E4A9000575D5 /* LocalConnection.cpp */,
+				101758B82C99C24E008318A8 /* notifications.cpp */,
 				858ABB862A52F5CD007AE641 /* OperationQueue.cpp */,
 				1022D09628AFBB5C00C1F1E9 /* process.cpp */,
 				10C63D2A246C4F61003DEC3E /* strings.cpp */,
@@ -553,6 +564,7 @@
 				10974C8C244D6916008153FE /* device-ios.mm */,
 				8534FDD5240E97D5004B3494 /* device-macos.mm */,
 				10974C89244D690C008153FE /* filesystem.mm */,
+				10C541282CA70FBD008CB6C7 /* HttpRequest.mm */,
 				850623592877898C00B270A6 /* miniaudio_impl.mm */,
 				85BD47D62A5DABAE00556C6E /* notifications.mm */,
 				855CB5E4287320E200072D5F /* process-ios.cpp */,
@@ -850,6 +862,7 @@
 				102145142C75E0C000099E38 /* WSBackend.cpp in Sources */,
 				102145152C75E0C000099E38 /* ThreadManager.cpp in Sources */,
 				102145162C75E0C000099E38 /* HttpResponse.cpp in Sources */,
+				101758BC2C99C254008318A8 /* notifications.cpp in Sources */,
 				102145172C75E0C000099E38 /* miniaudio_impl.mm in Sources */,
 				102145182C75E0C000099E38 /* WSService.cpp in Sources */,
 				102145192C75E0C000099E38 /* vxtime.cpp in Sources */,
@@ -871,6 +884,7 @@
 				102145292C75E0C000099E38 /* HttpRequest.cpp in Sources */,
 				1021452A2C75E0C000099E38 /* OperationQueue.cpp in Sources */,
 				1021452B2C75E0C000099E38 /* URL.cpp in Sources */,
+				10C5412C2CA70FBD008CB6C7 /* HttpRequest.mm in Sources */,
 				1021452C2C75E0C000099E38 /* Connection.cpp in Sources */,
 				1021452D2C75E0C000099E38 /* web-macos.mm in Sources */,
 				1021452E2C75E0C000099E38 /* process.cpp in Sources */,
@@ -896,6 +910,7 @@
 				850D25BA2AE11C7500B00B13 /* notifications.mm in Sources */,
 				85E6380E28F703C3001FC12F /* device.cpp in Sources */,
 				85471B9727E85B03000575D5 /* WSService.cpp in Sources */,
+				101758BA2C99C254008318A8 /* notifications.cpp in Sources */,
 				10847CC3270EE8C6006A5E91 /* vxtime.cpp in Sources */,
 				8518D0A027BA6DD900A438D6 /* json.cpp in Sources */,
 				10847CC4270EE8C6006A5E91 /* filesystem.cpp in Sources */,
@@ -905,6 +920,7 @@
 				10847CC6270EE8C6006A5E91 /* device_c.cpp in Sources */,
 				10847CC8270EE8C6006A5E91 /* crypto.cpp in Sources */,
 				10847CC9270EE8C6006A5E91 /* vxlog.mm in Sources */,
+				10C5412B2CA70FBD008CB6C7 /* HttpRequest.mm in Sources */,
 				85471B4227E3E4AA000575D5 /* LocalConnection.cpp in Sources */,
 				10EE2BC9272C098A00EC374C /* web-macos.mm in Sources */,
 				85BB0193279F3B56000F1B10 /* HttpRequest.cpp in Sources */,
@@ -932,6 +948,7 @@
 				85FCECA228072D3200CD6115 /* WSBackend.cpp in Sources */,
 				8518D09827BA6D9000A438D6 /* ThreadManager.cpp in Sources */,
 				85BB0195279F3BAD000F1B10 /* HttpResponse.cpp in Sources */,
+				101758BB2C99C254008318A8 /* notifications.cpp in Sources */,
 				85454CE0288003D70047A26C /* miniaudio_impl.mm in Sources */,
 				85471B9527E85B03000575D5 /* WSService.cpp in Sources */,
 				1033952325626D220083F4C0 /* vxtime.cpp in Sources */,
@@ -953,6 +970,7 @@
 				85BB0190279F3B56000F1B10 /* HttpRequest.cpp in Sources */,
 				858ABB872A52F5CD007AE641 /* OperationQueue.cpp in Sources */,
 				85D52F6B29D9EE2900070F19 /* URL.cpp in Sources */,
+				10C541292CA70FBD008CB6C7 /* HttpRequest.mm in Sources */,
 				85471B4327E3E4AA000575D5 /* Connection.cpp in Sources */,
 				10EE2BC5272C091100EC374C /* web-macos.mm in Sources */,
 				1022D09928AFBC8E00C1F1E9 /* process.cpp in Sources */,
@@ -974,6 +992,7 @@
 				85FCECA328072D3200CD6115 /* WSBackend.cpp in Sources */,
 				8506235A2877898C00B270A6 /* miniaudio_impl.mm in Sources */,
 				8518D09927BA6D9000A438D6 /* ThreadManager.cpp in Sources */,
+				101758B92C99C254008318A8 /* notifications.cpp in Sources */,
 				85BB0196279F3BAD000F1B10 /* HttpResponse.cpp in Sources */,
 				85471B9627E85B03000575D5 /* WSService.cpp in Sources */,
 				1033952425626D220083F4C0 /* vxtime.cpp in Sources */,
@@ -995,6 +1014,7 @@
 				85BB0191279F3B56000F1B10 /* HttpRequest.cpp in Sources */,
 				858ABBC12A531836007AE641 /* OperationQueue.cpp in Sources */,
 				85D52F6C29D9EE2900070F19 /* URL.cpp in Sources */,
+				10C5412A2CA70FBD008CB6C7 /* HttpRequest.mm in Sources */,
 				85471B4427E3E4AA000575D5 /* Connection.cpp in Sources */,
 				10974C8B244D690C008153FE /* filesystem.mm in Sources */,
 				1022D09728AFBC8E00C1F1E9 /* process.cpp in Sources */,
@@ -1037,6 +1057,7 @@
 		102145392C75E0C000099E38 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 9JFN8QQG65;
 				EXECUTABLE_PREFIX = lib;
@@ -1067,6 +1088,7 @@
 		1021453A2C75E0C000099E38 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 9JFN8QQG65;
 				EXECUTABLE_PREFIX = lib;
@@ -1096,6 +1118,7 @@
 		10847CD2270EE8C6006A5E91 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 9JFN8QQG65;
 				EXECUTABLE_PREFIX = lib;
@@ -1119,6 +1142,7 @@
 		10847CD3270EE8C6006A5E91 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 9JFN8QQG65;
 				EXECUTABLE_PREFIX = lib;
@@ -1145,7 +1169,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -1215,7 +1239,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
@@ -1276,6 +1300,7 @@
 		8534FDCC240E92C1004B3494 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 9JFN8QQG65;
 				EXECUTABLE_PREFIX = lib;
@@ -1303,6 +1328,7 @@
 		8534FDCD240E92C1004B3494 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 9JFN8QQG65;
 				EXECUTABLE_PREFIX = lib;
@@ -1329,6 +1355,7 @@
 		8598D6CD240EF3FD008A6D4C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 9JFN8QQG65;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -1354,6 +1381,7 @@
 		8598D6CE240EF3FD008A6D4C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 9JFN8QQG65;
 				FRAMEWORK_SEARCH_PATHS = (

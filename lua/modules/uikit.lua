@@ -154,17 +154,8 @@ function createUI(system)
 	-- pressed is assigned to scroll node when drag starts (considering epsilon)
 	local pressedScrolls = {}
 
-	-- keeping a reference on all text items,
-	-- to update fontsize when needed
-	local texts = {}
-
 	-- each Text gets a unique ID
 	local nodeID = 1
-
-	-- keeping current font size (based on screen size & density)
-	local currentFontSize = Text.FontSizeDefault
-	local currentFontSizeBig = Text.FontSizeBig
-	local currentFontSizeSmall = Text.FontSizeSmall
 
 	local pointerDownListener
 	local pointerUpListener
@@ -333,9 +324,6 @@ function createUI(system)
 		_onRemoveWrapper(t)
 
 		t:setParent(nil)
-
-		-- in case node is a Text
-		texts[t._id] = nil
 
 		if pressed == t then
 			pressed = nil
@@ -1233,6 +1221,42 @@ function createUI(system)
 		})
 	end
 
+	local frameNotificationQuadData
+	ui.frameNotification = function(self)
+		if self ~= ui then
+			error("ui:frameNotification(): use `:`", 2)
+		end
+		if frameNotificationQuadData == nil then
+			frameNotificationQuadData = Data:FromBundle("images/notification.png")
+		end
+		return ui.frame(self, {
+			image = {
+				data = frameNotificationQuadData,
+				slice9 = { 0.5, 0.5 },
+				slice9Scale = DEFAULT_SLICE_9_SCALE,
+				alpha = true,
+			},
+		})
+	end
+
+	local frameNotificationBadgeQuadData
+	ui.frameNotificationBadge = function(self)
+		if self ~= ui then
+			error("ui:frameNotification(): use `:`", 2)
+		end
+		if frameNotificationBadgeQuadData == nil then
+			frameNotificationBadgeQuadData = Data:FromBundle("images/notification_badge.png")
+		end
+		return ui.frame(self, {
+			image = {
+				data = frameNotificationBadgeQuadData,
+				slice9 = { 0.5, 0.5 },
+				slice9Scale = DEFAULT_SLICE_9_SCALE,
+				alpha = true,
+			},
+		})
+	end
+
 	local frameMaskWithRoundCornersQuadData
 	ui.frameMaskWithRoundCorners = function(self)
 		if self ~= ui then
@@ -1601,6 +1625,7 @@ function createUI(system)
 			color = Color(0, 0, 0),
 			backgroundColor = Color(0, 0, 0, 0),
 			size = "default",
+			font = Font.Noto,
 		}
 
 		local config = nil
@@ -1638,7 +1663,6 @@ function createUI(system)
 		end
 
 		local node = _nodeCreate()
-		texts[node._id] = node
 
 		node._text = function(self)
 			return self.object.Text
@@ -1671,7 +1695,7 @@ function createUI(system)
 		local t = Text()
 		t.Anchor = { 0, 0 }
 		t.Type = TextType.World
-		t.Font = Font.Noto
+		t.Font = config.font
 		_setLayers(t)
 		t.Text = str
 		t.Padding = 0
@@ -1682,11 +1706,11 @@ function createUI(system)
 		if type(config.size) == "number" or type(config.size) == "integer" then
 			t.FontSize = config.size
 		elseif config.size == "big" then
-			t.FontSize = currentFontSizeBig
+			t.FontSize = Text.FontSizeBig
 		elseif config.size == "small" then
-			t.FontSize = currentFontSizeSmall
+			t.FontSize = Text.FontSizeSmall
 		else
-			t.FontSize = currentFontSize
+			t.FontSize = Text.FontSizeDefault
 		end
 
 		t.IsUnlit = true
@@ -2724,7 +2748,7 @@ function createUI(system)
 			local cell
 
 			if cellInfo == nil then
-				cell = config.loadCell(cellIndex, config.userdata)
+				cell = config.loadCell(cellIndex, config.userdata, container)
 				if cell == nil then
 					-- reached the end of cells
 					return nil
@@ -2866,7 +2890,7 @@ function createUI(system)
 					then
 						cell = cells[cellIndex]
 						if cell == nil then
-							cell = config.loadCell(cellIndex, config.userdata)
+							cell = config.loadCell(cellIndex, config.userdata, container)
 							-- here if cell == nil, it means cell already loaded once now gone
 							-- let's just not display anything in this area.
 							if cell ~= nil then
@@ -2930,7 +2954,7 @@ function createUI(system)
 							-- 	"[" .. cellInfo.left .. " - " .. cellInfo.right .. "]",
 							-- 	"[" .. loadLeft .. " - " .. loadRight .. "]"
 							-- )
-							cell = config.loadCell(cellIndex, config.userdata)
+							cell = config.loadCell(cellIndex, config.userdata, container)
 							-- here if cell == nil, it means cell already loaded once now gone
 							-- let's just not display anything in this area.
 							if cell ~= nil then
@@ -3320,7 +3344,7 @@ function createUI(system)
 			-- radius = 5, -- not yet supported
 
 			-- OTHER PROPERTIES --
-			sound = "button_1",
+			sound = "",
 			unfocuses = true, -- unfocused focused node when true
 			debugName = nil,
 		}
@@ -3996,30 +4020,6 @@ function createUI(system)
 
 		rootFrame.LocalPosition = { -Screen.Width * 0.5, -Screen.Height * 0.5, UI_FAR }
 
-		if
-			currentFontSize ~= Text.FontSizeDefault
-			or currentFontSizeBig ~= Text.FontSizeBig
-			or currentFontSizeSmall ~= Text.FontSizeSmall
-		then
-			currentFontSize = Text.FontSizeDefault
-			currentFontSizeBig = Text.FontSizeBig
-			currentFontSizeSmall = Text.FontSizeSmall
-
-			for _, node in pairs(texts) do
-				if node.object and node.object.FontSize then
-					if node.fontsize == nil or node.fontsize == "default" then
-						node.object.FontSize = currentFontSize
-					elseif node.fontsize == "big" then
-						node.object.FontSize = currentFontSizeBig
-					elseif node.fontsize == "small" then
-						node.object.FontSize = currentFontSizeSmall
-					end
-				end
-
-				_contentDidResizeWrapper(node.parent)
-			end
-		end
-
 		for _, child in pairs(rootChildren) do
 			_parentDidResizeWrapper(child)
 		end
@@ -4049,6 +4049,7 @@ function createUI(system)
 
 		local pressedCandidate = nil
 		local pressedCandidateImpact = nil
+		local withinScroll
 
 		for _, impact in ipairs(impacts) do
 			skip = false
@@ -4070,13 +4071,20 @@ function createUI(system)
 				elseif hitObject._node._onPress or hitObject._node._onRelease or hitObject._node.isScrollArea then
 					-- check if hitObject is within a scroll
 					parent = hitObject._node.parent
+					withinScroll = false
 					while parent ~= nil do
 						-- skip action if node parented by scroll but not within area
 						-- note: a scroll can itself be within a scroll
-						if parent.isScrollArea == true and parent:containsPointer(pointerEvent) == false then
-							skip = true
-							break
+						if parent.isScrollArea == true then
+							if parent:containsPointer(pointerEvent) == false then
+								skip = true
+								break
+							end
+							withinScroll = true
+						elseif parent._onDrag ~= nil then
+							withinScroll = true
 						end
+
 						parent = parent.parent
 					end
 
@@ -4088,6 +4096,9 @@ function createUI(system)
 						if pressedCandidate == nil then
 							pressedCandidate = hitObject._node
 							pressedCandidateImpact = impact
+							if withinScroll == false then
+								break
+							end
 						end
 					end
 				end

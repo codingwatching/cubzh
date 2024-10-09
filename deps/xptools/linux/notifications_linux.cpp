@@ -1,27 +1,30 @@
 
 #include "notifications.hpp"
 
-bool vx::notification::notificationsAvailable() {
-    // Notifications are not implemented yet for this platform.
-    return false;
+namespace vx {
+    namespace notification {
+
+// Returns current authorization status for push notifications.
+void remotePushAuthorizationStatus(StatusCallback callback) {
+	callback(NotificationAuthorizationStatus_NotSupported);
 }
 
-bool vx::notification::shouldShowInfoPopup() {
-    // Notifications are not implemented yet for this platform.
-    return false;
-}
+// Shows system popup requesting user's authorization to receive push notifications
+void requestRemotePushAuthorization(AuthorizationRequestCallback callback) {}
 
-void vx::notification::requestRemotePush() {
-    // Notifications are not implemented yet for this platform.
-}
+void requestRemotePushToken() {}
 
-bool vx::notification::scheduleAllLocalReminders(const std::string& title,
-                                                 const std::string& message) {
-    // TODO: implement me!
-    return false;
-}
+void scheduleLocalNotification(const std::string &title,
+                               const std::string &body,
+                               const std::string &identifier,
+                               int days,
+                               int hours,
+                               int minutes,
+                               int seconds) {}
 
-bool vx::notification::cancelAllLocalReminders() {
-    // TODO: implement me!
-    return false;
+void cancelLocalNotification(const std::string &identifier) {}
+
+void setBadgeCount(int count) {}
+
+    }
 }

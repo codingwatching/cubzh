@@ -19,7 +19,10 @@
 #include "vxlog.h"
 #include "JNIUtils.hpp"
 
-bool vx::notification::notificationsAvailable() {
+//
+static vx::notification::AuthorizationRequestCallback storedCallback = nullptr;
+
+bool _javaPermissionGranted() {
     bool just_attached = false;
     vx::tools::JniMethodInfo methodInfo;
 
@@ -47,42 +50,14 @@ bool vx::notification::notificationsAvailable() {
     return result;
 }
 
-bool vx::notification::shouldShowInfoPopup() {
+void _javaRequestRemotePush() {
     bool just_attached = false;
     vx::tools::JniMethodInfo methodInfo;
 
     if (!vx::tools::JNIUtils::getInstance()->getMethodInfo(&just_attached,
                                                            &methodInfo,
                                                            "com/voxowl/tools/Notifications",
-                                                           "shouldShowInfoPopup",
-                                                           "()Z")) {
-        __android_log_print(ANDROID_LOG_ERROR,
-                            "Cubzh",
-                            "%s %d: error to get methodInfo",
-                            __FILE__,
-                            __LINE__);
-        assert(false); // crash the program
-    }
-
-    const jboolean result = methodInfo.env->CallStaticBooleanMethod(methodInfo.classID, methodInfo.methodID);
-
-    methodInfo.env->DeleteLocalRef(methodInfo.classID);
-
-    if (just_attached) {
-        vx::tools::JNIUtils::getInstance()->getJavaVM()->DetachCurrentThread();
-    }
-
-    return result;
-}
-
-void vx::notification::requestRemotePush() {
-    bool just_attached = false;
-    vx::tools::JniMethodInfo methodInfo;
-
-    if (!vx::tools::JNIUtils::getInstance()->getMethodInfo(&just_attached,
-                                                           &methodInfo,
-                                                           "com/voxowl/tools/Notifications",
-                                                           "request",
+                                                           "requestPermission",
                                                            "()V")) {
         __android_log_print(ANDROID_LOG_ERROR,
                             "Cubzh",
@@ -101,16 +76,15 @@ void vx::notification::requestRemotePush() {
     }
 }
 
-bool vx::notification::scheduleAllLocalReminders(const std::string& title,
-                                                 const std::string& message) {
+void _javaRequestFirebaseToken() {
     bool just_attached = false;
     vx::tools::JniMethodInfo methodInfo;
 
     if (!vx::tools::JNIUtils::getInstance()->getMethodInfo(&just_attached,
                                                            &methodInfo,
                                                            "com/voxowl/tools/Notifications",
-                                                           "scheduleAllLocalNotificationReminders",
-                                                           "()Z")) {
+                                                           "requestFirebaseToken",
+                                                           "()V")) {
         __android_log_print(ANDROID_LOG_ERROR,
                             "Cubzh",
                             "%s %d: error to get methodInfo",
@@ -119,60 +93,24 @@ bool vx::notification::scheduleAllLocalReminders(const std::string& title,
         assert(false); // crash the program
     }
 
-    const jboolean result = methodInfo.env->CallStaticBooleanMethod(methodInfo.classID, methodInfo.methodID);
+    methodInfo.env->CallStaticVoidMethod(methodInfo.classID, methodInfo.methodID);
 
     methodInfo.env->DeleteLocalRef(methodInfo.classID);
 
     if (just_attached) {
         vx::tools::JNIUtils::getInstance()->getJavaVM()->DetachCurrentThread();
     }
-
-    return result;
 }
 
-//bool vx::notification::scheduleAllLocalReminders(const std::string& title,
-//                                                 const std::string& message) {
-//    bool just_attached = false;
-//    vx::tools::JniMethodInfo methodInfo;
-//
-//    if (!vx::tools::JNIUtils::getInstance()->getMethodInfo(&just_attached,
-//                                                           &methodInfo,
-//                                                           "com/voxowl/tools/Notifications",
-//                                                           "scheduleAllLocalNotificationReminders",
-//                                                           "(Ljava/lang/String;Ljava/lang/String;)Z")) {
-//        __android_log_print(ANDROID_LOG_ERROR,
-//                            "Cubzh",
-//                            "%s %d: error to get methodInfo",
-//                            __FILE__,
-//                            __LINE__);
-//        assert(false); // crash the program
-//    }
-//
-//    const jstring j_title = methodInfo.env->NewStringUTF(title.c_str());
-//    const jstring j_message = methodInfo.env->NewStringUTF(message.c_str());
-//
-//    const jboolean result = methodInfo.env->CallStaticBooleanMethod(methodInfo.classID, methodInfo.methodID, j_title, j_message);
-//
-//    methodInfo.env->DeleteLocalRef(methodInfo.classID);
-//    methodInfo.env->DeleteLocalRef(j_title);
-//    methodInfo.env->DeleteLocalRef(j_message);
-//
-//    if (just_attached) {
-//        vx::tools::JNIUtils::getInstance()->getJavaVM()->DetachCurrentThread();
-//    }
-//
-//    return result;
-//}
-
-bool vx::notification::cancelAllLocalReminders() {
+void _setBadgeCount(int count) {
     bool just_attached = false;
     vx::tools::JniMethodInfo methodInfo;
 
     if (!vx::tools::JNIUtils::getInstance()->getMethodInfo(&just_attached,
                                                            &methodInfo,
                                                            "com/voxowl/tools/Notifications",
-                                                           "cancelAllLocalNotificationReminders",
-                                                           "()Z")) {
+                                                           "setBadgeCount",
+                                                           "(I)V")) {
         __android_log_print(ANDROID_LOG_ERROR,
                             "Cubzh",
                             "%s %d: error to get methodInfo",
@@ -181,13 +119,87 @@ bool vx::notification::cancelAllLocalReminders() {
         assert(false); // crash the program
     }
 
-    const jboolean result = methodInfo.env->CallStaticBooleanMethod(methodInfo.classID, methodInfo.methodID);
+    methodInfo.env->CallStaticVoidMethod(methodInfo.classID, methodInfo.methodID, count);
 
     methodInfo.env->DeleteLocalRef(methodInfo.classID);
 
     if (just_attached) {
         vx::tools::JNIUtils::getInstance()->getJavaVM()->DetachCurrentThread();
     }
+}
 
-    return result;
+namespace vx {
+namespace notification {
+
+void setBadgeCount(int count) {
+    _setBadgeCount(count);
+}
+
+void remotePushAuthorizationStatus(StatusCallback callback) {
+    std::string _status = "";
+
+    char *s = readNotificationStatusFile();
+    if (s != nullptr) {
+        _status = std::string(s); // "set" or "postponed"
+        free(s);
+        s = nullptr;
+    }
+
+    NotificationAuthorizationStatus status = NotificationAuthorizationStatus_NotDetermined;
+    const bool granted = _javaPermissionGranted();
+    if (granted) {
+        status = NotificationAuthorizationStatus_Authorized;
+        if (_status != "set") {
+            setRemotePushAuthorization();
+        }
+    } else {
+        if (_status == "postponed") {
+            status = NotificationAuthorizationStatus_Postponed;
+        } else if (_status == "set") {
+            status = NotificationAuthorizationStatus_Denied;
+        } else {
+            status = NotificationAuthorizationStatus_NotDetermined;
+        }
+    }
+    callback(status);
+}
+
+void requestRemotePushAuthorization(AuthorizationRequestCallback callback) {
+    // store callback
+    storedCallback = callback;
+    _javaRequestRemotePush();
+}
+
+void requestRemotePushToken() {
+    remotePushAuthorizationStatus([](NotificationAuthorizationStatus status){
+        if (status == NotificationAuthorizationStatus_Authorized) {
+            // TODO: check we are in the correct thread?
+            _javaRequestFirebaseToken();
+        }
+    });
+}
+
+void scheduleLocalNotification(const std::string &title,
+                               const std::string &body,
+                               const std::string &identifier,
+                               int days,
+                               int hours,
+                               int minutes,
+                               int seconds) {
+    __android_log_print(ANDROID_LOG_ERROR,"Cubzh","%s %d: %s is not implemented", __FILE__, __LINE__, __FUNCTION__);
+}
+
+void cancelLocalNotification(const std::string &identifier) {
+    __android_log_print(ANDROID_LOG_ERROR,"Cubzh","%s %d: %s is not implemented", __FILE__, __LINE__, __FUNCTION__);
+}
+
+// Android-specific
+void didReplyToNotificationPermissionPopup(NotificationAuthorizationResponse response) {
+    if (storedCallback != nullptr) {
+        storedCallback(response);
+    }
+}
+
+
+}
 }
