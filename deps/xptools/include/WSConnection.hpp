@@ -37,8 +37,9 @@ public:
     
     static WSConnection_SharedPtr make(const std::string& scheme,
                                        const std::string& addr,
-                                       const uint16_t& port);
-    
+                                       const uint16_t& port,
+                                       const std::string& path);
+
     ~WSConnection();
     
     Status getStatus() override;
@@ -57,6 +58,7 @@ public:
     // accessors
     const std::string& getHost() const;
     const uint16_t& getPort() const;
+    const std::string& getPath() const;
     const bool& getSecure() const;
     std::string getURL() const;
 
@@ -101,8 +103,9 @@ private:
     void init(const WSConnection_SharedPtr& ref,
               const std::string& scheme,
               const std::string& addr,
-              const uint16_t& port);
-    
+              const uint16_t& port,
+              const std::string& path);
+
     ///
     void _threadFunction();
     
@@ -124,7 +127,10 @@ private:
     
     /// server port to connect to
     uint16_t _serverPort;
-    
+
+    /// URL path
+    std::string _serverPath;
+
     /// indicate whether SSL is used
     bool _secure;
     
