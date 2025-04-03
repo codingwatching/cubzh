@@ -8,9 +8,9 @@ local common = {}
 local MAP_SCALE_DEFAULT = 5
 local SERIALIZE_VERSION = 3
 
-local COLLISION_GROUP_OBJECT = CollisionGroups(3)
 local COLLISION_GROUP_MAP = CollisionGroups(1)
 local COLLISION_GROUP_PLAYER = CollisionGroups(2)
+local COLLISION_GROUP_OBJECT = CollisionGroups(3)
 
 -- Chunk identifiers for serialization
 local SERIALIZED_CHUNKS_ID = {
@@ -390,6 +390,18 @@ local writeChunkObjects = function(d, objects)
 				nbFields = nbFields + 1
 			end
 
+			if object.CollisionGroups ~= nil then
+				d:WriteString("cg")
+				d:WriteCollisionGroups(object.CollisionGroups)
+				nbFields = nbFields + 1
+			end
+
+			if object.CollidesWithGroups ~= nil then
+				d:WriteString("cw")
+				d:WriteCollisionGroups(object.CollidesWithGroups)
+				nbFields = nbFields + 1
+			end
+
 			-- Update nbFields value
 			d.Cursor = cursorNbFields
 			d:WriteUInt8(nbFields)
@@ -441,6 +453,10 @@ local readChunkObjects = function(d)
 					instance.uuid = d:ReadString(idLength)
 				elseif key == "pm" then
 					instance.Physics = d:ReadPhysicsMode()
+				elseif key == "cg" then
+					instance.CollisionGroups = d:ReadCollisionGroups()
+				elseif key == "cw" then
+					instance.CollidesWithGroups = d:ReadCollisionGroups()
 				else
 					error("Wrong format while deserializing", 2)
 					return false
@@ -626,8 +642,17 @@ local loadObject = function(obj, objInfo)
 	obj.Rotation = objInfo.Rotation or Rotation(0, 0, 0)
 	obj.Scale = objInfo.Scale or 0.5
 	obj.uuid = objInfo.uuid
-	obj.CollisionGroups = COLLISION_GROUP_OBJECT
-	obj.CollidesWithGroups = COLLISION_GROUP_MAP + COLLISION_GROUP_PLAYER
+	if objInfo.CollisionGroups ~= nil then
+		obj.CollisionGroups = objInfo.CollisionGroups
+	else
+		obj.CollisionGroups = COLLISION_GROUP_OBJECT
+	end
+	if objInfo.CollidesWithGroups ~= nil then
+		obj.CollidesWithGroups = objInfo.CollidesWithGroups
+	else
+		obj.CollidesWithGroups = COLLISION_GROUP_MAP + COLLISION_GROUP_PLAYER
+	end
+
 	obj.Name = objInfo.Name or objInfo.fullname
 	obj.fullname = objInfo.fullname
 
@@ -650,8 +675,8 @@ local loadMap = function(d, n, didLoad)
 
 		map.Scale = n or 5
 		map:Recurse(function(o)
-			o.CollisionGroups = Map.CollisionGroups
-			o.CollidesWithGroups = Map.CollidesWithGroups
+			o.CollisionGroups = COLLISION_GROUP_MAP
+			o.CollidesWithGroups = COLLISION_GROUP_OBJECT + COLLISION_GROUP_PLAYER
 			o.Physics = PhysicsMode.StaticPerBlock
 		end, { includeRoot = true })
 		map:SetParent(World)
@@ -830,6 +855,8 @@ common.loadWorld = function(config)
 			Rotation = Rotation(0, 0, 0),
 			Scale = Number3(scale, scale, scale),
 			Physics = PhysicsMode.StaticPerBlock,
+			CollisionGroups = COLLISION_GROUP_MAP,
+			CollidesWithGroups = COLLISION_GROUP_OBJECT + COLLISION_GROUP_PLAYER
 		}
 		world.objects = world.objects or {}
 		table.insert(world.objects, basePlate)
