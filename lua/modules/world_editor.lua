@@ -4,12 +4,16 @@ local sfx = require("sfx")
 local ease = require("ease")
 local ui = require("uikit")
 local ambience = require("ambience")
-local worldEditorCommon = require("world_editor_common")
+local world = require("world")
 local ccc = require("ccc")
 
--- constants
+-- Constants
 local NEW_OBJECT_MAX_DISTANCE = 50
 local THIRD_PERSON_CAMERA_DISTANCE = 40
+local TRAIL_COLOR = Color.White
+local COLLISION_GROUP_OBJECT = CollisionGroups(3)
+local COLLISION_GROUP_MAP = CollisionGroups(1)
+local COLLISION_GROUP_PLAYER = CollisionGroups(2)
 
 local defaultAmbienceGeneration = { 
 	sky = { 
@@ -36,121 +40,15 @@ local defaultAmbienceGeneration = {
 	}
 }
 
-function requireSkybox()
-	local skybox = {}
-	skybox.load = function(config, func)
-		local defaultConfig = {
-			scale = 1000,
-			url = "https://e7.pngegg.com/pngimages/57/621/png-clipart-skybox-texture-mapping-panorama-others-texture-atmosphere.png",
-		}
+-- Import events and constants from world module
+local events = world.events
 
-		local url = config.url or defaultConfig.url
-		local scale = config.scale or defaultConfig.scale
-		if func == nil then
-			func = function(obj)
-				obj:SetParent(Camera)
-				obj.Tick = function(self)
-					self.Rotation = Rotation(0, 0, 0)
-					self.Position = Camera.Position - Number3(self.Scale.X, self.Scale.Y, -self.Scale.Z) / 2
-				end
-			end
-		end
-
-		HTTP:Get(url, function(data)
-			if data.StatusCode ~= 200 then
-				error("Error: " .. data.StatusCode)
-			end
-
-			local image = data.Body
-			local object = Object()
-
-			object.Scale = scale
-
-			local back = Quad()
-			back.Image = image
-			back.Size = Number2(1, 1)
-			back.Tiling = Number2(0.25, 0.3335)
-			back.Offset = Number2(0, 0.3335)
-			back:SetParent(object)
-			back.IsUnlit = true
-
-			local left = Quad()
-			left.Image = image
-			left.Size = Number2(1, 1)
-			left.Tiling = Number2(0.25, 0.3335)
-			left.Offset = Number2(0.25, 0.3335)
-			left.Position = back.Position + Number3(1, 0, 0)
-			left.Rotation.Y = math.pi / 2
-			left:SetParent(object)
-			left.IsUnlit = true
-
-			local front = Quad()
-			front.Image = image
-			front.Size = Number2(1, 1)
-			front.Tiling = Number2(0.25, 0.3335)
-			front.Offset = Number2(0.5, 0.3335)
-			front.Position = back.Position + Number3(1, 0, -1)
-			front.Rotation.Y = math.pi
-			front:SetParent(object)
-			front.IsUnlit = true
-
-			local right = Quad()
-			right.Image = image
-			right.Size = Number2(1, 1)
-			right.Tiling = Number2(0.25, 0.3335)
-			right.Offset = Number2(0.75, 0.3335)
-			right.Position = back.Position + Number3(0, 0, -1)
-			right.Rotation.Y = -math.pi / 2
-			right:SetParent(object)
-			right.IsUnlit = true
-
-			local down = Quad()
-			down.Image = image
-			down.Size = Number2(1, 1 * 1.001)
-			down.Tiling = Number2(0.25, 0.3335)
-			down.Offset = Number2(0.25, 0.6668)
-			down.Position = back.Position + Number3(-1 * 0.001, 1 * 0.002, 0)
-			down.Rotation = Rotation(math.pi / 2, math.pi / 2, 0)
-			down:SetParent(object)
-			down.IsUnlit = true
-
-			local up = Quad()
-			up.Image = image
-			up.Size = Number2(1, 1)
-			up.Tiling = Number2(0.25, 0.3335)
-			up.Offset = Number2(0.25, 0)
-			up.Position = back.Position + Number3(1, 1, 0)
-			up.Rotation = Rotation(-math.pi / 2, math.pi / 2, 0)
-			up:SetParent(object)
-			up.IsUnlit = true
-
-			object:SetParent(Camera)
-			object.Tick = function(self)
-				self.Rotation:Set(0, 0, 0)
-				self.Position = Camera.Position - Number3(self.Scale.X, self.Scale.Y, -self.Scale.Z) / 2
-			end
-
-			func(object)
-		end)
-	end
-	return skybox
-end
-
-local skybox = requireSkybox()
-
--- Import common events and constants from common module
-local events = worldEditorCommon.events
-
-local uuidv4 = worldEditorCommon.uuidv4
-
-local loadWorld = worldEditorCommon.loadWorld
-local maps = worldEditorCommon.maps
+local loadWorld = world.loadWorld
+local maps = world.maps
 
 local theme = require("uitheme").current
 local padding = theme.padding
 
-local objects = {}
-local objectsByUUID = {}
 local map
 local mapIndex = 1
 local mapName
@@ -172,21 +70,19 @@ local transformGizmo
 local objectInfoFrame
 local physicsBtn
 local addObjectBtn
+local gallery
+local newObjectCancelBtn
+local newObjectBeingPlaced
+local objectNameInput
 
 local trail
-
-local TRAIL_COLOR = Color.White
-
-local COLLISION_GROUP_OBJECT = CollisionGroups(3)
-local COLLISION_GROUP_MAP = CollisionGroups(1)
-local COLLISION_GROUP_PLAYER = CollisionGroups(2)
 
 local function hideAllPanels()
 	if ambiencePanel ~= nil then
 		ambiencePanel:hide()
 	end
-	if worldEditor.gallery ~= nil then
-		worldEditor.gallery:hide()
+	if gallery ~= nil then
+		gallery:hide()
 	end
 	ambienceBtn:show()
 	cameraBtn:show()
@@ -222,16 +118,38 @@ local function setCameraMode(mode)
 	end
 end
 
-local function getObjectInfoTable(obj)
-	return {
-		uuid = obj.uuid,
-		fullname = obj.fullname,
-		Position = obj.Position or Number3.Zero,
-		Rotation = obj.Rotation or Number3.Zero,
-		Scale = obj.Scale or Number3.One,
-		Name = obj.Name or obj.fullname,
-		Physics = obj.realPhysicsMode or PhysicsMode.StaticPerBlock,
+local function copyObjectInfo(obj)
+	if obj.uuid == nil then
+		print("error: trying to get object info without uuid")
+		return nil
+	end
+	
+	local objectInfo = world.getObjectInfo(obj.uuid)
+	if objectInfo == nil then
+		print("error: can't get object info")
+		return nil
+	end
+
+	local newObjectInfo = {
+		uuid = nil, -- will be assigned later
+		fullname = objectInfo.fullname,
+		Name = objectInfo.Name,
+		Physics = objectInfo.Physics,
+		CollisionGroups = objectInfo.CollisionGroups,
+		CollidesWithGroups = objectInfo.CollidesWithGroups,
 	}
+
+	if objectInfo.Position then
+		newObjectInfo.Position = objectInfo.Position:Copy()
+	end
+	if objectInfo.Rotation then
+		newObjectInfo.Rotation = objectInfo.Rotation:Copy()
+	end
+	if objectInfo.Scale then
+		newObjectInfo.Scale = objectInfo.Scale:Copy()
+	end
+	
+	return newObjectInfo
 end
 
 -- STATE
@@ -272,9 +190,9 @@ local function setObjectPhysicsMode(obj, physicsMode)
 		end
 	end, { includeRoot = true })
 
-	worldEditorCommon.updateObject({
+	world.updateObject({
 		uuid = obj.uuid,
-		physics = physicsMode,
+		Physics = physicsMode,
 	})
 end
 
@@ -324,26 +242,6 @@ function tryPickObjectUp(pe)
 	setState(states.OBJECT_SELECTED, obj)
 end
 
-local setObjectAlpha = function(obj, alpha)
-	obj:Recurse(function(o)
-		if not o.Palette then
-			return
-		end
-		if not o.savedAlpha then
-			o.savedAlpha = {}
-			for k = 1, #o.Palette do
-				local c = o.Palette[k]
-				o.savedAlpha[k] = c.Color.Alpha / 255
-			end
-		end
-		for k = 1, #o.Palette do
-			local c = o.Palette[k]
-			c.Color.Alpha = o.savedAlpha[k] * alpha
-		end
-		o:RefreshModel()
-	end, { includeRoot = true })
-end
-
 local freezeObject = function(obj)
 	if not obj then
 		return
@@ -370,11 +268,11 @@ local unfreezeObject = function(obj)
 	end, { includeRoot = true })
 end
 
-local spawnObject = function(data, onDone)
-	if data.obj then -- Loaded with loadWorld, already created, no need to place it
-		local obj = data.obj
+local spawnObject = function(objectInfo, onDone)
+	if objectInfo.obj then -- Loaded with loadWorld, already created, no need to place it
+		local obj = objectInfo.obj
 		obj.isEditable = true
-		local physicsMode = data.Physics or PhysicsMode.StaticPerBlock
+		local physicsMode = objectInfo.Physics or PhysicsMode.StaticPerBlock
 		setObjectPhysicsMode(obj, physicsMode)
 		obj:Recurse(function(o)
 			if typeof(o) == "Object" then
@@ -384,28 +282,17 @@ local spawnObject = function(data, onDone)
 			o.CollidesWithGroups = COLLISION_GROUP_MAP + COLLISION_GROUP_PLAYER + COLLISION_GROUP_OBJECT
 			o:ResetCollisionBox()
 		end, { includeRoot = true })
-		if obj.uuid ~= -1 then
-			objects[obj.uuid] = obj
-		end
 		if onDone then
 			onDone(obj)
 		end
 		return
 	end
-	local fullname = data.fullname
+	local fullname = objectInfo.fullname
 	Object:Load(fullname, function(obj)
-		if not obj then
-			print("Can't load", fullname)
+		if obj == nil then
+			print("couldn't load", fullname)
 			return
 		end
-
-		local uuid = uuidv4()
-		local fullname = data.fullname
-		local name = data.Name
-		local position = data.Position or Number3(0, 0, 0)
-		local rotation = data.Rotation or Rotation(0, 0, 0)
-		local scale = data.Scale or 0.5
-		local physicsMode = data.Physics or PhysicsMode.StaticPerBlock
 
 		obj:SetParent(World)
 
@@ -414,12 +301,11 @@ local spawnObject = function(data, onDone)
 		box:Fit(obj, true)
 		obj.Pivot = Number3(obj.Width / 2, box.Min.Y + obj.Pivot.Y, obj.Depth / 2)
 
-		setObjectPhysicsMode(obj, physicsMode)
+		setObjectPhysicsMode(obj, objectInfo.Physics or PhysicsMode.StaticPerBlock)
 
-		obj.uuid = uuid
-		obj.Position = position
-		obj.Rotation = rotation
-		obj.Scale = scale
+		obj.Position = objectInfo.Position or Number3(0, 0, 0)
+		obj.Rotation = objectInfo.Rotation or Rotation(0, 0, 0)
+		obj.Scale = objectInfo.Scale or 0.5
 
 		obj:Recurse(function(o)
 			if typeof(o) == "Object" then
@@ -431,11 +317,10 @@ local spawnObject = function(data, onDone)
 		end, { includeRoot = true })
 
 		obj.isEditable = true
-		obj.fullname = fullname
-		obj.Name = name or fullname
+		obj.fullname = objectInfo.fullname
+		obj.Name = objectInfo.Name or obj.fullname
 
-		objects[obj.uuid] = obj
-		worldEditorCommon.addObject(obj)
+		world.addObject(obj) -- attributes a uuid to the object
 
 		if onDone then
 			onDone(obj)
@@ -444,23 +329,18 @@ local spawnObject = function(data, onDone)
 end
 
 local editObject = function(objInfo)
-	local obj = objects[objInfo.uuid]
+	local obj = world.getObject(objInfo.uuid)
 	if not obj then
-		print("Error: can't edit object")
+		error("can't edit object")
 		return
 	end
 
-	for field, value in pairs(objInfo) do
+	for field, value in objInfo do
 		obj[field] = value
 	end
 
 	if objInfo.Physics then
 		setObjectPhysicsMode(obj, objInfo.Physics)
-	end
-
-	local alpha = objInfo.alpha
-	if alpha ~= nil then
-		setObjectAlpha(obj, alpha)
 	end
 end
 
@@ -474,22 +354,21 @@ local putObjectAtImpact = function(obj, origin, direction, distance)
 end
 
 local dropNewObject = function()
-	local placingObj = worldEditor.placingObj
-	worldEditor.placingObj = nil
-	unfreezeObject(placingObj)
-
-	if not objects[placingObj.uuid] then
-		objects[placingObj.uuid] = placingObj
-	else
-		worldEditorCommon.updateObject({
-			uuid = placingObj.uuid,
-			position = placingObj.Position,
-			rotation = placingObj.Rotation,
-		})
+	if newObjectBeingPlaced == nil then
+		return
 	end
-	setState(states.OBJECT_SELECTED, placingObj)
-end
+	local obj = newObjectBeingPlaced
+	newObjectBeingPlaced = nil
+	unfreezeObject(obj)
 
+	world.updateObject({
+		uuid = obj.uuid,
+		Position = obj.Position,
+		Rotation = obj.Rotation,
+	})
+	
+	setState(states.OBJECT_SELECTED, obj)
+end
 
 -- States
 
@@ -532,8 +411,8 @@ local statesSettings = {
 			addObjectBtn:hide()
 			ambienceBtn:hide()
 			cameraBtn:hide()
-			worldEditor.gallery:show()
-			worldEditor.gallery:bounce()
+			gallery:show()
+			gallery:bounce()
 			require("controls"):turnOff()
 			Player.Motion = { 0, 0, 0 }
 		end,
@@ -542,20 +421,19 @@ local statesSettings = {
 		end,
 	},
 	[states.SPAWNING_OBJECT] = {
-		onStateBegin = function(data)
-			worldEditor.rotationShift = data.rotationShift or 0
-			spawnObject(data, function(obj)
+		onStateBegin = function(objectInfo) -- objectInfo only contains `fullname` here
+			spawnObject(objectInfo, function(obj)
 				setState(states.PLACING_OBJECT, obj)
 			end)
 		end,
 	},
 	[states.PLACING_OBJECT] = { -- NOTE(aduermael): maybe we can remove this state
 		onStateBegin = function(obj)
-			worldEditor.placingCancelBtn:show()
-			worldEditor.placingObj = obj
+			newObjectCancelBtn:show()
+			newObjectBeingPlaced = obj
 			freezeObject(obj)
-			if worldEditor.rotationShift == nil then
-				worldEditor.rotationShift = 0
+			if rotationShift == nil then
+				rotationShift = 0
 			end
 			
 			-- When in first person, or mobile, we can  use pointer move event to place the object.
@@ -563,18 +441,20 @@ local statesSettings = {
 			if cameraMode == CameraMode.FREE or Client.IsMobile then
 				local impact = Camera:CastRay(COLLISION_GROUP_MAP + COLLISION_GROUP_OBJECT, obj)
 				putObjectAtImpact(obj, Camera.Position, Camera.Forward, impact.Distance)
-				obj.Rotation.Y = worldEditor.rotationShift
+				obj.Rotation.Y = rotationShift
 				dropNewObject() -- ends state
 			end
 		end,
 		onStateEnd = function()
-			worldEditor.placingCancelBtn:hide()
+			newObjectCancelBtn:hide()
 		end,
 		pointerMove = function(pe)
-			local placingObj = worldEditor.placingObj
-			local impact = pe:CastRay(COLLISION_GROUP_MAP + COLLISION_GROUP_OBJECT, placingObj)
-			putObjectAtImpact(placingObj, pe.Position, pe.Direction, impact.Distance)
-			placingObj.Rotation.Y = worldEditor.rotationShift
+			if newObjectBeingPlaced == nil then
+				return
+			end
+			local impact = pe:CastRay(COLLISION_GROUP_MAP + COLLISION_GROUP_OBJECT, newObjectBeingPlaced)
+			putObjectAtImpact(newObjectBeingPlaced, pe.Position, pe.Direction, impact.Distance)
+			newObjectBeingPlaced.Rotation.Y = rotationShift
 		end,
 		pointerUp = function(pe)
 			if pe.Index ~= 4 then
@@ -583,8 +463,8 @@ local statesSettings = {
 			dropNewObject()
 		end,
 		pointerWheelPriority = function(delta)
-			worldEditor.rotationShift = worldEditor.rotationShift + math.pi * 0.0625 * (delta > 0 and 1 or -1)
-			worldEditor.placingObj.Rotation.Y = worldEditor.rotationShift
+			worldEditor.rotationShift = rotationShift + math.pi * 0.0625 * (delta > 0 and 1 or -1)
+			newObjectBeingPlaced.Rotation.Y = rotationShift
 			return true
 		end,
 	},
@@ -592,12 +472,12 @@ local statesSettings = {
 		onStateBegin = function(obj)
 			selectedObject = obj
 			require("box_gizmo"):toggle(obj, Color.White)
-			worldEditor.nameInput.Text = obj.Name
-			worldEditor.nameInput.onTextChange = function(o)
+			objectNameInput.Text = obj.Name
+			objectNameInput.onTextChange = function(o)
 				selectedObject.Name = o.Text
-				worldEditorCommon.updateObject({
+				world.updateObject({
 					uuid = obj.uuid,
-					name = o.Text,
+					Name = o.Text,
 				})
 			end
 			objectInfoFrame:bump()
@@ -627,13 +507,13 @@ local statesSettings = {
 				target = selectedObject,
 				onChange = function(target) end,
 				onDone = function(target)
-					worldEditorCommon.updateObject({
+					world.updateObject({
 						uuid = target.uuid,
-						position = target.Position,
-						rotation = target.Rotation,
-						scale = target.Scale,
+						Position = target.Position,
+						Rotation = target.Rotation,
+						Scale = target.Scale,
 					})
-					worldEditorCommon.updateShadow(target)
+					world.updateShadow(target)
 				end,
 			})
 		end,
@@ -645,8 +525,8 @@ local statesSettings = {
 			tryPickObjectUp(pe)
 		end,
 		onStateEnd = function()
-			worldEditor.nameInput.onTextChange = nil
-			worldEditor.nameInput.Text = ""
+			objectNameInput.onTextChange = nil
+			objectNameInput.Text = ""
 
 			if transformGizmo then
 				transformGizmo:remove()
@@ -670,26 +550,24 @@ local statesSettings = {
 		pointerWheelPriority = function(delta)
 			selectedObject:RotateWorld(Number3(0, 1, 0), math.pi * 0.0625 * (delta > 0 and 1 or -1))
 			selectedObject.Rotation = selectedObject.Rotation -- trigger OnSetCallback
-			worldEditorCommon.updateObject({
+			world.updateObject({
 				uuid = selectedObject.uuid,
-				rotation = target.Rotation,
+				Rotation = target.Rotation,
 			})
 			return true
 		end,
 	},
 	[states.DUPLICATE_OBJECT] = {
 		onStateBegin = function(uuid)
-			local obj = objects[uuid]
+			local obj = world.getObject(uuid)
 			if not obj then
-				print("Error: can't duplicate this object")
+				print("error: can't duplicate this object")
 				setState(states.DEFAULT)
 				return
 			end
-			local data = getObjectInfoTable(obj)
-			data.uuid = uuidv4()
-			data.rotationShift = worldEditor.rotationShift or 0
+			local objectInfo = copyObjectInfo(obj)
 			local previousObj = obj
-			spawnObject(data, function(obj)
+			spawnObject(objectInfo, function(obj)
 				obj.Position = previousObj.Position + Number3(5, 0, 5)
 				obj.Rotation = previousObj.Rotation
 				setState(states.OBJECT_SELECTED, obj)
@@ -702,18 +580,18 @@ local statesSettings = {
 	[states.DESTROY_OBJECT] = {
 		onStateBegin = function(uuid)
 			objectInfoFrame:hide()
-			local obj = objects[uuid]
+			local obj = world.getObject(uuid)
 			if not obj then
-				print("Error: can't remove this object")
+				print("error: can't remove this object (uuid: " .. uuid .. ")")
 				setState(states.DEFAULT)
 				return
 			end
 			obj:RemoveFromParent()
-			objects[uuid] = nil
-			worldEditorCommon.removeObject(uuid)
+			world.removeObject(uuid)
 			setState(states.DEFAULT)
 		end,
 		onStateEnd = function()
+			print("destroy object onStateEnd")
 			saveWorld()
 		end,
 	},
@@ -746,14 +624,12 @@ local listeners = {
 	PointerDragEnd = "pointerDragEnd",
 	PointerUp = "pointerUp",
 	PointerWheel = "pointerWheel",
-	PointerLongPress = "pointerLongPress",
+	PointerLongPress = "pointerLongPress"
 }
 
 local function handleLocalEventListener(listenerName, pe)
 	local stateSettings = statesSettings[state]
-	local callback
-
-	callback = stateSettings[listenerName]
+	local callback = stateSettings[listenerName]
 	if callback then
 		if callback(pe) then
 			return true
@@ -761,11 +637,14 @@ local function handleLocalEventListener(listenerName, pe)
 	end
 end
 
-for localEventName, listenerName in pairs(listeners) do
-	LocalEvent:Listen(LocalEvent.Name[localEventName], function(pe)
+for eventName, listenerName in pairs(listeners) do
+	local event = LocalEvent.Name[eventName]
+	-- Priority listener
+	LocalEvent:Listen(event, function(pe)
 		return handleLocalEventListener(listenerName .. "Priority", pe)
 	end, { topPriority = true })
-	LocalEvent:Listen(LocalEvent.Name[localEventName], function(pe)
+	-- Normal listener
+	LocalEvent:Listen(event, function(pe)
 		return handleLocalEventListener(listenerName, pe)
 	end, { topPriority = false })
 end
@@ -778,18 +657,18 @@ function loadEditedWorld()
 			return
 		end
 
-		loadWorld({
+		world.load({
 			b64 = data.mapBase64,
 			title = data.title,
 			worldID = worldID,
 			addBasePlateIfNeeded = true,
 			onDone = function(info)
 				local ambienceAdded = false
-				local ambience = worldEditorCommon.getAmbience()
+				local ambience = world.getAmbience()
 				if ambience == nil then
 					ambienceAdded = true
 					local a = require("ai_ambience"):loadGeneration(defaultAmbienceGeneration)
-					worldEditorCommon.updateAmbience(a)
+					world.updateAmbience(a)
 				end
 				setState(states.DEFAULT)
 				startDefaultMode()
@@ -797,16 +676,16 @@ function loadEditedWorld()
 					saveWorld()
 				end
 			end,
-			onLoad = function(obj, data)
-				if data == "Map" then
+			onLoad = function(obj, objectInfo)
+				if objectInfo == "Map" then
 					if map then
 						map:RemoveFromParent()
 					end
 					map = obj
 					return
 				end
-				data.obj = obj
-				spawnObject(data)
+				objectInfo.obj = obj
+				spawnObject(objectInfo)
 			end,
 		})
 	end)
@@ -871,7 +750,7 @@ function uiShowDefaultMenu()
 	end
 	local initGallery
 	initGallery = function()
-		worldEditor.gallery = require("gallery"):create(function() -- maxWidth
+		gallery = require("gallery"):create(function() -- maxWidth
 			return Screen.Width - Screen.SafeArea.Right - Screen.SafeArea.Left - theme.padding * 2
 		end, function() -- maxHeight
 			return Menu.Position.Y - Screen.SafeArea.Bottom - theme.padding * 2
@@ -884,35 +763,33 @@ function uiShowDefaultMenu()
 				- m.Height * 0.5,
 			}
 		end, { onOpen = galleryOnOpen, type = "items" })
-		worldEditor.gallery.didClose = function()
+		gallery.didClose = function()
 			setState(states.DEFAULT)
 			initGallery()
 		end
-		worldEditor.gallery:hide()
+		gallery:hide()
 	end
 	initGallery()
 
 	-- Placing
-	local placingCancelBtn = ui:createButton("❌")
-	placingCancelBtn.onRelease = function()
+	newObjectCancelBtn = ui:createButton("❌")
+	newObjectCancelBtn.onRelease = function()
 		setState(states.DEFAULT)
-		worldEditor.placingObj:RemoveFromParent()
-		worldEditor.placingObj = nil
+		newObjectBeingPlaced:RemoveFromParent()
+		newObjectBeingPlaced = nil
 	end
-	placingCancelBtn.parentDidResize = function()
-		placingCancelBtn.pos = { Screen.Width * 0.5 - placingCancelBtn.Width * 0.5, placingCancelBtn.Height * 2 }
+	newObjectCancelBtn.parentDidResize = function()
+		newObjectCancelBtn.pos = { Screen.Width * 0.5 - newObjectCancelBtn.Width * 0.5, newObjectCancelBtn.Height * 2 }
 	end
-	placingCancelBtn:parentDidResize()
-	placingCancelBtn:hide()
-	worldEditor.placingCancelBtn = placingCancelBtn
+	newObjectCancelBtn:parentDidResize()
+	newObjectCancelBtn:hide()
 
 	-- OBJECT INFO FRAME
 
 	objectInfoFrame = ui:frameGenericContainer()
 
-	local nameInput = ui:createTextInput("", "Item Name", { textSize = "small" })
-	worldEditor.nameInput = nameInput
-	nameInput:setParent(objectInfoFrame)
+	objectNameInput = ui:createTextInput("", "Item Name", { textSize = "small" })
+	objectNameInput:setParent(objectInfoFrame)
 
 	physicsBtn = ui:buttonSecondary({ content = "", textSize = "small" })
 	physicsBtn.physicsMode = PhysicsMode.Static
@@ -970,13 +847,13 @@ function uiShowDefaultMenu()
 		self.Width = math.min(200, Screen.Width - Menu.Width - Screen.SafeArea.Right - Screen.SafeArea.Left - padding * 3)
 
 		local width = self.Width - padding * 2
-		nameInput.Width = width
+		objectNameInput.Width = width
 		physicsBtn.Width = width
 		duplicateBtn.Width = width
 		deleteBtn.Width = width
 		validateBtn.Width = width
 
-		self.Height = nameInput.Height + padding
+		self.Height = objectNameInput.Height + padding
 		+ physicsBtn.Height + padding
 		+ duplicateBtn.Height + padding
 		+ deleteBtn.Height + padding
@@ -985,8 +862,8 @@ function uiShowDefaultMenu()
 
 		local y = self.Height
 
-		y -= nameInput.Height + padding
-		nameInput.pos = { padding, y }
+		y -= objectNameInput.Height + padding
+		objectNameInput.pos = { padding, y }
 
 		y -= physicsBtn.Height + padding
 		physicsBtn.pos = { padding, y }
@@ -1051,26 +928,6 @@ function uiShowDefaultMenu()
 		local aiBtn = ui:buttonNeutral({ content = "✨", textSize = "small", padding = padding })
 		aiBtn:setParent(ambiencePanel)
 
-		local skyboxLabel = ui:createText("Include skybox:", Color(150, 150, 150), "small")
-		skyboxLabel:setParent(ambiencePanel)
-
-		local includeSkybox = true
-		local skyboxBtn = ui:buttonSecondary({
-			textFont = Font.Pixel,
-			content = "✅",
-			textSize = "default",
-			padding = 2,
-		})
-		skyboxBtn.onRelease = function(self)
-			includeSkybox = not includeSkybox
-			if includeSkybox then
-				self.Text = "✅"
-			else
-				self.Text = "  "
-			end
-		end
-		skyboxBtn:setParent(ambiencePanel)
-
 		local loading = require("ui_loading_animation"):create({ ui = ui })
 		loading:setParent(ambiencePanel)
 		loading:hide()
@@ -1097,10 +954,10 @@ function uiShowDefaultMenu()
 			button = sliderButton,
 			onValueChange = function(v)
 				sunRotationYLabel.Text = "" .. v
-				local ambience = worldEditorCommon.getAmbience()
+				local ambience = world.getAmbience()
 				if ambience.sun.rotation then
 					ambience.sun.rotation.Y = math.rad(v)
-					worldEditorCommon.updateAmbience(ambience)
+					world.updateAmbience(ambience)
 					require("ai_ambience"):loadGeneration(ambience)
 				end
 			end,
@@ -1122,10 +979,10 @@ function uiShowDefaultMenu()
 			button = sliderButton,
 			onValueChange = function(v)
 				sunRotationXLabel.Text = "" .. v
-				local ambience = worldEditorCommon.getAmbience()
+				local ambience = world.getAmbience()
 				if ambience.sun.rotation then
 					ambience.sun.rotation.X = math.rad(v)
-					worldEditorCommon.updateAmbience(ambience)
+					world.updateAmbience(ambience)
 					require("ai_ambience"):loadGeneration(ambience)
 				end
 			end,
@@ -1231,53 +1088,13 @@ function uiShowDefaultMenu()
 
 					sfx("metal_clanging_2", { Spatialized = false, Volume = 0.6 })
 					loadedAmbiance = require("ai_ambience"):loadGeneration(generation)
-					worldEditorCommon.updateAmbience(loadedAmbiance)
+					world.updateAmbience(loadedAmbiance)
 					sunRotationSlider:setValue(math.floor(math.deg(loadedAmbiance.sun.rotation.Y)))
 					sunRotationXSlider:setValue(math.floor(math.deg(loadedAmbiance.sun.rotation.X)))
 					aiInput:show()
 					aiBtn:show()
 					loading:hide()
 					saveWorld()
-
-					-- prompt = "SYSTEM: Generate a skybox in pixel art style. Do NOT include ground details, just empty sky volume, include skyline details only if specified.\n\nPROMPT: "
-					-- 	.. prompt
-
-					-- local body = {}
-					-- body.prompt = prompt
-
-					-- local headers = {}
-					-- headers["Content-Type"] = "application/json"
-
-					-- -- do not send request when skybox is not requested
-					-- HTTP:Post("http://localhost", headers, body, function(res)
-					-- 	if res.StatusCode == 200 then
-					-- 		loadedAmbiance = require("ai_ambience"):loadGeneration(generation)
-
-					-- 		local body = JSON:Decode(res.Body:ToString())
-					-- 		if body.url ~= nil then
-					-- 			local textureURL = "http://localhost" .. body.url
-					-- 			skybox.load({ url = textureURL }, function(obj)
-					-- 				sfx("metal_clanging_2", { Spatialized = false, Volume = 0.6 })
-					-- 				worldEditorCommon.updateAmbience(loadedAmbiance)
-					-- 				sunRotationSlider:setValue(math.floor(math.deg(loadedAmbiance.sun.rotation.Y)))
-					-- 				sunRotationXSlider:setValue(math.floor(math.deg(loadedAmbiance.sun.rotation.X)))
-					-- 				aiInput:show()
-					-- 				aiBtn:show()
-					-- 				loading:hide()
-					-- 				saveWorld()
-					-- 			end)
-					-- 		else
-					-- 			sfx("metal_clanging_2", { Spatialized = false, Volume = 0.6 })
-					-- 			worldEditorCommon.updateAmbience(loadedAmbiance)
-					-- 			sunRotationSlider:setValue(math.floor(math.deg(loadedAmbiance.sun.rotation.Y)))
-					-- 			sunRotationXSlider:setValue(math.floor(math.deg(loadedAmbiance.sun.rotation.X)))
-					-- 			aiInput:show()
-					-- 			aiBtn:show()
-					-- 			loading:hide()
-					-- 			saveWorld()
-					-- 		end
-					-- 	end
-					-- end)
 				end,
 				onError = function(err)
 					print("❌", err)
@@ -1345,16 +1162,6 @@ function uiShowDefaultMenu()
 				aiInput.pos.Y + aiBtn.Height * 0.5 - loading.Height * 0.5,
 			}
 
-			skyboxBtn.pos = {
-				aiBtn.pos.X + aiBtn.Width - skyboxBtn.Width,
-				aiInput.pos.Y - skyboxBtn.Height - padding,
-			}
-
-			skyboxLabel.pos = {
-				skyboxBtn.pos.X - skyboxLabel.Width - padding,
-				skyboxBtn.pos.Y + skyboxBtn.Height * 0.5 - skyboxLabel.Height * 0.5,
-			}
-
 			btnClose.pos = {
 				self.Width * 0.5 - btnClose.Width * 0.5,
 				padding,
@@ -1362,7 +1169,7 @@ function uiShowDefaultMenu()
 
 			scroll.pos.Y = btnClose.pos.Y + btnClose.Height + padding
 			scroll.pos.X = padding
-			scroll.Height = aiInput.pos.Y - skyboxBtn.Height - padding * 2 - scroll.pos.Y
+			scroll.Height = aiInput.pos.Y - padding - scroll.pos.Y
 			scroll.Width = self.Width - padding * 2
 		end
 
@@ -1411,7 +1218,7 @@ function saveWorld()
 		autoSaveTimer:Cancel()
 	end
 	if state >= states.DEFAULT then
-		worldEditorCommon.saveWorld()
+		world.save()
 	end
 	autoSaveTimer = Timer(30, saveWorld)
 end

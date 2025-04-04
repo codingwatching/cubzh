@@ -22,8 +22,8 @@ local onLoad = function(obj, data)
     -- here SetParent/use data to set position/rotation etc.
     print(obj, data.fullname, data.pos[3])
 end
-local onDone = function(list)
-    print(string.format("Successfully loaded %d items", #list))
+local onDone = function()
+    print("Successfully loaded all Objects")
 end
 local config = {
     onLoad = onLoad, -- called when a shape is loaded, first parameter is the object, second is the element of the list
@@ -43,7 +43,8 @@ massLoading.getObject = function(_, name)
 	return cachedObjects[name]
 end
 
-massLoading.load = function(_, list, config)
+-- collection can be an array or map
+massLoading.load = function(_, collection, config)
 	local defaultConfig = {
 		onLoad = nil,
 		onDone = nil,
@@ -57,8 +58,16 @@ massLoading.load = function(_, list, config)
 		return
 	end
 
-	if #list == 0 then
-		config.onDone(list)
+	local nbElements = 0
+	local list = {}
+
+	for _, entry in collection do
+		table.insert(list, entry)
+		nbElements += 1
+	end
+
+	if nbElements == 0 then
+		config.onDone()
 		return
 	end
 
@@ -66,7 +75,7 @@ massLoading.load = function(_, list, config)
 	local function loadedNextObject()
 		nbObjectsLoaded = nbObjectsLoaded + 1
 		if nbObjectsLoaded >= #list then
-			config.onDone(list)
+			config.onDone()
 		end
 	end
 
@@ -75,7 +84,7 @@ massLoading.load = function(_, list, config)
 		loadedNextObject()
 	end
 
-	for _, data in ipairs(list) do
+	for _, data in list do
 		local fullname = data[config.fullnameItemKey]
 
 		-- 1) in cache

@@ -21,7 +21,7 @@ sfx = require("sfx")
 logo = require("logo")
 uiPointer = require("ui_pointer")
 signup = require("signup")
-worldEditorCommon = require("world_editor_common")
+world = require("world")
 
 -- CONSTANTS
 
@@ -1714,7 +1714,7 @@ if DEV_MODE == true then
 					end
 					setAILoading()
 					-- Get scene description JSON
-					local sceneDescriptionJSON = worldEditorCommon.objectsToJSON()
+					local sceneDescriptionJSON = world.objectsToJSON()
 					-- HTTP request body
 					local body = {
 						prompt = self.Text,
