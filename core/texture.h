@@ -19,12 +19,15 @@ typedef enum {
     TextureType_Albedo,
     TextureType_Normal,
     TextureType_Metallic,
-    TextureType_Emissive
+    TextureType_Emissive,
+    TextureType_Cubemap
 } TextureType;
 
 typedef struct _Texture Texture;
 
 Texture* texture_new_raw(const void* data, const uint32_t size, const TextureType type);
+Texture* texture_new_cubemap_faces(const void* top, const void* bottom, const void* front, const void* back, const void* right, const void* left,
+                                   const uint32_t faceSize, const uint32_t width, const uint32_t height, const uint8_t format);
 void texture_free(Texture* t);
 bool texture_retain(Texture* t);
 void texture_release(Texture* t);

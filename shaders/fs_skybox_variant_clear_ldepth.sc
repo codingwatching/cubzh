@@ -2,8 +2,9 @@
  * Skybox fragment shader variant: clear MRT
  */
 
-// No foreground
-#define SKYBOX_VARIANT_CUBEMAPS 0
+// No cubemap
+#define SKYBOX_VARIANT_CUBEMAP 0
+#define SKYBOX_VARIANT_CUBEMAPLERP 0
 
 // Clear multiple render target buffer
 #define SKYBOX_VARIANT_MRT_CLEAR 1

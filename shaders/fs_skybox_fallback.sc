@@ -2,8 +2,9 @@
  * Skybox fragment shader fallback
  */
 
-// No foreground
-#define SKYBOX_VARIANT_CUBEMAPS 0
+// No cubemap
+#define SKYBOX_VARIANT_CUBEMAP 0
+#define SKYBOX_VARIANT_CUBEMAPLERP 0
 
 // No multiple render target
 #define SKYBOX_VARIANT_MRT_CLEAR 0
