@@ -8,7 +8,9 @@ blocks:
 
     - title: "Script Structure"
     - text: |
-        This is the overall structure of a Blip script:
+        Here's an example showing the overall structure of a Blip script.
+        It's important to note that for multiplayer games, the execution of the script is distributed between connected clients and the server.
+        Keeping everything in one place makes it easier to reason about game logic.
     - code: |
         -- A single Blip script is by default executed on the client AND server.
         -- A variable defined at the root level (local or global)
@@ -63,58 +65,77 @@ blocks:
 
     - title: "User Interface"
 
-    - subtitle: "Standard interface components"
+    - subtitle: "How to build a simple User Interface"
+
+    - text: |
+        Here's an example showing how to create a simple user interface with buttons, texts and frame containers. It's generally a really good idea to use a module like `uikit` to build your UI even though it's also technically possible to achieve it with an orthographic [Camera], objects like [Quad]s and [Text]s, and Ray casting.
 
     - code: |
+        Modules = { 
+            uikit = "uikit" -- imports `uikit` module, exposed globally as `uikit`
+        }
 
         Client.OnStart = function()
-            local ui = require("uikit")
+            
+            -- TEXTS
 
-            -- Button
+            local text = uikit:createText("Hello, world!")
+            -- All uikit components are bottom left anchored
+            -- and positioned relative to the bottom left corner of their parent.
+            -- By default, the parent is the screen.
+            text.pos = {10, 10}
 
-            local button = ui:button({
-                content = "Click me!",
-            })
-
-            -- All uikit components have their anchor on their bottom left corner.
-            -- They are positioned relative to the bottom left corner of their parent.
-
-            button.counter = 0
-            button.text = "Click me! (clicked " .. button.counter .. " times)"
-
-            -- We can use the screen size to center the button.
-            button.pos = {(Screen.Size.X - button.Width) * 0.5, (Screen.Size.Y - button.Height) * 0.5}
-
-            -- Add a callback to the button
-            button.onRelease = function()
-                button.counter += 1
-                button.text = "Click me! (clicked " .. button.counter .. " times)"
-                -- we changed the text, we need to update the button position to center it
-                button.pos = {(Screen.Size.X - button.Width) * 0.5, (Screen.Size.Y - button.Height) * 0.5}
-            end
-
-            -- To be responsive, we can use the `parentDidResize` event.
-            -- This event is called when the parent of the button is resized.
-            button.parentDidResize = function(self)
-                self.pos = {(Screen.Size.X - self.Width) * 0.5, (Screen.Size.Y - self.Height) * 0.5}
-            end
-
-            -- Text
-
-            local text1 = ui:createText("Hello, world!")
-            text1.pos = {0, 100}
-
-            local text2 = ui:createText("Custom text :)", {
-                color = Color(0, 0, 255),
-                size = "default", -- options: "small", "default", "big"
-                align = "center", -- options: "left", "center", "right"
+            -- Text components accept some style properties.
+            -- Here's an example with a text to display a score at the top right corner of the screen:
+            
+            local scoreValue = 0
+            local score = uikit:createText(string.format("Score: %d", scoreValue), {
+                color = Color(235, 203, 139),
+                size = "big", -- options: "small", "default" (default), "big"
+                align = "right", -- options: "left" (default), "center", "right"
                 outline = 1.0,
-                outlineColor = Color(128, 128, 255),
+                outlineColor = Color(122, 172, 187),
                 bold = true,
             })
 
-            text2.pos = {0, 50}
-            
+            -- to ensure responsiveness, it's a good practice to position the component within its `parentDidResize` callback:
+            score.parentDidResize = function(self)
+                self.pos = {
+                    -- Screen.SafeArea helps considering device special areas (e.g. notch on iPhone)
+                    -- Screen.SafeArea.Bottom, Top, Left & Right represent positive distances from each edge.
+                    Screen.Width - Screen.SafeArea.Right - self.Width - 10,
+                    Screen.Height - Screen.SafeArea.Top - self.Height - 10
+                }
+            end
+            score:parentDidResize() -- call once manually to set initial position
+
+            -- BUTTONS
+
+            -- here's how to create a button with default style:
+            local button = uikit:button({
+                content = "Increase score!",
+            })
+
+            -- center the button
+            button.parentDidResize = function(self)
+                self.pos = {
+                    Screen.Width * 0.5 - self.Width * 0.5,
+                    Screen.Height * 0.5 - self.Height * 0.5
+                }
+            end
+            button:parentDidResize() -- call once manually to set initial position
+
+            -- Add a callback to the button
+            button.onRelease = function()
+                scoreValue += 1 
+                score.Text = string.format("Score: %d", scoreValue) -- update text component with new score
+                score:parentDidResize() -- update position considering new score text width
+            end
         end
 
+    - title: "Physics and Collisions"
+
+    - title: "Miscellaneous"
+
+    - subtitle: "Plane controls"
 
