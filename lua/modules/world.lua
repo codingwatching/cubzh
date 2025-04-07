@@ -749,7 +749,7 @@ world.updateObject = function(config)
 	end
 	
 	if config.Name ~= nil then
-		objectInfo.Name = objectInfo.name
+		objectInfo.Name = config.Name
 	end
 
 	if config.CollisionGroups ~= nil then
