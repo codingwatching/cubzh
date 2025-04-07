@@ -146,6 +146,165 @@ blocks:
 
     - title: "Physics and Collisions"
 
+    - subtitle: "Simple physics and pointer raycasting"
+
+    - text: |
+        Here's an example of a world showcasing simple physics and pointer raycasting.
+
+    - code: |
+        Modules = {
+            controls = "controls",
+        }
+
+        -- Dev.DisplayColliders = true -- uncomment to display colliders
+
+        local collisionGroupMap = CollisionGroups(1) -- collision group for Objects that are part of the map
+        local collisionGroupPlayers = CollisionGroups(2) -- collision group for Players
+        local collisionGroupObjects = CollisionGroups(3) -- collision group for Objects that are not part of the map
+        local collisionGroupTomatoes = CollisionGroups(4) -- collision group for tomatoes
+
+        -- declaring local variables upstream so that they can be captured as upvalues,
+        -- values are assigned in Client.OnStart if found in the World.
+        local trampoline = nil
+        local tomato = nil
+        local cat = nil
+
+        local tomatoes = {} -- recycle pool for tomatoes
+
+        Client.OnStart = function()
+            World:Recurse(function(o)
+                if o.Name == "trampoline" then
+                    trampoline = o
+                    -- bounciness == 1: maintain velocity
+                    -- bounciness > 1: increase velocity
+                    -- bounciness < 1: decrease velocity
+                    trampoline.Bounciness = 1.1
+                elseif o.Name == "tomato" then
+                    tomato = o
+                    tomato.CollisionGroups = collisionGroupTomatoes
+                    tomato.CollidesWithGroups = collisionGroupMap + collisionGroupObjects
+                    tomato.Physics = PhysicsMode.Dynamic
+                    tomato:RemoveFromParent() -- tomato is used as a projectile, we don't need it in the scene
+                elseif o.Name == "cat" then
+                    cat = o
+                    cat.Physics = PhysicsMode.Dynamic
+                    -- cat can collide with map and other objects like the trampoline
+                    cat.CollisionGroups = collisionGroupObjects
+                    cat.CollidesWithGroups = collisionGroupMap + collisionGroupObjects 
+
+                    -- creating a trigger box to detect when the player is close to the cat,
+                    -- when that happens, the cat will look at the player.
+                    local catTrigger = Object()
+                    catTrigger.Physics = PhysicsMode.Trigger
+                    catTrigger.CollisionGroups = nil
+                    catTrigger.CollidesWithGroups = collisionGroupPlayers
+                    catTrigger:SetParent(cat)
+                    local triggerBoxSize = cat.CollisionBox.Size * 4
+                    local halfSize = triggerBoxSize * 0.5
+                    catTrigger.CollisionBox = Box(
+                        Number3(-halfSize.Width, 0, -halfSize.Depth),
+                        Number3(halfSize.Width, halfSize.Height * 2, halfSize.Depth)
+                    )
+
+                    local lookAtPlayerListener
+                    catTrigger.OnCollisionBegin = function(o, other)
+                        if other == Player then
+                            if lookAtPlayerListener == nil then
+                                -- creating a tick listener to keep updating the cat's rotation
+                                lookAtPlayerListener = LocalEvent:Listen(LocalEvent.Name.Tick, function(dt)
+                                    local p1 = cat.Position:Copy() p1.Y = 0
+                                    local p2 = Player.Position:Copy() p2.Y = 0
+                                    cat.Rotation:SetLookRotation(p2 - p1)
+                                end)
+                            end
+                        end
+                    end
+
+                    catTrigger.OnCollisionEnd = function(o, other)
+                        if other == Player then
+                            if lookAtPlayerListener then
+                                lookAtPlayerListener:Remove()
+                                lookAtPlayerListener = nil
+                            end
+                        end
+                    end
+                end
+            end)
+
+            Player:SetParent(World)
+            Player.Position = {0, 40, 0}
+
+            Camera.Behavior = {
+                positionTarget = Player, -- camera goes to that position (or position of given object)
+                positionTargetOffset = { 0, 14, 0 }, -- applying offset to the target position
+                positionTargetBackoffDistance = 40, -- camera then tries to backoff that distance, considering collision
+                positionTargetMinBackoffDistance = 20,
+                positionTargetMaxBackoffDistance = 100,
+                rotationTarget = Player.Head, -- camera rotates to that rotation (or rotation of given object)
+                rigidity = 0.5, -- how fast the camera moves to the target
+                collidesWithGroups = nil, -- camera will not go through objects in these groups
+            }
+        end
+
+        -- Click to make cat jump if close enough, otherwise throws a tomato
+        Pointer.Click = function(pointerEvent)
+            -- cast ray considering only objects for impact
+            if cat ~= nil then
+                local impact = pointerEvent:CastRay(collisionGroupObjects) 
+                if impact.Object == cat then
+                    if impact.Distance < 100 then -- check if close enough to cat
+                        cat.Velocity.Y = 50
+                        return
+                    end
+                end
+            end
+
+            -- table.remove returns nil if the table is empty,
+            -- this is a good way to implement recycling pools.
+            -- (table.remove to reuse, table.insert to recycle)
+            local t = table.remove(tomatoes) -- get tomato from pool
+            if t == nil then
+                if tomato then
+                    t = tomato:Copy()
+                end
+            end
+            if t == nil then
+                return -- couldn't get nor create tomato
+            end
+            t:SetParent(World)
+            t.Position = Player.Position + Player.Forward * 2
+            t.Velocity = Player.Forward * 90 + Number3(0, 100, 0)
+            -- recycle tomatoes after 5 seconds
+            Timer(5, function()
+                t:RemoveFromParent()
+                table.insert(tomatoes, t)
+            end)
+        end
+
+        -- PLAYER CONTROLS 
+
+        -- jump function
+        Client.Action1 = function()
+            if Player.IsOnGround then
+                Player.Velocity.Y = 100
+            end
+        end
+
+        local playerSpeed = 50
+
+        -- Client.DirectionalPad is only called when x or y changes (not repeatedly)
+        Client.DirectionalPad = function(x, y)
+            Player.Motion = (Player.Forward * y + Player.Right * x) * playerSpeed
+        end
+
+        -- Called when Pointer is "shown" (Pointer.IsHidden == false), which is the case by default.
+        Pointer.Drag = function(pointerEvent)
+            Player.LocalRotation = Rotation(0, pointerEvent.DX * 0.01, 0) * Player.LocalRotation
+            Player.Head.LocalRotation = Rotation(-pointerEvent.DY * 0.01, 0, 0) * Player.Head.LocalRotation
+            local dpad = controls.DirectionalPadValues
+            Player.Motion = (Player.Forward * dpad.Y + Player.Right * dpad.X) * playerSpeed
+        end
+
     - title: "Miscellaneous"
 
     - subtitle: "Plane controls"
