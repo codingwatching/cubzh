@@ -474,7 +474,18 @@ mod.setBehavior = function(self, config)
 			error("can't assign rotation target", 2)
 		end
 	end
-	local rotationTargetOffset = config.rotationTargetOffset or Rotation(0, 0, 0)
+	local rotationTargetOffset = Rotation(0, 0, 0)
+	if config.rotationTargetOffset ~= nil then
+		if typeof(config.rotationTargetOffset) == "Rotation" then
+			rotationTargetOffset = config.rotationTargetOffset
+		elseif typeof(config.rotationTargetOffset) == "Number3" then
+			rotationTargetOffset = Rotation(config.rotationTargetOffset)
+		elseif typeof(config.rotationTargetOffset) == "table" then
+			rotationTargetOffset = Rotation(config.rotationTargetOffset[1], config.rotationTargetOffset[2], config.rotationTargetOffset[3])
+		else
+			error("can't assign rotation target offset", 2)
+		end
+	end
 	
 	-- others
 	local rigidity = config.rigidity
@@ -507,9 +518,9 @@ mod.setBehavior = function(self, config)
 	listener = LocalEvent:Listen(LocalEvent.Name.Tick, function(dt)
 
 		if rotationTarget ~= nil then
-			worldObject.Rotation:Set(rotationTargetOffset * rotationTarget)
+			worldObject.Rotation:Set(rotationTarget * rotationTargetOffset)
 		else
-			worldObject.Rotation:Set(rotationTargetOffset * camera.Rotation)
+			worldObject.Rotation:Set(camera.Rotation * rotationTargetOffset)
 		end
 
 		if positionTarget ~= nil then
