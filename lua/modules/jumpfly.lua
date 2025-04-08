@@ -4,12 +4,14 @@
 local jumpfly = {}
 
 conf = require("config")
+codes = require("inputcodes")
 
 local defaultConfig = {
 	jumpVelocity = 100,
 	holdTimeToFly = 0.5,
 	exitFlyDoubleTapDelay = 0.5,
 	airJumps = -1, -- -1 for infinite
+	flyVerticalSpeed = 50,
 	onFlyStart = nil,
 	onFlyEnd = nil
 }
@@ -18,6 +20,7 @@ local config = defaultConfig
 local listeners = {}
 
 local flying = false
+local velocity = nil
 local holdTimer = nil
 local exitFlyDoubleTapTimer = nil
 local jumps = 0
@@ -41,11 +44,12 @@ function stopFlying()
 	end
 	flying = false
 	Player.Acceleration:Set(0, 0, 0)
+	Player.Velocity:Set(0, 0, 0)
+	velocity = nil
 	if config.onFlyEnd ~= nil then
 		config.onFlyEnd()
 	end
 end
-
 
 jumpfly.setup = function(self, _config)
 	if self ~= jumpfly then
@@ -73,11 +77,13 @@ jumpfly.setup = function(self, _config)
 		if flying then
 			if exitFlyDoubleTapTimer ~= nil then
 				stopFlying()
-			else
-				exitFlyDoubleTapTimer = Timer(config.exitFlyDoubleTapDelay, function()
-					exitFlyDoubleTapTimer = nil
-				end)
+				return
 			end
+			
+			exitFlyDoubleTapTimer = Timer(config.exitFlyDoubleTapDelay, function()
+				exitFlyDoubleTapTimer = nil
+			end)
+			velocity = Number3(0, config.flyVerticalSpeed, 0)
 		else
 			if config.airJumps < 0 then -- infinite air jumps
 				Player.Velocity.Y = config.jumpVelocity
@@ -105,8 +111,36 @@ jumpfly.setup = function(self, _config)
 			holdTimer:Cancel()
 			holdTimer = nil
 		end
+		if velocity ~= nil then
+			Player.Velocity:Set(0, 0, 0)
+			velocity = nil
+		end
 	end)
 	table.insert(listeners, l)
+
+	l = LocalEvent:Listen(LocalEvent.Name.Tick, function(dt)
+		if velocity ~= nil then
+			Player.Velocity:Set(velocity)
+		end
+	end)
+	table.insert(listeners, l)
+
+	l = LocalEvent:Listen(LocalEvent.Name.KeyboardInput, function(_, keyCode, _, down)
+		if not flying then
+			return
+		end
+		if down then
+			if keyCode == codes.SHIFT or keyCode == codes.RIGHT_SHIFT then
+				velocity = Number3(0, -config.flyVerticalSpeed, 0)
+			end
+		else
+			if keyCode == codes.SHIFT or keyCode == codes.RIGHT_SHIFT then
+				Player.Velocity:Set(0, 0, 0)
+				velocity = nil
+			end
+		end
+	end)
+
 end
 
 jumpfly.fly = fly

@@ -1226,18 +1226,32 @@ function uiShowDefaultMenu()
 		ambiencePanel:bump(true)
 	end
 
-	-- Camera
-	cameraBtn = ui:buttonSecondary({ content = "🎥", textSize = "small" })
+	local cameraIcon = ui:frame({ image = {
+		data = Data:FromBundle("images/icon-camera.png"),
+		alpha = true,
+	} })
+	cameraIcon.Width = 20 cameraIcon.Height = 20
+	cameraBtn = ui:buttonSecondary({ content = cameraIcon })
 	cameraBtn.onRelease = function()
 		setCameraMode(CameraMode.FREE)
 	end
 
-	walkModeBtn = ui:buttonSecondary({ content = "W", textSize = "small" })
+	local walkIcon = ui:frame({ image = {
+		data = Data:FromBundle("images/icon-walk.png"),
+		alpha = true,
+	} })
+	walkIcon.Width = 20 walkIcon.Height = 20
+	walkModeBtn = ui:buttonSecondary({ content = walkIcon })
 	walkModeBtn.onRelease = function()
 		setCameraMode(CameraMode.THIRD_PERSON)
 	end
 
-	flyModeBtn = ui:buttonSecondary({ content = "F", textSize = "small" })
+	local flyIcon = ui:frame({ image = {
+		data = Data:FromBundle("images/icon-jetpack.png"),
+		alpha = true,
+	} })
+	flyIcon.Width = 20 flyIcon.Height = 20
+	flyModeBtn = ui:buttonSecondary({ content = flyIcon })
 	flyModeBtn.onRelease = function()
 		setCameraMode(CameraMode.THIRD_PERSON_FLYING)
 	end
