@@ -6,6 +6,7 @@ local ui = require("uikit")
 local ambience = require("ambience")
 local world = require("world")
 local ccc = require("ccc")
+local jumpfly = require("jumpfly")
 
 -- Constants
 local NEW_OBJECT_MAX_DISTANCE = 50
@@ -66,6 +67,8 @@ local cameraSpeed = Number3.Zero
 local ambienceBtn
 local ambiencePanel
 local cameraBtn
+local walkModeBtn
+local flyModeBtn
 local transformGizmo
 local objectInfoFrame
 local physicsBtn
@@ -86,6 +89,8 @@ local function hideAllPanels()
 	end
 	ambienceBtn:show()
 	cameraBtn:show()
+	walkModeBtn:show()
+	flyModeBtn:show()
 	addObjectBtn:show()
 	require("controls"):turnOn()
 end
@@ -95,8 +100,12 @@ local function setCameraMode(mode)
 		return
 	end
 	cameraMode = mode
+
+	cameraBtn:unselect()
+	walkModeBtn:unselect()
+	flyModeBtn:unselect()
+
 	if mode == CameraMode.THIRD_PERSON then
-		-- Camera:SetModeThirdPerson()
 		Camera:SetModeFree()
 		ccc:set({
 			target = Player,
@@ -107,6 +116,22 @@ local function setCameraMode(mode)
 		if trail then
 			trail:show()
 		end
+		jumpfly:stopFlying()
+		walkModeBtn:select()
+
+	elseif mode == CameraMode.THIRD_PERSON_FLYING then
+		Camera:SetModeFree()
+		ccc:set({
+			target = Player,
+			cameraColliders = COLLISION_GROUP_OBJECT,
+		})
+		Player.Physics = PhysicsMode.Dynamic
+		Player.IsHidden = false
+		if trail then
+			trail:show()
+		end
+		jumpfly:fly()
+		flyModeBtn:select()
 	else
 		ccc:unset()
 		Camera:SetModeFree()
@@ -115,6 +140,7 @@ local function setCameraMode(mode)
 		if trail then
 			trail:hide()
 		end
+		cameraBtn:select()
 	end
 end
 
@@ -411,6 +437,8 @@ local statesSettings = {
 			addObjectBtn:hide()
 			ambienceBtn:hide()
 			cameraBtn:hide()
+			walkModeBtn:hide()
+			flyModeBtn:hide()
 			gallery:show()
 			gallery:bounce()
 			require("controls"):turnOff()
@@ -707,7 +735,15 @@ startDefaultMode = function()
 	setCameraMode(CameraMode.THIRD_PERSON)
 	dropPlayer()
 
-	require("jumpfly")
+	jumpfly:setup({
+		airJumps = -1, -- infinite air jumps
+		onFlyStart = function()
+			setCameraMode(CameraMode.THIRD_PERSON_FLYING)
+		end,
+		onFlyEnd = function()
+			setCameraMode(CameraMode.THIRD_PERSON)
+		end,
+	})
 
 	Client.Tick = function(dt)
 		if cameraMode == CameraMode.FREE then
@@ -908,6 +944,8 @@ function uiShowDefaultMenu()
 		require("controls"):turnOff()
 		ambienceBtn:hide()
 		cameraBtn:hide()
+		walkModeBtn:hide()
+		flyModeBtn:hide()
 
 		if ambiencePanel ~= nil then
 			ambiencePanel:bump()
@@ -1191,12 +1229,19 @@ function uiShowDefaultMenu()
 	-- Camera
 	cameraBtn = ui:buttonSecondary({ content = "🎥", textSize = "small" })
 	cameraBtn.onRelease = function()
-		if cameraMode == CameraMode.THIRD_PERSON then
-			setCameraMode(CameraMode.FREE)
-		else
-			setCameraMode(CameraMode.THIRD_PERSON)
-		end
+		setCameraMode(CameraMode.FREE)
 	end
+
+	walkModeBtn = ui:buttonSecondary({ content = "W", textSize = "small" })
+	walkModeBtn.onRelease = function()
+		setCameraMode(CameraMode.THIRD_PERSON)
+	end
+
+	flyModeBtn = ui:buttonSecondary({ content = "F", textSize = "small" })
+	flyModeBtn.onRelease = function()
+		setCameraMode(CameraMode.THIRD_PERSON_FLYING)
+	end
+
 	cameraBtn.parentDidResize = function()
 		ambienceBtn.pos = {
 			Screen.SafeArea.Left + padding,
@@ -1207,8 +1252,19 @@ function uiShowDefaultMenu()
 			ambienceBtn.pos.X,
 			ambienceBtn.pos.Y - cameraBtn.Height - padding,
 		}
+
+		walkModeBtn.pos = {
+			cameraBtn.pos.X + cameraBtn.Width + padding,
+			cameraBtn.pos.Y,
+		}
+
+		flyModeBtn.pos = {
+			walkModeBtn.pos.X + walkModeBtn.Width + padding,
+			cameraBtn.pos.Y,
+		}
 	end
 	cameraBtn:parentDidResize()
+	
 end
 
 -- Auto-save timer
