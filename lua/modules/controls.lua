@@ -898,12 +898,24 @@ _state.downListener = LocalEvent:Listen(LocalEvent.Name.PointerDown, function(po
 		end
 	else -- Pointer hidden
 		if _isPC then
-			if pointerEvent.Index == POINTER_INDEX_MOUSE_LEFT and Client.Action2 ~= nil then
-				Client.Action2()
-				return true -- capture event
-			elseif pointerEvent.Index == POINTER_INDEX_MOUSE_RIGHT and Client.Action3 ~= nil then
-				Client.Action3()
-				return true -- capture event
+			if pointerEvent.Index == POINTER_INDEX_MOUSE_LEFT then
+				local captured = LocalEvent:Send(LocalEvent.Name.Action2)
+				if captured then
+					return true
+				end
+				if Client.Action2 ~= nil then
+					Client.Action2()
+					return true -- capture event
+				end
+			elseif pointerEvent.Index == POINTER_INDEX_MOUSE_RIGHT then
+				local captured = LocalEvent:Send(LocalEvent.Name.Action3)
+				if captured then
+					return true
+				end
+				if Client.Action3 ~= nil then
+					Client.Action3()
+					return true -- capture event
+				end	
 			end
 		elseif _isMobile then
 			local x, y = pointerEvent.X * Screen.Width, pointerEvent.Y * Screen.Height
@@ -1208,12 +1220,24 @@ _state.upListener = LocalEvent:Listen(LocalEvent.Name.PointerUp, function(pointe
 		end
 	else -- Pointer hidden
 		if _isPC then
-			if pointerEvent.Index == POINTER_INDEX_MOUSE_LEFT and Client.Action2Release ~= nil then
-				Client.Action2Release()
-				return true
-			elseif pointerEvent.Index == POINTER_INDEX_MOUSE_RIGHT and Client.Action3Release ~= nil then
-				Client.Action3Release()
-				return true
+			if pointerEvent.Index == POINTER_INDEX_MOUSE_LEFT then
+				local captured = LocalEvent:Send(LocalEvent.Name.Action2Release)
+				if captured then
+					return true
+				end
+				if Client.Action2Release ~= nil then
+					Client.Action2Release()
+					return true
+				end
+			elseif pointerEvent.Index == POINTER_INDEX_MOUSE_RIGHT then
+				local captured = LocalEvent:Send(LocalEvent.Name.Action3Release)
+				if captured then
+					return true
+				end
+				if Client.Action3Release ~= nil then
+					Client.Action3Release()
+					return true
+				end
 			end
 		elseif _isMobile then
 			local indicator = _getOrCreateIndicator(pointerEvent.Index)
@@ -1251,11 +1275,13 @@ function applyKey(keyCode, down)
 
 	if keyCode == codes.SPACE then
 		if down then
-			if Client.Action1 ~= nil then
+			local captured = LocalEvent:Send(LocalEvent.Name.Action1)
+			if not captured and Client.Action1 ~= nil then
 				Client.Action1()
 			end
 		else
-			if Client.Action1Release ~= nil then
+			local captured = LocalEvent:Send(LocalEvent.Name.Action1Release)
+			if not captured and Client.Action1Release ~= nil then
 				Client.Action1Release()
 			end
 		end
