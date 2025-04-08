@@ -252,7 +252,10 @@ blocks:
             if cat ~= nil then
                 local impact = pointerEvent:CastRay(collisionGroupObjects) 
                 if impact.Object == cat then
-                    if impact.Distance < 100 then -- check if close enough to cat
+                    -- we could check impact.Distance here (distance between cat and ray origin), 
+                    -- but the distance between the player and the cat makes a bit more sense in that situation.
+                    local diff = Player.Position - cat.Position
+                    if diff.Length < 70 then -- check if close enough to cat
                         cat.Velocity.Y = 50
                         return
                     end
