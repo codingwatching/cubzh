@@ -4094,19 +4094,34 @@ function createUI(system)
 		config = config or {}
 		config.textColor = config.textColor or theme.buttonSecondaryTextColor
 
-		local image = Data:FromBundle("images/button_secondary.png")
+		if btnSecondaryQuadData == nil then
+			btnSecondaryQuadData = Data:FromBundle("images/button_secondary.png")
+		end
 		config.backgroundQuad = Quad()
 		config.backgroundQuad.Image = {
-			data = image,
-			slice9 = { 0.5, 0.5 } --[[, slice9Scale = 0.1 ]],
+			data = btnSecondaryQuadData,
+			slice9 = { 0.5, 0.5 },
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
 			alpha = true,
 		}
 
-		image = Data:FromBundle("images/button_secondary_pressed.png")
+		if btnSecondaryPressedQuadData == nil then
+			btnSecondaryPressedQuadData = Data:FromBundle("images/button_secondary_pressed.png")
+		end
 		config.backgroundQuadPressed = Quad()
 		config.backgroundQuadPressed.Image = {
-			data = image,
+			data = btnSecondaryPressedQuadData,
+			slice9 = { 0.5, 0.5 },
+			slice9Scale = DEFAULT_SLICE_9_SCALE,
+			alpha = true,
+		}
+
+		if btnSecondarySelectedQuadData == nil then
+			btnSecondarySelectedQuadData = Data:FromBundle("images/button_selected.png")
+		end
+		config.backgroundQuadSelected = Quad()
+		config.backgroundQuadSelected.Image = {
+			data = btnNeutralSelectedQuadData,
 			slice9 = { 0.5, 0.5 },
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
 			alpha = true,
