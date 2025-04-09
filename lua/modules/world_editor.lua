@@ -7,6 +7,9 @@ local ambience = require("ambience")
 local world = require("world")
 local ccc = require("ccc")
 local jumpfly = require("jumpfly")
+local bundle = require("bundle")
+
+local jetpack = bundle:Shape("shapes/jetpack.3zh")
 
 -- Constants
 local NEW_OBJECT_MAX_DISTANCE = 50
@@ -119,6 +122,8 @@ local function setCameraMode(mode)
 		jumpfly:stopFlying()
 		walkModeBtn:select()
 
+		Player:EquipBackpack(nil)
+
 	elseif mode == CameraMode.THIRD_PERSON_FLYING then
 		Camera:SetModeFree()
 		ccc:set({
@@ -132,6 +137,8 @@ local function setCameraMode(mode)
 		end
 		jumpfly:fly()
 		flyModeBtn:select()
+
+		Player:EquipBackpack(jetpack)
 	else
 		ccc:unset()
 		Camera:SetModeFree()

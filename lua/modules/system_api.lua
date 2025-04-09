@@ -780,6 +780,54 @@ mod.getNotifications = function(self, config, callback)
 	return req
 end
 
+mod.getWorldHistory = function(self, config, callback)
+	if self ~= mod then
+		error("api:getWorldHistory(config, callback): use `:`", 2)
+	end
+	if type(callback) ~= "function" then
+		error("api:getWorldHistory(config, callback) - callback must be a function", 2)
+	end
+
+	local defaultConfig = {
+		worldID = nil, -- string
+	}
+
+	local ok, err = pcall(function()
+		config = require("config"):merge(defaultConfig, config, {
+			acceptTypes = {
+				worldID = { "string" },
+			},
+		})
+	end)
+
+	if not ok then
+		error("api:getWorldHistory(config, callback): config error (" .. err .. ")", 2)
+	end
+
+	local u = url:parse(mod.kApiAddr .. "/worlds/" .. config.worldID .. "/history")
+
+	local req = System:HttpGet(u:toString(), function(res)
+		if res.StatusCode ~= 200 then
+			callback(nil, mod:error(res.StatusCode, "status code: " .. res.StatusCode))
+			return
+		end
+
+		local data, err = JSON:Decode(res.Body)
+		if err ~= nil then
+			callback(nil, mod:error(res.StatusCode, "getWorldHistory JSON decode error: " .. err))
+			return
+		end
+
+		for _, v in data do
+			if v.created then
+				v.created = time.iso8601_to_os_time(v.created)
+			end
+		end
+		callback(data)
+	end)
+	return req
+end
+
 mod.readNotifications = function(self, config)
 	if self ~= mod then
 		error("api:readNotifications(config): use `:`", 2)

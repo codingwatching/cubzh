@@ -46,7 +46,7 @@ CUBZH_MENU_SECONDARY_BUTTON_HEIGHT = 40
 
 DEV_MODE = System.LocalUserIsAuthor and System.ServerIsInDevMode
 IN_WORLD_EDITOR = Environment["worldId"] == "world_editor"
-AI_ASSISTANT_ENABLED = true -- feature is not ready yet
+AI_ASSISTANT_ENABLED = not IN_WORLD_EDITOR
 
 -- VARS
 
@@ -89,6 +89,8 @@ MODAL_KEYS = {
 	USERNAME_FORM = 15,
 	VERIFY_ACCOUNT_FORM = 16,
 	NOTIFICATIONS = 17,
+	HISTORY = 18,
+	AI_ASSISTANT = 19,
 }
 
 -- User account management
@@ -252,6 +254,9 @@ function showModal(key, config)
 			categories = { "featured" },
 		})
 		activeModal = modal:create(content, maxModalWidth, maxModalHeight, updateModalPosition, ui)
+	elseif key == MODAL_KEYS.HISTORY then
+		content = require("history"):createModalContent({ uikit = ui })
+		activeModal = modal:create(content, maxModalWidth, maxModalHeight, updateModalPosition, ui)
 	elseif key == MODAL_KEYS.WORLD then
 		local config = config or {}
 		config.uikit = ui
@@ -288,9 +293,9 @@ function showModal(key, config)
 
 		ui.unfocus() -- unfocuses node currently focused
 
-		if key ~= MODAL_KEYS.WORLDS then
-			activeModal:setParent(background)
-		end
+		-- if key ~= MODAL_KEYS.WORLDS then
+		-- 	activeModal:setParent(background)
+		-- end
 
 		activeModalKey = key
 
@@ -1414,9 +1419,12 @@ end
 -- DEV MODE / AI BUTTON
 
 if DEV_MODE == true then
-	if AI_ASSISTANT_ENABLED == true then
+	if AI_ASSISTANT_ENABLED then
 		aiBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
 		aiBtn:setParent(topBar)
+
+		historyBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
+		historyBtn:setParent(topBar)
 
 		local aiUINeedsFirstLayout = false
 
@@ -1608,8 +1616,7 @@ if DEV_MODE == true then
 				alpha = true,
 			},
 		})
-		aiIcon.Width = 50
-		aiIcon.Height = 50
+		aiIcon.Width = 50 aiIcon.Height = 50
 
 		aiIcon.parentDidResize = function(self)
 			local parent = self.parent
@@ -1849,6 +1856,29 @@ if DEV_MODE == true then
 			else
 				removeAIPrompt()
 			end
+		end
+
+		local historyIcon = ui:frame({
+			image = {
+				data = Data:FromBundle("images/icon-history.png"),
+				alpha = true,
+			},
+		})
+		historyIcon.Width = 50 historyIcon.Height = 50
+
+		historyIcon.parentDidResize = function(self)
+			local parent = self.parent
+			self.Height = parent.Height - PADDING * 2
+			self.Width = self.Height
+			self.pos = { PADDING, PADDING }
+		end
+		historyIcon:setParent(historyBtn)
+
+		historyBtn.onPress = topBarBtnPress
+		historyBtn.onCancel = topBarBtnRelease
+		historyBtn.onRelease = function(self)
+			topBarBtnRelease(self)
+			showModal(MODAL_KEYS.HISTORY)
 		end
 	end
 
@@ -2137,7 +2167,7 @@ function getCubzhMenuModalContent()
 	btnHelp:setParent(node)
 
 	btnHelp.onRelease = function()
-		URL:Open("https://discord.gg/cubzh")
+		URL:Open("https://discord.gg/blipgame")
 	end
 
 	if dev then
@@ -2311,6 +2341,16 @@ topBar.parentDidResize = function(self)
 		aiBtn.pos = { previousBtn.pos.X + previousBtn.Width, 0 }
 		previousBtn = aiBtn
 		width += aiBtn.Width
+	end
+
+	-- HISTORY BUTTON
+
+	if historyBtn ~= nil and historyBtn:isVisible() then
+		historyBtn.Height = height
+		historyBtn.Width = height
+		historyBtn.pos = { previousBtn.pos.X + previousBtn.Width, 0 }
+		previousBtn = historyBtn
+		width += historyBtn.Width
 	end
 
 	-- PLAY BUTTON
