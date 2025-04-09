@@ -140,7 +140,16 @@ jumpfly.setup = function(self, _config)
 			end
 		end
 	end)
+end
 
+-- TMP HACK
+if Client.IsMobile then
+	Client.Action1 = function() 
+		LocalEvent:Send(LocalEvent.Name.Action1)
+	end
+	Client.Action1Release = function() 
+		LocalEvent:Send(LocalEvent.Name.Action1Release)
+	end
 end
 
 jumpfly.fly = fly
