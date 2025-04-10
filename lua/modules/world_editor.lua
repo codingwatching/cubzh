@@ -1,5 +1,83 @@
 local worldEditor = {}
 
+local animationsAdded = false
+function addPlayerAnimations()
+	if animationsAdded then 
+		return
+	end
+	animationsAdded = true
+	local player = Player
+
+	local leftLeg = Player.LeftLeg
+
+	local animFly = Animation("Fly", { speed = 1, loops = 0, priority = 255 })
+	local bodyFloat = {
+		{ time = 0.0, position = { 0, 12, 0 } },
+		{ time = 0.5, position = { 0, 11, 0 } },
+		{ time = 1.0, position = { 0, 12, 0 } },
+	}
+	local moveLeftLeg = {
+		{ time = 0.0, rotation = { 0, 0, 0 } },
+		{ time = 0.5, rotation = { math.rad(10), 0, 0 } },
+		{ time = 1.0, rotation = { 0, 0, 0 } },
+	}
+	local moveRightLeg = {
+		{ time = 0.0, rotation = { 0, 0, 0 } },
+		{ time = 0.5, rotation = { math.rad(10), 0, 0 } },
+		{ time = 1.0, rotation = { 0, 0, 0 } },
+	}
+	local moveLeftFoot = {
+		{ time = 0.0, rotation = { 0, 0, 0 } },
+	}
+	local moveRightFoot = {
+		{ time = 0.0, rotation = { 0, 0, 0 } },
+	}
+
+	local moveLeftArm = {
+		{ time = 0.0, rotation = { 0, 0, 1.14537 + 0.1 } },
+		{ time = 0.5, rotation = { 0, 0, 1.14537 } },
+		{ time = 1.0, rotation = { 0, 0, 1.14537 + 0.1 } },
+	}
+	local moveLeftHand = {
+		{ time = 0.0, rotation = { 0, 0.294524, -0.0981748 } },
+		{ time = 0.5, rotation = { 0, 0.19635, -0.0981748 } },
+		{ time = 1.0, rotation = { 0, 0.294524, -0.0981748 } },
+	}
+	local moveRightArm = {
+		{ time = 0.0, rotation = { 0, 0, -1.14537 - 0.1 } },
+		{ time = 0.5, rotation = { 0, 0, -1.14537 } },	
+		{ time = 1.0, rotation = { 0, 0, -1.14537 - 0.1 } },
+	}
+	local moveRightHand = {
+		{ time = 0.0, rotation = { 0, -0.294524, 0 } },
+		{ time = 0.5, rotation = { 0, -0.19635, 0 } },
+		{ time = 1.0, rotation = { 0, -0.294524, 0 } },
+	}
+
+	local animFlyConfig = {
+		Body = bodyFloat,
+		LeftLeg = moveLeftLeg,
+		RightLeg = moveRightLeg,
+		LeftFoot = moveLeftFoot,
+		RightFoot = moveRightFoot,
+		LeftArm = moveLeftArm,
+		RightArm = moveRightArm,
+		LeftHand = moveLeftHand,
+		RightHand = moveRightHand,
+	}
+
+	for name, v in pairs(animFlyConfig) do
+		for _, frame in ipairs(v) do
+			animFly:AddFrameInGroup(name, frame.time, { position = frame.position, rotation = frame.rotation })
+			animFly:Bind(
+				name,
+				(name == "Body" and not player.Avatar[name]) and player.Avatar or player.Avatar[name]
+			)
+		end
+	end
+	player.Animations.Fly = animFly
+end
+
 local sfx = require("sfx")
 local ease = require("ease")
 local ui = require("uikit")
@@ -10,6 +88,21 @@ local jumpfly = require("jumpfly")
 local bundle = require("bundle")
 
 local jetpack = bundle:Shape("shapes/jetpack.3zh")
+jetpack:Recurse(function(o)
+	o.IsUnlit = true
+end)
+
+jetpack.anim = function()
+	local t = 0
+	jetpack.Tick = function(o, dt)
+		t += dt * 10
+		jetpack.Children[1].Scale.Y = 1 + math.sin(t) * 0.05
+	end
+end
+
+jetpack.stopAnim = function()
+	jetpack.Tick = nil
+end
 
 -- Constants
 local NEW_OBJECT_MAX_DISTANCE = 50
@@ -123,6 +216,10 @@ local function setCameraMode(mode)
 		walkModeBtn:select()
 
 		Player:EquipBackpack(nil)
+		if Player.Animations.Fly then
+			Player.Animations.Fly:Stop()
+		end
+		jetpack.stopAnim()
 
 	elseif mode == CameraMode.THIRD_PERSON_FLYING then
 		Camera:SetModeFree()
@@ -135,10 +232,24 @@ local function setCameraMode(mode)
 		if trail then
 			trail:show()
 		end
-		jumpfly:fly()
+
 		flyModeBtn:select()
 
 		Player:EquipBackpack(jetpack)
+		ease:cancel(jetpack)
+		jetpack.LocalPosition.Y -= 3
+		jetpack.Scale = 0.5
+
+		ease:outBack(jetpack, 0.3).Scale = Number3(0.8, 0.8, 0.8)
+
+		jetpack.anim()
+
+		Player.Velocity.Y = 30 -- little jump (before setting fly mode)
+		addPlayerAnimations() -- adds animations if not already added
+		Timer(0.2, function()
+			Player.Animations.Fly:Play()
+			jumpfly:fly()
+		end)
 	else
 		ccc:unset()
 		Camera:SetModeFree()
