@@ -6,7 +6,6 @@ local menu = {}
 
 bundle = require("bundle")
 loc = require("localize")
--- str = require("str")
 ui = require("uikit").systemUI(System)
 modal = require("modal")
 theme = require("uitheme").current
@@ -1040,9 +1039,6 @@ end
 
 btnContentParentDidResize = function(self)
 	local padding = PADDING
-	if self == pezhShape then
-		padding = PADDING_BIG
-	end
 	local parent = self.parent
 	local ratio = self.Width / self.Height
 	self.Height = parent.Height - padding * 2
@@ -1972,13 +1968,14 @@ chatBtn:hide()
 pezhBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
 pezhBtn:setParent(topBar)
 
-pezhShape = ui:createShape(bundle:Shape("shapes/pezh_coin_2"), { spherized = false, doNotFlip = true })
-pezhShape:setParent(pezhBtn)
-pezhShape.parentDidResize = btnContentParentDidResize
-
--- LocalEvent:Listen(LocalEvent.Name.Tick, function(dt)
--- 	pezhShape.pivot.Rotation = pezhShape.pivot.Rotation * Rotation(0, dt, 0)
--- end)
+local bluxIcon = ui:frame({ image = {
+	data = Data:FromBundle("images/icon-blux.png"),
+	alpha = true,
+} })
+bluxIcon.Width = 50
+bluxIcon.Height = 50
+bluxIcon:setParent(pezhBtn)
+bluxIcon.parentDidResize = btnContentParentDidResize
 
 pezhBtn.onPress = topBarBtnPress
 pezhBtn.onCancel = topBarBtnRelease
@@ -1991,7 +1988,6 @@ end
 
 if minified then
 	pezhBtn:hide()
-	pezhShape:setParent(nil)
 end
 
 -- CHAT

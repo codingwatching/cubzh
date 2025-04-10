@@ -34,7 +34,7 @@ coins.createModalContent = function(_, config)
 	local content = modal:createContent()
 	content.closeButton = true
 	content.title = "Bank Account"
-	content.icon = "🇵"
+	content.icon = Data:FromBundle("images/icon-blux.png")
 
 	local node = ui:createFrame()
 	content.node = node
