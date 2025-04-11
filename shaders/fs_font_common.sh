@@ -21,7 +21,6 @@ uniform vec4 u_normal;
 #endif
 
 SAMPLERCUBE(s_atlas, 0);
-SAMPLERCUBE(s_atlasPoint, 1);
 
 void main() {
 	vec3 metadata1 = unpackFontUniformMetadata(u_metadata);
@@ -31,14 +30,11 @@ void main() {
 #if FONT_VARIANT_UNLIT == 0
 	vec4 vlighting = unpackVoxelLight(u_vlighting);
 #endif
-	vec2 metadata2 = unpackFontAttributesMetadata(v_texcoord0.w);
-	#define colored metadata2.x
-	#define filtering metadata2.y
+	float metadata2 = unpackFontAttributesMetadata(v_texcoord0.w);
+	#define colored metadata2
 
-	vec4 base = mix(textureCube(s_atlasPoint, v_texcoord0.xyz).bgra,
-					textureCube(s_atlas, v_texcoord0.xyz).bgra,
-					filtering);
-	base.a = mix(base.r, base.a, colored);
+	vec4 base = textureCube(s_atlas, v_texcoord0.xyz);
+	base = mix(base.bbbb, base.rgba, colored);
 
 	if (base.a <= EPSILON) discard;
 

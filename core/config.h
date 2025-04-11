@@ -29,6 +29,7 @@ extern "C" {
 // GENERAL
 
 #define MAP_DEFAULT_SCALE 5.0f
+#define PACK_26_6_PIXEL_FORMAT 64.0f // 26.6 pixel format: float * 64 = int32_t
 
 // FRAMES
 
