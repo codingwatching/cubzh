@@ -9,6 +9,7 @@ end
 BUTTON_BORDER = 3
 BUTTON_PADDING = 3
 BUTTON_UNDERLINE = 1
+COMBO_BOX_MAX_HEIGHT = 300
 DEFAULT_SLICE_9_SCALE = 1.0
 LAYER_STEP = -0.1 -- children offset
 SCROLL_DAMPENING_FACTOR = 0.2
@@ -3781,17 +3782,40 @@ function createUI(system)
 		return ui:button(config)
 	end -- createButton (legacy)
 
-	ui.createComboBox = function(self, stringOrShape, choices, config)
-		if choices == nil then
-			return
+	ui.comboBox = function(self, config)
+		if self ~= ui then
+			error("ui:comboBox(config): use `:`", 2)
 		end
 
-		config = config or {}
-		config.content = stringOrShape
+		local defaultConfig = {
+			textSize = "default",
+			button = nil,
+			choices = nil,
+			onSelect = nil,
+			optionsPosition = "center", -- "bottom", "center" or "top" relative to button position
+		}
 
-		local btn = self:buttonNeutral(config)
+		local options = {
+			acceptTypes = {
+				button = { "table" }, -- note: expecting a uikit node here, config module doesn't allow to check for this yet
+				choices = { "table" },
+				onSelect = { "function" },
+			},
+		}
 
-		btn.onSelect = function(_, _) end
+		config = conf:merge(defaultConfig, config, options)
+		
+		local choices = config.choices
+		if choices == nil then
+			error("ui:comboBox(config): config.choices should be an array of strings", 2)
+		end
+
+		local btn = config.button
+		if btn == nil then
+			btn = ui:buttonNeutral({ content = "combo box" })
+		end
+
+		btn.onSelect = config.onSelect
 
 		btn.onRelease = function(_)
 			btn:disable()
@@ -3817,45 +3841,64 @@ function createUI(system)
 
 			local cells = {}
 
+			local loadCell = function(index)
+				local choice = choices[index]
+				if choice then
+					local c = table.remove(cells)
+					if c ~= nil then
+						c.text = choice
+					else
+						c = ui:button({
+							textSize = config.textSize,	
+							content = choice,
+							borders = false,
+							shadow = false,
+							unfocuses = false,
+						})
+						c.parentDidResize = choiceParentDidResize
+						c.onRelease = choiceOnRelease
+					end
+					c._choiceIndex = index
+
+					if btn.selectedRow == c._choiceIndex then
+						c:select()
+					else
+						c:unselect()
+					end
+
+					return c
+				end
+			end
+
+			local unloadCell = function(_, cell) -- index, cell
+				cell:setParent(nil)
+				table.insert(cells, cell)
+			end
+
 			local scroll = ui:scroll({
 				direction = "down",
 				cellPadding = 0,
 				padding = 0,
-				loadCell = function(index)
-					local choice = choices[index]
-					if choice then
-						local c = table.remove(cells)
-						if c ~= nil then
-							c.text = choice
-						else
-							c = ui:button({
-								content = choice,
-								borders = false,
-								shadow = false,
-								unfocuses = false,
-							})
-							c.parentDidResize = choiceParentDidResize
-							c.onRelease = choiceOnRelease
-						end
-						c._choiceIndex = index
-
-						if btn.selectedRow == c._choiceIndex then
-							c:select()
-						else
-							c:unselect()
-						end
-
-						return c
-					end
-				end,
-				unloadCell = function(_, cell) -- index, cell
-					cell:setParent(nil)
-					table.insert(cells, cell)
-				end,
+				loadCell = loadCell,
+				unloadCell = unloadCell,
 			})
 
-			scroll.Height = 200
-			scroll.Width = 100
+			local firstCell = loadCell(1)
+			if firstCell ~= nil then
+				scroll.Height = math.min(
+					firstCell.Height * #choices, 
+					Screen.Height - Screen.SafeArea.Top - Screen.SafeArea.Bottom - theme.paddingBig * 2, 
+					COMBO_BOX_MAX_HEIGHT
+				)
+				unloadCell(_, firstCell)
+			else
+				scroll.Height = math.min(
+					Screen.Height - Screen.SafeArea.Top - Screen.SafeArea.Bottom - theme.paddingBig * 2, 
+					COMBO_BOX_MAX_HEIGHT
+				)
+			end
+
+			scroll.Width = btn.Width
 
 			focus(nil)
 
@@ -3866,18 +3909,21 @@ function createUI(system)
 
 			focusedComboBoxSelector = selector
 
-			scroll.Height = math.min(
-				Screen.Height - Screen.SafeArea.Top - Screen.SafeArea.Bottom - theme.paddingBig * 2,
-				-- contentHeight,
-				300 -- max heigh for all combo boxes
-			)
-
 			scroll.pos = { theme.paddingTiny, theme.paddingTiny }
 
 			selector.Height = scroll.Height + theme.paddingTiny * 2
 			selector.Width = scroll.Width + theme.paddingTiny * 2
 
-			local p = Number3(btn.pos.X - theme.padding, btn.pos.Y + btn.Height - selector.Height + theme.padding, 0)
+			local p = Number3( -- has to be a number3 for ease animation
+				btn.pos.X - theme.paddingTiny,
+				btn.pos.Y + btn.Height * 0.5 - selector.Height * 0.5, -- centered by default
+				0
+			)
+			if config.optionsPosition == "bottom" then
+				p.Y = btn.pos.Y + btn.Height - selector.Height + theme.paddingTiny
+			elseif config.optionsPosition == "top" then
+				p.Y = btn.pos.Y - theme.paddingTiny
+			end
 
 			parent = btn.parent
 			absPy = p.Y
@@ -3912,9 +3958,8 @@ function createUI(system)
 				if btn.enable then
 					btn:enable()
 				end
-				for _, cell in ipairs(cells) do
-					cell:remove()
-				end
+				-- no need to remove individual cells, 
+				-- they're removed when selector:remove is called
 				cells = {}
 			end
 		end

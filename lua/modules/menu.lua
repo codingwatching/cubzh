@@ -1432,6 +1432,7 @@ if DEV_MODE == true then
 			ease:cancel(aiInput.pos)
 			ease:cancel(aiCharacter.pos)
 			ease:cancel(aiCharacterBubble.pos)
+			ease:cancel(modelCombo.pos)
 
 			local promptEnabled = aiCharacterText:isVisible()
 			local updatePosition = aiUINeedsFirstLayout or animate == false
@@ -1457,10 +1458,15 @@ if DEV_MODE == true then
 				targetInputPosition[1],
 				targetInputPosition[2] + aiInput.Height + PADDING,
 			}
+			local targetModelComboPosition = {
+				targetCharacterPosition[1],
+				targetCharacterPosition[2] + aiCharacter.Height + PADDING,
+			}
 
 			if promptEnabled == false then
 				-- move character and bubble just above safe area
 				targetCharacterPosition[2] = Screen.SafeArea.Bottom + PADDING
+				targetModelComboPosition[2] = targetCharacterPosition[2] + aiCharacter.Height + PADDING
 				-- move input below viewport
 				targetInputPosition[2] = -aiInput.Height - PADDING
 			end
@@ -1477,6 +1483,7 @@ if DEV_MODE == true then
 				aiInput.pos = targetInputPosition
 				aiCharacter.pos = targetCharacterPosition
 				aiCharacterBubble.pos = targetBubblePosition
+				modelCombo.pos = targetModelComboPosition
 			end
 
 			if animate then
@@ -1509,28 +1516,29 @@ if DEV_MODE == true then
 							onDone = function()
 								aiInput:focus()
 							end,
-						}).Y =
-							targetInputPosition[2]
+						}).Y = targetInputPosition[2]
 						ease:outBack(aiCharacter.pos, 0.22, {
 							onDone = function() end,
-						}).Y =
-							targetCharacterPosition[2]
+						}).Y = targetCharacterPosition[2]
 						ease:outBack(aiCharacterBubble.pos, 0.24, {
 							onDone = function() end,
-						}).Y =
-							targetBubblePosition[2]
+						}).Y = targetBubblePosition[2]
+						ease:outBack(modelCombo.pos, 0.24, {
+							onDone = function() end,
+						}).Y = targetModelComboPosition[2]
 					else
 						ease:inBack(aiInput.pos, 0.2, {
 							onDone = function() end,
 						}).Y = targetInputPosition[2]
 						ease:inBack(aiCharacter.pos, 0.22, {
 							onDone = function() end,
-						}).Y =
-							targetCharacterPosition[2]
+						}).Y = targetCharacterPosition[2]
 						ease:inBack(aiCharacterBubble.pos, 0.24, {
 							onDone = function() end,
-						}).Y =
-							targetBubblePosition[2]
+						}).Y = targetBubblePosition[2]
+						ease:inBack(modelCombo.pos, 0.24, {
+							onDone = function() end,
+						}).Y = targetModelComboPosition[2]
 					end
 				end
 			end
@@ -1551,6 +1559,11 @@ if DEV_MODE == true then
 				ease:cancel(aiCharacter.pos)
 				aiCharacter:remove()
 				aiCharacter = nil
+			end
+			if modelCombo ~= nil then
+				ease:cancel(modelCombo.pos)
+				modelCombo:remove()
+				modelCombo = nil
 			end
 		end
 
@@ -1638,6 +1651,19 @@ if DEV_MODE == true then
 				sfx("waterdrop_2", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 				aiUINeedsFirstLayout = true
 
+				local modelSelected = 1
+				local models = { "Claude 3.7", "Gemini 2.5", "Grok 3"}
+				local modelNames = { "claude-3-7-sonnet-20250219", "gemini-2.5-pro-exp-03-25", "grok-3-beta", "grok-3-mini-beta" }
+
+				local comboBtn = ui:buttonSecondary({ content = "Claude 3.7", textSize = "small" })
+				modelCombo = ui:comboBox({ choices = models, button = comboBtn, textSize = "small", optionsPosition = "top" })
+				modelCombo.onSelect = function(self, index)
+					self.Text = models[index]
+					modelSelected = index
+				end
+
+				modelCombo:setParent(background)
+
 				aiCharacter = ui:frame({ image = {
 					data = welcomingBuddy,
 					alpha = true,
@@ -1662,7 +1688,7 @@ if DEV_MODE == true then
 				aiCharacterLoadingAnimation:setParent(aiCharacterBubble)
 				aiCharacterLoadingAnimation:hide()
 
-				aiCharacterText = ui:createText("Hey! I'm Buzz, I can code, what do you want to do? 🙂", {
+				aiCharacterText = ui:createText("Hey! I can code for you, what do you want to do? 🙂", {
 					size = "small",
 					color = Color.White,
 				})
@@ -1723,7 +1749,9 @@ if DEV_MODE == true then
 						prompt = self.Text,
 						script = System.Script,
 						scene = sceneDescriptionJSON,
+						model = modelNames[modelSelected],
 					}
+					print("model:", body.model)
 					local headers = {}
 					headers["Content-Type"] = "application/json"
 					self.Text = ""
