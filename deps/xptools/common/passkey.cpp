@@ -6,6 +6,4 @@
 //  Copyright © 2025 voxowl. All rights reserved.
 //
 
-#pragma once
-
 #include "passkey.hpp"
