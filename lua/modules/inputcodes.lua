@@ -117,6 +117,14 @@ local inputCodes = {
 	KEY_Y = 115,
 	KEY_Z = 116,
 	SPACE = 117,
+
+	SHIFT = 118,
+	OPTION = 119,
+	CONTROL = 120,
+	RIGHT_SHIFT = 121,
+	RIGHT_OPTION = 122,
+	RIGHT_CONTROL = 123,
+
 	modifiers = {
 		Option = 1,
 		Alt = 1, --Same as options, for windows coders

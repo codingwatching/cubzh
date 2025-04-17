@@ -6,7 +6,6 @@ local menu = {}
 
 bundle = require("bundle")
 loc = require("localize")
--- str = require("str")
 ui = require("uikit").systemUI(System)
 modal = require("modal")
 theme = require("uitheme").current
@@ -21,7 +20,7 @@ sfx = require("sfx")
 logo = require("logo")
 uiPointer = require("ui_pointer")
 signup = require("signup")
-worldEditorCommon = require("world_editor_common")
+world = require("world")
 
 -- CONSTANTS
 
@@ -46,7 +45,7 @@ CUBZH_MENU_SECONDARY_BUTTON_HEIGHT = 40
 
 DEV_MODE = System.LocalUserIsAuthor and System.ServerIsInDevMode
 IN_WORLD_EDITOR = Environment["worldId"] == "world_editor"
-AI_ASSISTANT_ENABLED = true -- feature is not ready yet
+AI_ASSISTANT_ENABLED = not IN_WORLD_EDITOR
 
 -- VARS
 
@@ -89,6 +88,8 @@ MODAL_KEYS = {
 	USERNAME_FORM = 15,
 	VERIFY_ACCOUNT_FORM = 16,
 	NOTIFICATIONS = 17,
+	HISTORY = 18,
+	AI_ASSISTANT = 19,
 }
 
 -- User account management
@@ -252,6 +253,9 @@ function showModal(key, config)
 			categories = { "featured" },
 		})
 		activeModal = modal:create(content, maxModalWidth, maxModalHeight, updateModalPosition, ui)
+	elseif key == MODAL_KEYS.HISTORY then
+		content = require("history"):createModalContent({ uikit = ui })
+		activeModal = modal:create(content, maxModalWidth, maxModalHeight, updateModalPosition, ui)
 	elseif key == MODAL_KEYS.WORLD then
 		local config = config or {}
 		config.uikit = ui
@@ -288,9 +292,9 @@ function showModal(key, config)
 
 		ui.unfocus() -- unfocuses node currently focused
 
-		if key ~= MODAL_KEYS.WORLDS then
-			activeModal:setParent(background)
-		end
+		-- if key ~= MODAL_KEYS.WORLDS then
+		-- 	activeModal:setParent(background)
+		-- end
 
 		activeModalKey = key
 
@@ -1035,9 +1039,6 @@ end
 
 btnContentParentDidResize = function(self)
 	local padding = PADDING
-	if self == pezhShape then
-		padding = PADDING_BIG
-	end
 	local parent = self.parent
 	local ratio = self.Width / self.Height
 	self.Height = parent.Height - padding * 2
@@ -1414,9 +1415,12 @@ end
 -- DEV MODE / AI BUTTON
 
 if DEV_MODE == true then
-	if AI_ASSISTANT_ENABLED == true then
+	if AI_ASSISTANT_ENABLED then
 		aiBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
 		aiBtn:setParent(topBar)
+
+		historyBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
+		historyBtn:setParent(topBar)
 
 		local aiUINeedsFirstLayout = false
 
@@ -1428,6 +1432,7 @@ if DEV_MODE == true then
 			ease:cancel(aiInput.pos)
 			ease:cancel(aiCharacter.pos)
 			ease:cancel(aiCharacterBubble.pos)
+			ease:cancel(modelCombo.pos)
 
 			local promptEnabled = aiCharacterText:isVisible()
 			local updatePosition = aiUINeedsFirstLayout or animate == false
@@ -1453,10 +1458,15 @@ if DEV_MODE == true then
 				targetInputPosition[1],
 				targetInputPosition[2] + aiInput.Height + PADDING,
 			}
+			local targetModelComboPosition = {
+				targetCharacterPosition[1],
+				targetCharacterPosition[2] + aiCharacter.Height + PADDING,
+			}
 
 			if promptEnabled == false then
 				-- move character and bubble just above safe area
 				targetCharacterPosition[2] = Screen.SafeArea.Bottom + PADDING
+				targetModelComboPosition[2] = targetCharacterPosition[2] + aiCharacter.Height + PADDING
 				-- move input below viewport
 				targetInputPosition[2] = -aiInput.Height - PADDING
 			end
@@ -1473,6 +1483,7 @@ if DEV_MODE == true then
 				aiInput.pos = targetInputPosition
 				aiCharacter.pos = targetCharacterPosition
 				aiCharacterBubble.pos = targetBubblePosition
+				modelCombo.pos = targetModelComboPosition
 			end
 
 			if animate then
@@ -1505,28 +1516,29 @@ if DEV_MODE == true then
 							onDone = function()
 								aiInput:focus()
 							end,
-						}).Y =
-							targetInputPosition[2]
+						}).Y = targetInputPosition[2]
 						ease:outBack(aiCharacter.pos, 0.22, {
 							onDone = function() end,
-						}).Y =
-							targetCharacterPosition[2]
+						}).Y = targetCharacterPosition[2]
 						ease:outBack(aiCharacterBubble.pos, 0.24, {
 							onDone = function() end,
-						}).Y =
-							targetBubblePosition[2]
+						}).Y = targetBubblePosition[2]
+						ease:outBack(modelCombo.pos, 0.24, {
+							onDone = function() end,
+						}).Y = targetModelComboPosition[2]
 					else
 						ease:inBack(aiInput.pos, 0.2, {
 							onDone = function() end,
 						}).Y = targetInputPosition[2]
 						ease:inBack(aiCharacter.pos, 0.22, {
 							onDone = function() end,
-						}).Y =
-							targetCharacterPosition[2]
+						}).Y = targetCharacterPosition[2]
 						ease:inBack(aiCharacterBubble.pos, 0.24, {
 							onDone = function() end,
-						}).Y =
-							targetBubblePosition[2]
+						}).Y = targetBubblePosition[2]
+						ease:inBack(modelCombo.pos, 0.24, {
+							onDone = function() end,
+						}).Y = targetModelComboPosition[2]
 					end
 				end
 			end
@@ -1547,6 +1559,11 @@ if DEV_MODE == true then
 				ease:cancel(aiCharacter.pos)
 				aiCharacter:remove()
 				aiCharacter = nil
+			end
+			if modelCombo ~= nil then
+				ease:cancel(modelCombo.pos)
+				modelCombo:remove()
+				modelCombo = nil
 			end
 		end
 
@@ -1608,8 +1625,7 @@ if DEV_MODE == true then
 				alpha = true,
 			},
 		})
-		aiIcon.Width = 50
-		aiIcon.Height = 50
+		aiIcon.Width = 50 aiIcon.Height = 50
 
 		aiIcon.parentDidResize = function(self)
 			local parent = self.parent
@@ -1635,6 +1651,19 @@ if DEV_MODE == true then
 				sfx("waterdrop_2", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 				aiUINeedsFirstLayout = true
 
+				local modelSelected = 1
+				local models = { "Claude 3.7", "Gemini 2.5", "Grok 3"}
+				local modelNames = { "claude-3-7-sonnet-20250219", "gemini-2.5-pro-exp-03-25", "grok-3-beta", "grok-3-mini-beta" }
+
+				local comboBtn = ui:buttonSecondary({ content = "Claude 3.7", textSize = "small" })
+				modelCombo = ui:comboBox({ choices = models, button = comboBtn, textSize = "small", optionsPosition = "top" })
+				modelCombo.onSelect = function(self, index)
+					self.Text = models[index]
+					modelSelected = index
+				end
+
+				modelCombo:setParent(background)
+
 				aiCharacter = ui:frame({ image = {
 					data = welcomingBuddy,
 					alpha = true,
@@ -1659,7 +1688,7 @@ if DEV_MODE == true then
 				aiCharacterLoadingAnimation:setParent(aiCharacterBubble)
 				aiCharacterLoadingAnimation:hide()
 
-				aiCharacterText = ui:createText("Hey! I'm Buzz, I can code, what do you want to do? 🙂", {
+				aiCharacterText = ui:createText("Hey! I can code for you, what do you want to do? 🙂", {
 					size = "small",
 					color = Color.White,
 				})
@@ -1714,13 +1743,15 @@ if DEV_MODE == true then
 					end
 					setAILoading()
 					-- Get scene description JSON
-					local sceneDescriptionJSON = worldEditorCommon.objectsToJSON()
+					local sceneDescriptionJSON = world.objectsToJSON()
 					-- HTTP request body
 					local body = {
 						prompt = self.Text,
 						script = System.Script,
 						scene = sceneDescriptionJSON,
+						model = modelNames[modelSelected],
 					}
+					print("model:", body.model)
 					local headers = {}
 					headers["Content-Type"] = "application/json"
 					self.Text = ""
@@ -1850,6 +1881,29 @@ if DEV_MODE == true then
 				removeAIPrompt()
 			end
 		end
+
+		local historyIcon = ui:frame({
+			image = {
+				data = Data:FromBundle("images/icon-history.png"),
+				alpha = true,
+			},
+		})
+		historyIcon.Width = 50 historyIcon.Height = 50
+
+		historyIcon.parentDidResize = function(self)
+			local parent = self.parent
+			self.Height = parent.Height - PADDING * 2
+			self.Width = self.Height
+			self.pos = { PADDING, PADDING }
+		end
+		historyIcon:setParent(historyBtn)
+
+		historyBtn.onPress = topBarBtnPress
+		historyBtn.onCancel = topBarBtnRelease
+		historyBtn.onRelease = function(self)
+			topBarBtnRelease(self)
+			showModal(MODAL_KEYS.HISTORY)
+		end
 	end
 
 	if IN_WORLD_EDITOR == true then
@@ -1942,13 +1996,14 @@ chatBtn:hide()
 pezhBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
 pezhBtn:setParent(topBar)
 
-pezhShape = ui:createShape(bundle:Shape("shapes/pezh_coin_2"), { spherized = false, doNotFlip = true })
-pezhShape:setParent(pezhBtn)
-pezhShape.parentDidResize = btnContentParentDidResize
-
--- LocalEvent:Listen(LocalEvent.Name.Tick, function(dt)
--- 	pezhShape.pivot.Rotation = pezhShape.pivot.Rotation * Rotation(0, dt, 0)
--- end)
+local bluxIcon = ui:frame({ image = {
+	data = Data:FromBundle("images/icon-blux.png"),
+	alpha = true,
+} })
+bluxIcon.Width = 50
+bluxIcon.Height = 50
+bluxIcon:setParent(pezhBtn)
+bluxIcon.parentDidResize = btnContentParentDidResize
 
 pezhBtn.onPress = topBarBtnPress
 pezhBtn.onCancel = topBarBtnRelease
@@ -1961,7 +2016,6 @@ end
 
 if minified then
 	pezhBtn:hide()
-	pezhShape:setParent(nil)
 end
 
 -- CHAT
@@ -2137,7 +2191,7 @@ function getCubzhMenuModalContent()
 	btnHelp:setParent(node)
 
 	btnHelp.onRelease = function()
-		URL:Open("https://discord.gg/cubzh")
+		URL:Open("https://discord.gg/blipgame")
 	end
 
 	if dev then
@@ -2311,6 +2365,16 @@ topBar.parentDidResize = function(self)
 		aiBtn.pos = { previousBtn.pos.X + previousBtn.Width, 0 }
 		previousBtn = aiBtn
 		width += aiBtn.Width
+	end
+
+	-- HISTORY BUTTON
+
+	if historyBtn ~= nil and historyBtn:isVisible() then
+		historyBtn.Height = height
+		historyBtn.Width = height
+		historyBtn.pos = { previousBtn.pos.X + previousBtn.Width, 0 }
+		previousBtn = historyBtn
+		width += historyBtn.Width
 	end
 
 	-- PLAY BUTTON

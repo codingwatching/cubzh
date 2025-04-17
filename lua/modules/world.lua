@@ -1,18 +1,17 @@
--- world_editor_common.lua
--- Core module for world serialization, deserialization, and management
--- Used by all worlds to load worlds created with the world editor
+-- world.lua
+-- Core module used to load, and save worlds.
+-- Used by all worlds to load worlds created with the world editor.
+-- Current version: 3
 
-local common = {}
+local world = {}
 
--- Constants
 local MAP_SCALE_DEFAULT = 5
 local SERIALIZE_VERSION = 3
 
-local COLLISION_GROUP_OBJECT = CollisionGroups(3)
 local COLLISION_GROUP_MAP = CollisionGroups(1)
 local COLLISION_GROUP_PLAYER = CollisionGroups(2)
+local COLLISION_GROUP_OBJECT = CollisionGroups(3)
 
--- Chunk identifiers for serialization
 local SERIALIZED_CHUNKS_ID = {
 	MAP = 0,
 	AMBIENCE = 1,
@@ -23,13 +22,19 @@ local SERIALIZED_CHUNKS_ID = {
 -- State tracking
 local loaded = {
 	b64 = nil,
-	map = nil,
-	world = nil,
 	title = nil,
 	worldID = nil,
 	ambience = nil,
-	objectsByUUID = {},
+	objectsByUUID = {}, -- entries are of type Object (same references as in the World Object)
+	-- indexed by uuid, contains source of through information for each Object.
+	-- example: an Object in the scene (World Object temporarily uses Disabled physics,
+	-- in the context of world edition for example, but we don't want to save it as such.
+	-- Fields from objectsInfo instances always prevail over the World Object ones.
+	objectsInfo = {},
 	minimum_item_size_for_shadows_sqr = 1,
+	-- not used anymore, some old worlds might still have it
+	map = nil,
+	mapName = nil,
 }
 
 -- Ambience field definitions with serialization/deserialization functions
@@ -309,24 +314,20 @@ local readChunkAmbience = function(d)
 end
 
 -- Group objects by fullname for efficient serialization
-local groupObjects = function(objects)
+local groupObjects = function(objectsInfo)
 	local t = {}
-	local nbGroups = 0
-	
-	for _, v in ipairs(objects) do
-		if not t[v.fullname] then
-			t[v.fullname] = {}
-			nbGroups = nbGroups + 1
+	for uuid, objectInfo in objectsInfo do
+		if not t[objectInfo.fullname] then
+			t[objectInfo.fullname] = {}
 		end
-		table.insert(t[v.fullname], v)
+		table.insert(t[objectInfo.fullname], objectInfo)
 	end
-	
-	return t, nbGroups
+	return t
 end
 
 -- Write objects chunk to data stream
-local writeChunkObjects = function(d, objects)
-	if objects == nil then
+local writeChunkObjects = function(d, world)
+	if world.objectsInfo == nil or world.objectsByUUID == nil then
 		error("can't serialize objects chunk", 2)
 		return false
 	end
@@ -335,58 +336,70 @@ local writeChunkObjects = function(d, objects)
 	local cursorLengthField = d.Cursor
 	d:WriteUInt32(0) -- temporary write size
 
-	local objectsGrouped = groupObjects(objects)
-	local nbObjects = #objects
+	local objectsGrouped = groupObjects(world.objectsInfo)
+	local nbObjects = world.nbObjects
 	d:WriteUInt16(nbObjects)
 	
-	for fullname, group in pairs(objectsGrouped) do
+	for fullname, group in objectsGrouped do
 		d:WriteUInt16(#fullname)
 		d:WriteString(fullname)
 		d:WriteUInt16(#group)
 
-		for _, object in ipairs(group) do
+		for _, objectInfo in ipairs(group) do
 			local cursorNbFields = d.Cursor
 			local nbFields = 0
 			d:WriteUInt8(0) -- temporary nbFields
 
-			if object.uuid then
+			if objectInfo.uuid then
 				d:WriteString("id")
-				d:WriteUInt8(#object.uuid)
-				d:WriteString(object.uuid)
+				d:WriteUInt8(#objectInfo.uuid)
+				d:WriteString(objectInfo.uuid)
 				nbFields = nbFields + 1
 			end
 			
-			if object.Position and object.Position ~= Number3(0, 0, 0) then
+			if objectInfo.Position and objectInfo.Position ~= Number3(0, 0, 0) then
 				d:WriteString("po")
-				d:WriteNumber3(object.Position)
+				d:WriteNumber3(objectInfo.Position)
 				nbFields = nbFields + 1
 			end
 			
-			if object.Rotation and object.Rotation ~= Rotation(0, 0, 0) then
+			if objectInfo.Rotation and objectInfo.Rotation ~= Rotation(0, 0, 0) then
 				d:WriteString("ro")
-				d:WriteRotation(object.Rotation)
+				d:WriteRotation(objectInfo.Rotation)
 				nbFields = nbFields + 1
 			end
 			
-			if object.Scale and object.Scale ~= Number3(1, 1, 1) then
+			if objectInfo.Scale and objectInfo.Scale ~= Number3(1, 1, 1) then
 				d:WriteString("sc")
 				if type(object.Scale) == "number" then
-					object.Scale = object.Scale * Number3(1, 1, 1)
+					objectInfo.Scale = objectInfo.Scale * Number3(1, 1, 1)
 				end
-				d:WriteNumber3(object.Scale)
+				d:WriteNumber3(objectInfo.Scale)
 				nbFields = nbFields + 1
 			end
 			
-			if object.Name and object.Name ~= object.fullname then
+			if objectInfo.Name and objectInfo.Name ~= objectInfo.fullname then
 				d:WriteString("na")
-				d:WriteUInt8(#object.Name)
-				d:WriteString(object.Name)
+				d:WriteUInt8(#objectInfo.Name)
+				d:WriteString(objectInfo.Name)
 				nbFields = nbFields + 1
 			end
 			
-			if object.Physics ~= nil then
+			if objectInfo.Physics ~= nil then
 				d:WriteString("pm")
-				d:WritePhysicsMode(object.Physics)
+				d:WritePhysicsMode(objectInfo.Physics)
+				nbFields = nbFields + 1
+			end
+
+			if objectInfo.CollisionGroups ~= nil then
+				d:WriteString("cg")
+				d:WriteCollisionGroups(objectInfo.CollisionGroups)
+				nbFields = nbFields + 1
+			end
+
+			if objectInfo.CollidesWithGroups ~= nil then
+				d:WriteString("cw")
+				d:WriteCollisionGroups(objectInfo.CollidesWithGroups)
 				nbFields = nbFields + 1
 			end
 
@@ -408,7 +421,7 @@ end
 
 -- Read objects chunk from data stream (for version 3)
 local readChunkObjects = function(d)
-	local objects = {}
+	local objectsInfo = {}
 	d:ReadUInt32() -- read size
 	local nbObjects = d:ReadUInt16()
 	local fetchedObjects = 0
@@ -441,70 +454,25 @@ local readChunkObjects = function(d)
 					instance.uuid = d:ReadString(idLength)
 				elseif key == "pm" then
 					instance.Physics = d:ReadPhysicsMode()
+				elseif key == "cg" then
+					instance.CollisionGroups = d:ReadCollisionGroups()
+				elseif key == "cw" then
+					instance.CollidesWithGroups = d:ReadCollisionGroups()
 				else
 					error("Wrong format while deserializing", 2)
 					return false
 				end
 			end
 			
-			table.insert(objects, instance)
-			fetchedObjects = fetchedObjects + 1
-		end
-	end
-	
-	return objects
-end
-
--- Read objects chunk from data stream (for version 2)
-local readChunkObjectsV2 = function(d)
-	local objects = {}
-	d:ReadUInt32() -- read size
-	local nbObjects = d:ReadUInt16()
-	local fetchedObjects = 0
-	
-	while fetchedObjects < nbObjects do
-		local fullnameSize = d:ReadUInt16()
-		local fullname = d:ReadString(fullnameSize)
-		local nbInstances = d:ReadUInt16()
-		
-		for _ = 1, nbInstances do
-			local instance = {
-				fullname = fullname,
-			}
-			
-			local nbFields = d:ReadUInt8()
-			for _ = 1, nbFields do
-				local key = d:ReadString(2)
-				
-				if key == "po" then
-					instance.Position = d:ReadNumber3()
-				elseif key == "ro" then
-					instance.Rotation = d:ReadRotation()
-				elseif key == "sc" then
-					instance.Scale = d:ReadNumber3()
-				elseif key == "na" then
-					local nameLength = d:ReadUInt8()
-					instance.Name = d:ReadString(nameLength)
-				elseif key == "id" then
-					local idLength = d:ReadUInt8()
-					instance.uuid = d:ReadString(idLength)
-				elseif key == "de" then
-					local length = d:ReadUInt16()
-					instance.itemDetailsCell = Data(d:ReadString(length), { format = "base64" }):ToTable()
-				elseif key == "pm" then
-					instance.Physics = d:ReadPhysicsMode()
-				else
-					error("Wrong format while deserializing", 2)
-					return false
-				end
+			if instance.uuid == nil then
+				error("Object has no uuid")
 			end
-			
-			table.insert(objects, instance)
+			objectsInfo[instance.uuid] = instance
 			fetchedObjects = fetchedObjects + 1
 		end
 	end
 	
-	return objects
+	return objectsInfo, fetchedObjects
 end
 
 -- Read blocks chunk (deprecated but needed for compatibility)
@@ -539,8 +507,8 @@ local serializeWorldBase64 = function(world)
 		writeChunkAmbience(d, world.ambience)
 	end
 	
-	if world.objects and #world.objects > 0 then
-		writeChunkObjects(d, world.objects)
+	if world.nbObjects > 0 then
+		writeChunkObjects(d, world)
 	end
 	
 	return d:ToString({ format = "base64" })
@@ -549,7 +517,10 @@ end
 -- Deserialize a world from base64 string
 local deserializeWorldBase64 = function(str)
 	local world = {
-		objects = {},
+		objectsInfo = {},
+		nbObjects = 0,
+		mapName = nil,
+		ambience = nil,
 	}
 	
 	if str == nil then
@@ -562,19 +533,18 @@ local deserializeWorldBase64 = function(str)
 	if version == 2 or version == 3 then
 		while d.Cursor < d.Length do
 			local chunk = d:ReadByte()
-			
 			if chunk == SERIALIZED_CHUNKS_ID.MAP then
 				world.mapName, world.mapScale = readChunkMap(d)
 			elseif chunk == SERIALIZED_CHUNKS_ID.AMBIENCE then
 				world.ambience = readChunkAmbience(d)
 			elseif chunk == SERIALIZED_CHUNKS_ID.OBJECTS then
 				if version == 2 then
-					world.objects = readChunkObjectsV2(d)
+					world.objectsInfo, world.nbObjects = require("world_v2").readChunkObjects(d)
 				else
-					world.objects = readChunkObjects(d)
+					world.objectsInfo, world.nbObjects = readChunkObjects(d)
 				end
 			elseif chunk == SERIALIZED_CHUNKS_ID.BLOCKS then
-				world.blocks = readChunkBlocks(d) -- Not used but need to read to move cursor
+				readChunkBlocks(d) -- Not used but need to read to move cursor
 			end
 		end
 	else -- just a table
@@ -589,7 +559,7 @@ end
 -- ---------------
 
 -- Generate a UUID v4
-common.uuidv4 = function()
+world.uuidv4 = function()
 	local template = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
 	return string.gsub(template, "[xy]", function(c)
 		local v = (c == "x") and math.random(0, 0xf) or math.random(8, 0xb)
@@ -598,7 +568,7 @@ common.uuidv4 = function()
 end
 
 -- Update shadow properties based on object size
-common.updateShadow = function(obj) 
+world.updateShadow = function(obj) 
 	local castShadow = false 
 
 	if loaded.minimum_item_size_for_shadows_sqr ~= nil then
@@ -615,7 +585,12 @@ common.updateShadow = function(obj)
 end
 
 -- Load an object into the world
-local loadObject = function(obj, objInfo)
+local function loadObject(obj, objInfo)
+	if loaded.objectsByUUID == nil then
+		return
+	end
+
+	loaded.objectsByUUID[objInfo.uuid] = obj
 	obj:SetParent(World)
 
 	local k = Box()
@@ -626,8 +601,17 @@ local loadObject = function(obj, objInfo)
 	obj.Rotation = objInfo.Rotation or Rotation(0, 0, 0)
 	obj.Scale = objInfo.Scale or 0.5
 	obj.uuid = objInfo.uuid
-	obj.CollisionGroups = COLLISION_GROUP_OBJECT
-	obj.CollidesWithGroups = COLLISION_GROUP_MAP + COLLISION_GROUP_PLAYER
+	if objInfo.CollisionGroups ~= nil then
+		obj.CollisionGroups = objInfo.CollisionGroups
+	else
+		obj.CollisionGroups = COLLISION_GROUP_OBJECT
+	end
+	if objInfo.CollidesWithGroups ~= nil then
+		obj.CollidesWithGroups = objInfo.CollidesWithGroups
+	else
+		obj.CollidesWithGroups = COLLISION_GROUP_MAP + COLLISION_GROUP_PLAYER
+	end
+
 	obj.Name = objInfo.Name or objInfo.fullname
 	obj.fullname = objInfo.fullname
 
@@ -639,19 +623,19 @@ local loadObject = function(obj, objInfo)
 		o.Physics = physics
 	end, { includeRoot = true })
 
-	common.updateShadow(obj)
+	world.updateShadow(obj)
 end
 
 -- Load a map into the world
-local loadMap = function(d, n, didLoad)
+local function loadMap(d, n, didLoad)
 	Object:Load(d, function(j)
 		local map = MutableShape(j, { includeChildren = true })
 		loaded.map = map
 
 		map.Scale = n or 5
 		map:Recurse(function(o)
-			o.CollisionGroups = Map.CollisionGroups
-			o.CollidesWithGroups = Map.CollidesWithGroups
+			o.CollisionGroups = COLLISION_GROUP_MAP
+			o.CollidesWithGroups = COLLISION_GROUP_OBJECT + COLLISION_GROUP_PLAYER
 			o.Physics = PhysicsMode.StaticPerBlock
 		end, { includeRoot = true })
 		map:SetParent(World)
@@ -664,15 +648,44 @@ local loadMap = function(d, n, didLoad)
 	end)
 end
 
+world.getObject = function(uuid)
+	if loaded.objectsByUUID == nil or uuid == nil then
+		return nil
+	end
+	return loaded.objectsByUUID[uuid]
+end
+
+world.getObjectInfo = function(uuid)
+	if loaded.objectsInfo == nil or uuid == nil then
+		return nil
+	end
+	return loaded.objectsInfo[uuid]
+end
+
 -- Add an object to the loaded world
-common.addObject = function(obj)
-	if loaded == nil or obj.uuid == nil then
+world.addObject = function(obj)
+	if loaded == nil then
 		return
 	end
+
+	if obj.uuid ~= nil and loaded.objectsByUUID[obj.uuid] ~= nil then 
+		error("object already exists")
+	end
 	
-	table.insert(loaded.world.objects, obj)
-	loaded.objectsByUUID = loaded.objectsByUUID or {}
+	obj.uuid = world.uuidv4()
 	loaded.objectsByUUID[obj.uuid] = obj
+	loaded.objectsInfo[obj.uuid] = {
+		uuid = obj.uuid,
+		fullname = obj.fullname,
+		Name = obj.Name,
+		Position = obj.Position:Copy(),
+		Rotation = obj.Rotation:Copy(),
+		Scale = obj.Scale:Copy(),
+		Physics = obj.Physics,
+		CollisionGroups = COLLISION_GROUP_OBJECT, -- default collision group
+		CollidesWithGroups = COLLISION_GROUP_MAP + COLLISION_GROUP_PLAYER,
+	}
+	loaded.nbObjects += 1
 end
 
 -- Default update config for objects
@@ -686,16 +699,18 @@ local defaultUpdateConfig = {
 }
 
 -- Update an object in the loaded world
-common.updateObject = function(config)
+world.updateObject = function(config)
 	local ok, err = pcall(function()
 		config = require("config"):merge(defaultUpdateConfig, config, {
 			acceptTypes = {
 				uuid = { "string" },
-				position = { "Number3" },
-				rotation = { "Rotation" },
-				scale = { "Number3", "number", "integer" },
-				name = { "string" },
-				physics = { "PhysicsMode" },
+				Position = { "Number3" },
+				Rotation = { "Rotation" },
+				Scale = { "Number3", "number", "integer" },
+				Name = { "string" },
+				Physics = { "PhysicsMode" },
+				CollisionGroups = { "CollisionGroups" },
+				CollidesWithGroups = { "CollisionGroups" },
 			},
 		})
 	end)
@@ -708,79 +723,75 @@ common.updateObject = function(config)
 		return
 	end
 	
-	local object = loaded.objectsByUUID[config.uuid]
-	if object == nil then
+	local objectInfo = loaded.objectsInfo[config.uuid]
+	if objectInfo == nil then
 		return
 	end
 	
-	if config.position ~= nil then
-		object.Position = config.position:Copy()
+	if config.Position ~= nil then
+		objectInfo.Position = config.Position:Copy()
 	end
 	
-	if config.rotation ~= nil then
-		object.Rotation = config.rotation:Copy()
+	if config.Rotation ~= nil then
+		objectInfo.Rotation = config.Rotation:Copy()
 	end
 	
-	if config.scale ~= nil then
-		if type(config.scale) == "Number3" then
-			object.Scale = config.scale:Copy()
+	if config.Scale ~= nil then
+		if type(config.Scale) == "Number3" then
+			objectInfo.Scale = config.Scale:Copy()
 		else
-			object.Scale = config.scale
+			objectInfo.Scale = config.Scale
 		end
 	end
 	
-	if config.physics ~= nil then
-		object.Physics = config.physics
+	if config.Physics ~= nil then
+		objectInfo.Physics = config.Physics
 	end
 	
-	if config.name ~= nil then
-		object.Name = config.name
+	if config.Name ~= nil then
+		objectInfo.Name = config.Name
+	end
+
+	if config.CollisionGroups ~= nil then
+		objectInfo.CollisionGroups = config.CollisionGroups
+	end
+
+	if config.CollidesWithGroups ~= nil then
+		objectInfo.CollidesWithGroups = config.CollidesWithGroups
 	end
 end
 
 -- Remove an object from the loaded world
-common.removeObject = function(uuid)
-	local objectsByUUID = loaded.objectsByUUID
-	local objects = loaded.world.objects
-	
-	if objectsByUUID == nil or uuid == nil then
+world.removeObject = function(uuid)
+	if loaded.objectsByUUID == nil or uuid == nil then
 		return
 	end
-	
-	local obj = objectsByUUID[uuid]
-	if obj == nil then
-		return
-	end
-	
-	objectsByUUID[uuid] = nil
-	
-	for i, o in ipairs(objects) do
-		if o.uuid == uuid then
-			table.remove(objects, i)
-			break
-		end
+	if loaded.objectsByUUID[uuid] ~= nil or loaded.objectsInfo[uuid] ~= nil then
+		loaded.objectsByUUID[uuid] = nil
+		loaded.objectsInfo[uuid] = nil
+		loaded.nbObjects -= 1
 	end
 end
 
 -- Update ambience settings
-common.updateAmbience = function(ambience)
-	if loaded.world == nil then
+world.updateAmbience = function(ambience)
+	if loaded == nil then
 		return
 	end
-	loaded.world.ambience = ambience
+	loaded.ambience = ambience
 end
 
 -- Get current ambience settings
-common.getAmbience = function()
-	return loaded.world.ambience
+world.getAmbience = function()
+	return loaded.ambience
 end
 
 -- Public API for serialization/deserialization
-common.serializeWorld = function(world)
+world.serializeWorld = function(world)
 	return serializeWorldBase64(world)
 end
 
-common.deserializeWorld = function(str)
+world.deserializeWorld = function(str)
 	return deserializeWorldBase64(str)
 end
 
@@ -799,7 +810,7 @@ local defaultLoadWorldConfig = {
 }
 
 -- Load a world from a base64 string
-common.loadWorld = function(config)
+world.load = function(config)
 	local ok, err = pcall(function()
 		config = require("config"):merge(defaultLoadWorldConfig, config, {
 			acceptTypes = {
@@ -814,25 +825,27 @@ common.loadWorld = function(config)
 	end)
 	
 	if not ok then
-		error("world_editor_common:loadWorld(config) - config error: " .. err, 2)
+		error("world:loadWorld(config) - config error: " .. err, 2)
 	end
 
-	local world = common.deserializeWorld(config.b64)
+	local worldInfo = world.deserializeWorld(config.b64)
 
 	-- Create a base plate if no map or objects exist
 	local basePlateAdded = false
-	if config.addBasePlateIfNeeded and world.mapName == nil and (world.objects == nil or #world.objects == 0) then
+	if config.addBasePlateIfNeeded and worldInfo.mapName == nil and (worldInfo.nbObjects == nil or worldInfo.nbObjects == 0) then
 		local scale = MAP_SCALE_DEFAULT
 		local basePlate = {
 			fullname = "aduermael.baseplate",
-			uuid = common.uuidv4(),
+			uuid = world.uuidv4(),
 			Position = Number3(0, 0, 0),
 			Rotation = Rotation(0, 0, 0),
 			Scale = Number3(scale, scale, scale),
 			Physics = PhysicsMode.StaticPerBlock,
+			CollisionGroups = COLLISION_GROUP_MAP,
+			CollidesWithGroups = COLLISION_GROUP_OBJECT + COLLISION_GROUP_PLAYER
 		}
-		world.objects = world.objects or {}
-		table.insert(world.objects, basePlate)
+		worldInfo.objectsInfo[basePlate.uuid] = basePlate
+		worldInfo.nbObjects = 1
 		basePlateAdded = true
 	end
 
@@ -847,10 +860,13 @@ common.loadWorld = function(config)
 		b64 = config.b64,
 		title = config.title,
 		worldID = config.worldID,
-		map = nil,
-		world = world,
+		ambience = worldInfo.ambience,
+		objectsInfo = worldInfo.objectsInfo,
+		nbObjects = worldInfo.nbObjects,
 		objectsByUUID = {},
 		minimum_item_size_for_shadows_sqr = config.optimisations.minimum_item_size_for_shadows^2 or 1,
+		map = nil,
+		mapName = worldInfo.mapName,
 	}
 
 	-- Load objects and ambience after map is loaded (or immediately if skipping map)
@@ -864,23 +880,16 @@ common.loadWorld = function(config)
 			end
 		end
 		
-		local objects = world.objects
-		local ambience = world.ambience
+		local objectsInfo = loaded.objectsInfo
+		local ambience = loaded.ambience
 		
-		-- Index objects by UUID for faster lookups
-		if objects then
-			for _, o in ipairs(objects) do
-				if o.uuid then
-					loaded.objectsByUUID[o.uuid] = o
-				end
-			end
-
+		if objectsInfo ~= nil then
 			-- Load objects through massloading system
 			local massLoading = require("massloading")
-			local onLoad = function(obj, data)
-				loadObject(obj, data)
+			local onLoad = function(obj, objectInfo)
+				loadObject(obj, objectInfo)
 				if config.onLoad then
-					config.onLoad(obj, data)
+					config.onLoad(obj, objectInfo)
 				end
 			end
 			
@@ -890,7 +899,7 @@ common.loadWorld = function(config)
 				fullnameItemKey = "fullname",
 			}
 			
-			massLoading:load(objects, massLoadingConfig)
+			massLoading:load(objectsInfo, massLoadingConfig)
 		end
 		
 		-- Apply ambience if available
@@ -899,7 +908,7 @@ common.loadWorld = function(config)
 		end
 		
 		-- Call onDone if no objects to load
-		if not objects then
+		if objectsInfo == nil then
 			onDone()
 		end
 	end
@@ -912,70 +921,76 @@ common.loadWorld = function(config)
 	end
 end
 
-common.objectsToJSON = function()
+world.debug = function()
+	if loaded.objectsByUUID == nil then
+		return
+	end
+	for uuid, obj in loaded.objectsByUUID do
+		print(uuid, obj, loaded.objectsInfo[uuid])
+	end
+end
+
+-- Add this near the top with other local declarations
+local PHYSICS_MODE_NAMES = {
+	[PhysicsMode.StaticPerBlock] = "StaticPerBlock",
+	[PhysicsMode.Dynamic] = "Dynamic", 
+	[PhysicsMode.Trigger] = "Trigger",
+	[PhysicsMode.Disabled] = "Disabled",
+	[PhysicsMode.Static] = "Static"
+}
+
+world.objectsToJSON = function()
 	local toEncode = {}
 
-	local objects = loaded.world.objects
-	if objects then
-		local objectsGrouped = groupObjects(objects)
-		local nbObjects = #objects
-	
-		for fullname, group in pairs(objectsGrouped) do
-			for _, object in ipairs(group) do
-				local entity = {
-					itemName = fullname,
-				}
-				
-				if object.Position and object.Position ~= Number3(0, 0, 0) then
-					entity.Position = { object.Position.X, object.Position.Y, object.Position.Z }
-				end
-				
-				if object.Rotation and object.Rotation ~= Rotation(0, 0, 0) then
-					entity.Rotation = { object.Rotation.X, object.Rotation.Y, object.Rotation.Z }
-				end
-				
-				if object.Scale and object.Scale ~= Number3(1, 1, 1) then
-					entity.Scale = { object.Scale.X, object.Scale.Y, object.Scale.Z }
-				end
-				
-				if object.Name and object.Name ~= object.fullname then
-					entity.Name = object.Name
-				else
-					entity.Name = object.fullname
-				end
-				
-				if object.Physics ~= nil then
-					if object.Physics == PhysicsMode.StaticPerBlock then
-						entity.Physics = "StaticPerBlock"
-					elseif object.Physics == PhysicsMode.Dynamic then
-						entity.Physics = "Dynamic"
-					elseif object.Physics == PhysicsMode.Trigger then
-						entity.Physics = "Trigger"
-					else
-						entity.Physics = "Static"
-					end
-					
-					entity.CollisionGroups = {}
-					local collisionGroups = object.CollisionGroups
-					if collisionGroups == nil then
-						collisionGroups = COLLISION_GROUP_OBJECT
-					end
-					for _, cg in collisionGroups do
-						table.insert(entity.CollisionGroups, cg)
-					end
-
-					entity.CollidesWithGroups = {}
-					local collidesWithGroups = object.CollidesWithGroups
-					if collidesWithGroups == nil then
-						collidesWithGroups = COLLISION_GROUP_MAP + COLLISION_GROUP_PLAYER
-					end
-					for _, cg in collidesWithGroups do
-						table.insert(entity.CollidesWithGroups, cg)
-					end
-				end
-
-				table.insert(toEncode, entity)
+	if loaded.objectsInfo then
+		for uuid, objectInfo in loaded.objectsInfo do
+			local entity = {
+				itemName = objectInfo.fullname,
+			}
+			
+			if objectInfo.Position and objectInfo.Position ~= Number3(0, 0, 0) then
+				entity.Position = { objectInfo.Position.X, objectInfo.Position.Y, objectInfo.Position.Z }
 			end
+			
+			if objectInfo.Rotation and objectInfo.Rotation ~= Rotation(0, 0, 0) then
+				entity.Rotation = { objectInfo.Rotation.X, objectInfo.Rotation.Y, objectInfo.Rotation.Z }
+			end
+			
+			if objectInfo.Scale and objectInfo.Scale ~= Number3(1, 1, 1) then
+				entity.Scale = { objectInfo.Scale.X, objectInfo.Scale.Y, objectInfo.Scale.Z }
+			end
+			
+			if objectInfo.Name and objectInfo.Name ~= objectInfo.fullname then
+				entity.Name = objectInfo.Name
+			else
+				entity.Name = objectInfo.fullname
+			end
+			
+			if objectInfo.Physics ~= nil then
+				entity.Physics = PHYSICS_MODE_NAMES[objectInfo.Physics] or "Static"
+			else
+				entity.Physics = "Disabled"
+			end
+
+			entity.CollisionGroups = {}
+			local collisionGroups = objectInfo.CollisionGroups
+			if collisionGroups == nil then
+				collisionGroups = COLLISION_GROUP_OBJECT
+			end
+			for _, cg in collisionGroups do
+				table.insert(entity.CollisionGroups, cg)
+			end
+
+			entity.CollidesWithGroups = {}
+			local collidesWithGroups = objectInfo.CollidesWithGroups
+			if collidesWithGroups == nil then
+				collidesWithGroups = COLLISION_GROUP_MAP + COLLISION_GROUP_PLAYER
+			end
+			for _, cw in collidesWithGroups do
+				table.insert(entity.CollidesWithGroups, cw)
+			end
+
+			table.insert(toEncode, entity)
 		end
 	end
 
@@ -983,12 +998,12 @@ common.objectsToJSON = function()
 end
 
 -- Save the current world state
-common.saveWorld = function()
-	if loaded.world == nil or loaded.worldID == nil then
+world.save = function()
+	if loaded.objectsByUUID == nil or loaded.objectsInfo == nil then
 		return
 	end
 	
-	local b64 = serializeWorldBase64(loaded.world)
+	local b64 = serializeWorldBase64(loaded)
 	
 	if b64 ~= loaded.b64 then
 		loaded.b64 = b64
@@ -1003,4 +1018,4 @@ common.saveWorld = function()
 	end
 end
 
-return common
+return world

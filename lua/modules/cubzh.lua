@@ -281,8 +281,10 @@ Client.OnStart = function()
 
 	local gameGridImage = Data:FromBundle("images/games-background.png")
 
-	local currentGradientFrom = Color(20, 20, 20)
-	local currentGradientTo = Color(50, 50, 50)
+	-- local currentGradientFrom = Color(20, 20, 20)
+	-- local currentGradientTo = Color(50, 50, 50)
+	local currentGradientFrom = Color(18, 18, 20)
+	local currentGradientTo = Color(18, 18, 20)
 	local currentGameGridAlpha = 0
 
 	-- local currentGradientFrom = Color(13, 28, 35)
@@ -347,7 +349,8 @@ Client.OnStart = function()
 	end		
 
 	function setHomeBackground()
-		startBackgroundLerp(Color(20, 20, 20), Color(50, 50, 50), 0.0)
+		startBackgroundLerp(Color(18, 18, 20), Color(18, 18, 20), 0.0)
+		-- startBackgroundLerp(Color(20, 20, 20), Color(50, 50, 50), 0.0)
 		Menu.BottomBar:hide()
 	end
 
@@ -1952,8 +1955,43 @@ function home()
 		}
 		local nbCategories = #categories
 
+		local firstCategoryCell = nil
+		local function getOrcreateFirstCategoryCell(category)
+			if firstCellQuadData == nil then
+				firstCellQuadData = Data:FromBundle("images/home-content-background.png")
+			end
+			cell = ui:frame({
+				image = {
+					data = firstCellQuadData,
+					slice9 = { 0.5, 0.5 },
+					slice9Scale = 1.0,
+					slice9Width = 20,
+					-- cutout = true,
+					alpha = true,
+				},
+			})
+
+			cell.parentDidResize = cellResizeFn
+
+			local title = ui:createText("Title", {
+				color = Color.White,
+				size = "default",
+				outline = 0.2,
+			})
+			title:setParent(cell)
+
+			cell.Height = title.Height + (category.cellSize or 100) + padding * 3
+			cell.title = title
+
+			cell.button = ui:buttonLink({ content = "", textSize = "small" })
+			cell.button:setParent(cell)
+
+			firstCategoryCell = cell
+			return cell
+		end
+
 		local function createCategoryCell(category)
-			cell = ui:frameGenericContainer()
+			cell = ui:frame({ color = Color(26, 26, 30) })
 			cell.parentDidResize = cellResizeFn
 
 			local title = ui:createText("Title", {
@@ -2040,10 +2078,10 @@ function home()
 			padding = {
 				top = Screen.SafeArea.Top + CONFIG.CELL_PADDING,
 				bottom = CONFIG.CELL_PADDING,
-				left = CONFIG.CELL_PADDING,
-				right = CONFIG.CELL_PADDING,
+				left = 0,
+				right = 0,
 			},
-			cellPadding = CONFIG.CELL_PADDING,
+			cellPadding = 0,
 			loadCell = function(index)
 				if index == 1 then
 					if profileCell == nil then
@@ -2161,10 +2199,14 @@ function home()
 
 					local cell = categoryCells[categoryIndex]
 					if cell == nil then
-						cell = table.remove(categoryUnusedCells)
-						if cell == nil then
-							-- no cell in recycle pool, create it
-							cell = createCategoryCell(category)
+						if index == 2 then
+							cell = getOrcreateFirstCategoryCell()
+						else
+							cell = table.remove(categoryUnusedCells)
+							if cell == nil then
+								-- no cell in recycle pool, create it
+								cell = createCategoryCell(category)
+							end
 						end
 						cell.categoryIndex = categoryIndex
 						categoryCells[categoryIndex] = cell
@@ -2196,8 +2238,15 @@ function home()
 							local scroll = ui:scroll({
 								-- backgroundColor = Color(255, 255, 255),
 								-- backgroundColor = Color(43, 45, 49),
-								backgroundColor = theme.buttonTextColor,
-								padding = CONFIG.CELL_PADDING,
+								backgroundColor = Color(26, 26, 30),
+								-- backgroundColor = theme.buttonTextColor,
+								padding = {
+									top = 0,
+									bottom = 0,
+									left = CONFIG.CELL_PADDING,
+									right = CONFIG.CELL_PADDING,
+								},
+								-- CONFIG.CELL_PADDING
 								cellPadding = CONFIG.CELL_PADDING,
 								direction = "right",
 								loadCell = category.loadCell,

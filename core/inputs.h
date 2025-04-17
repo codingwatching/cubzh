@@ -172,6 +172,13 @@ typedef enum {
     InputKeyZ, // 116
     InputSpace,
 
+    InputShift, // 118
+    InputOption, // 119
+    InputControl, // 120
+    InputRightShift, // 121
+    InputRightOption, // 122
+    InputRightControl, // 123
+
     InputISOSection, // AZERTY macOS: kVK_ISO_Section
 
     InputCount // not an input, used to get max value
