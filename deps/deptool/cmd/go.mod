@@ -1,6 +1,6 @@
 module github.com/cubzh/cubzh/deps/deptool/cmd
 
-go 1.24.1
+go 1.24.2
 
 // Use the local copies of packages
 replace github.com/cubzh/cubzh/deps/deptool v0.0.1 => ../
