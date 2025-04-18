@@ -83,7 +83,8 @@ CollisionCoupleStatus scene_register_collision_couple(Scene *sc,
 
 /// Toggle this flag when using scene recursion where an external callback w/ the ability to remove
 /// transforms is called. Transforms removal will be delayed until the flag is turned OFF
-void scene_toggle_recursion_lock(Scene *sc, const bool toggle);
+/// @returns false if maximum nested recursion count is reached
+bool scene_toggle_recursion_lock(Scene *sc, const bool toggle);
 
 // MARK: - Physics -
 

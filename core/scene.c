@@ -11,9 +11,6 @@
 
 #include "weakptr.h"
 
-#define SCENE_FLAG_NONE 0
-#define SCENE_FLAG_RECURSION_LOCK 1 // prevent transforms removal until toggled OFF
-
 #if DEBUG_SCENE
 static int debug_scene_awake_queries = 0;
 #endif
@@ -42,7 +39,8 @@ struct _Scene {
     // constant acceleration for the whole Scene (gravity usually)
     float3 constantAcceleration;
 
-    uint8_t flags;
+    // prevent transforms removal until toggled OFF (back to 0, in case of nested recursion calls)
+    uint8_t recursionLockCount;
 };
 
 typedef struct {
@@ -55,18 +53,6 @@ typedef struct {
     Transform *t;
     bool keepWorld;
 } _DelayedRemoval;
-
-static void _scene_toggle_flag(Scene *sc, const uint8_t flag, const bool toggle) {
-    if (toggle) {
-        sc->flags |= flag;
-    } else {
-        sc->flags &= ~flag;
-    }
-}
-
-static bool _scene_get_flag(const Scene *sc, const uint8_t flag) {
-    return (sc->flags & flag) != 0;
-}
 
 void _scene_collision_couple_free_func(void *ptr) {
     _CollisionCouple *cc = (_CollisionCouple *)ptr;
@@ -163,7 +149,7 @@ Scene *scene_new(Weakptr *g) {
         sc->collisions = doubly_linked_list_new();
         sc->awakeBoxes = doubly_linked_list_new();
         float3_set(&sc->constantAcceleration, 0.0f, 0.0f, 0.0f);
-        sc->flags = SCENE_FLAG_NONE;
+        sc->recursionLockCount = 0;
 
         transform_set_parent(sc->system, sc->root, false);
     }
@@ -435,7 +421,7 @@ bool scene_remove_transform(Scene *sc, Transform *t, const bool keepWorld) {
         return false;
     }
 
-    if (_scene_get_flag(sc, SCENE_FLAG_RECURSION_LOCK)) {
+    if (sc->recursionLockCount > 0) {
         transform_retain(t);
         _DelayedRemoval *dr = (_DelayedRemoval *)malloc(sizeof(_DelayedRemoval));
         dr->t = t;
@@ -506,21 +492,28 @@ CollisionCoupleStatus scene_register_collision_couple(Scene *sc,
     return CollisionCoupleStatus_Begin;
 }
 
-void scene_toggle_recursion_lock(Scene *sc, const bool toggle) {
-    if (_scene_get_flag(sc, SCENE_FLAG_RECURSION_LOCK) && toggle == false) {
-        _DelayedRemoval *dr = (_DelayedRemoval*)fifo_list_pop(sc->recursionLocked);
-        while (dr != NULL) {
-            if (transform_remove_parent(dr->t, dr->keepWorld)) {
-                _scene_register_removed_transform(sc, dr->t);
+bool scene_toggle_recursion_lock(Scene *sc, const bool toggle) {
+    if (toggle) {
+        if (sc->recursionLockCount == UINT8_MAX) {
+            return false;
+        }
+        ++sc->recursionLockCount;
+    } else if (sc->recursionLockCount > 0) {
+        if (--sc->recursionLockCount == 0) {
+            _DelayedRemoval *dr = (_DelayedRemoval*)fifo_list_pop(sc->recursionLocked);
+            while (dr != NULL) {
+                if (transform_remove_parent(dr->t, dr->keepWorld)) {
+                    _scene_register_removed_transform(sc, dr->t);
 #if DEBUG_SCENE_EXTRALOG
-                cclog_debug("🏞 transform %p (id: %d) removed from scene %p", t, transform_get_id(t), sc);
+                    cclog_debug("🏞 transform %p (id: %d) removed from scene %p", t, transform_get_id(t), sc);
 #endif
+                }
+                free(dr);
+                dr = (_DelayedRemoval*)fifo_list_pop(sc->recursionLocked);
             }
-            free(dr);
-            dr = (_DelayedRemoval*)fifo_list_pop(sc->recursionLocked);
         }
     }
-    _scene_toggle_flag(sc, SCENE_FLAG_RECURSION_LOCK, toggle);
+    return true;
 }
 
 // MARK: - Physics -
