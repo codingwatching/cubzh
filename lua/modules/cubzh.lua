@@ -420,7 +420,7 @@ function titleScreen()
 		didResizeFunction = function()
 			layoutCamera({ noAnimation = true })
 			-- local box = Box()
-			-- box:Fit(logo, { recursive = true })
+			-- box:Fit(logo, { recurse = true })
 			-- Camera:FitToScreen(box, 0.8)
 		end
 

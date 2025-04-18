@@ -120,7 +120,7 @@ end
 
 function getCenter(target)
 	local box = Box()
-	box:Fit(target, { recursive = true })
+	box:Fit(target, { recurse = true })
 	return box.Center
 end
 
