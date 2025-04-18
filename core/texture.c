@@ -15,7 +15,7 @@
 #define TEXTURE_FLAG_NONE 0
 #define TEXTURE_FLAG_FILTERING 1
 #define TEXTURE_FLAG_TYPE_SHIFT TEXTURE_FLAG_FILTERING
-#define TEXTURE_FLAG_TYPE_MASK 6
+#define TEXTURE_FLAG_TYPE_MASK 14 // 2nd to 4th bit
 
 //// If data isn't NULL and width/height are 0, the texture data must first be parsed
 struct _Texture {
@@ -64,6 +64,44 @@ Texture* texture_new_raw(const void* data, const uint32_t size, const TextureTyp
     t->refCount = 1;
     t->format = 0;
     t->flags = (uint8_t)(type << TEXTURE_FLAG_TYPE_SHIFT);
+    return t;
+}
+
+Texture* texture_new_cubemap_faces(const void* top, const void* bottom, const void* front, const void* back,
+                                   const void* right, const void* left, const uint32_t faceSize,
+                                   const uint32_t width, const uint32_t height, const uint8_t format) {
+    
+    Texture* t = (Texture*)malloc(sizeof(Texture));
+    if (t == NULL) {
+        return NULL;
+    }
+
+    const uint32_t size = faceSize * 6;
+    t->data = malloc(size);
+    if (t->data == NULL) {
+        free(t);
+        return NULL;
+    }
+
+    const uint8_t* faces[6] = { (const uint8_t*)right, (const uint8_t*)left, 
+                               (const uint8_t*)top, (const uint8_t*)bottom,
+                               (const uint8_t*)front, (const uint8_t*)back };
+    uint8_t* dest = (uint8_t*)t->data;    
+    for (int i = 0; i < 6; ++i) {
+        if (faces[i] != NULL) {
+            memcpy(dest, faces[i], faceSize);
+            dest += faceSize;
+        }
+    }
+
+    t->wptr = NULL;
+    t->size = size;
+    t->width = width;
+    t->height = height;
+    t->hash = (uint32_t)crc32(0, t->data, (uInt)size);
+    t->refCount = 1;
+    t->format = format;
+    t->flags = (uint8_t)(TextureType_Cubemap << TEXTURE_FLAG_TYPE_SHIFT);
     return t;
 }
 
