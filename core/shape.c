@@ -218,7 +218,7 @@ void _shape_void_free(void *s) {
     shape_free((Shape *)s);
 }
 
-Shape *shape_make(void) {
+Shape *shape_new(void) {
     Shape *s = (Shape *)malloc(sizeof(Shape));
 
     s->wptr = NULL;
@@ -261,32 +261,42 @@ Shape *shape_make(void) {
     return s;
 }
 
-Shape *shape_make_2(const bool isMutable) {
-    Shape *s = shape_make();
+Shape *shape_new_2(const bool isMutable) {
+    Shape *s = shape_new();
     _shape_toggle_lua_flag(s, SHAPE_LUA_FLAG_MUTABLE, isMutable);
     return s;
 }
 
-Shape *shape_make_copy(Shape *const origin) {
-    // apply transactions of the origin if needed
-    shape_apply_current_transaction(origin, true);
+Shape *shape_new_copy(Shape *const s) {
+    shape_apply_current_transaction(s, true);
 
-    Shape *const s = shape_make();
-    s->palette = color_palette_new_copy(origin->palette);
-    memcpy(s->blocksCount, origin->blocksCount, SHAPE_COLOR_INDEX_MAX_COUNT * sizeof(uint32_t));
+    Shape *copy = shape_new();
+    transform_copy(copy->transform, s->transform);
+    copy->palette = color_palette_new_copy(s->palette);
+    memcpy(copy->blocksCount, s->blocksCount, SHAPE_COLOR_INDEX_MAX_COUNT * sizeof(uint32_t));
+    copy->bbMin = s->bbMin;
+    copy->bbMax = s->bbMax;
+    copy->drawMode = s->drawMode;
+    copy->renderingFlags = s->renderingFlags;
+    copy->layers = s->layers;
+    copy->luaFlags = s->luaFlags;
+    copy->fullname = string_new_copy(s->fullname);
+    if (s->pivot != NULL) {
+        *copy->pivot = *s->pivot;
+    }
 
     // copy each point of interest
     MapStringFloat3Iterator *it = NULL;
     float3 *f3 = NULL;
     const char *key = NULL;
 
-    it = map_string_float3_iterator_new(origin->POIs);
+    it = map_string_float3_iterator_new(s->POIs);
     while (map_string_float3_iterator_is_done(it) == false) {
         f3 = map_string_float3_iterator_current_value(it);
         key = map_string_float3_iterator_current_key(it);
 
         if (f3 != NULL && key != NULL) {
-            shape_set_point_of_interest(s, key, f3);
+            shape_set_point_of_interest(copy, key, f3);
         }
 
         map_string_float3_iterator_next(it);
@@ -294,13 +304,13 @@ Shape *shape_make_copy(Shape *const origin) {
     map_string_float3_iterator_free(it);
 
     // copy each POI rotation
-    it = map_string_float3_iterator_new(origin->pois_rotation);
+    it = map_string_float3_iterator_new(s->pois_rotation);
     while (map_string_float3_iterator_is_done(it) == false) {
         f3 = map_string_float3_iterator_current_value(it);
         key = map_string_float3_iterator_current_key(it);
 
         if (f3 != NULL && key != NULL) {
-            shape_set_point_rotation(s, key, f3);
+            shape_set_point_rotation(copy, key, f3);
         }
 
         map_string_float3_iterator_next(it);
@@ -308,17 +318,8 @@ Shape *shape_make_copy(Shape *const origin) {
     map_string_float3_iterator_free(it);
     it = NULL;
 
-    s->bbMin = origin->bbMin;
-    s->bbMax = origin->bbMax;
-
-    s->drawMode = origin->drawMode;
-    s->renderingFlags = origin->renderingFlags;
-    s->layers = origin->layers;
-
-    s->luaFlags = origin->luaFlags;
-
     // copy chunks data
-    Index3DIterator *chunks_it = index3d_iterator_new(origin->chunks);
+    Index3DIterator *chunks_it = index3d_iterator_new(s->chunks);
     Chunk *chunk, *chunkCopy;
     while (index3d_iterator_pointer(chunks_it) != NULL) {
         chunk = index3d_iterator_pointer(chunks_it);
@@ -328,8 +329,8 @@ Shape *shape_make_copy(Shape *const origin) {
         const SHAPE_COORDS_INT3_T chunkCoords = chunk_utils_get_coords(chunkOrigin);
 
         // index new chunk & link w/ chunks neighbors
-        index3d_insert(s->chunks, chunkCopy, chunkCoords.x, chunkCoords.y, chunkCoords.z, NULL);
-        chunk_move_in_neighborhood(s->chunks, chunkCopy, chunkCoords);
+        index3d_insert(copy->chunks, chunkCopy, chunkCoords.x, chunkCoords.y, chunkCoords.z, NULL);
+        chunk_move_in_neighborhood(copy->chunks, chunkCopy, chunkCoords);
 
         // partition new chunk in shape space
         Box chunkBox = {{(float)chunkOrigin.x, (float)chunkOrigin.y, (float)chunkOrigin.z},
@@ -337,45 +338,16 @@ Shape *shape_make_copy(Shape *const origin) {
                          (float)(chunkOrigin.y + CHUNK_SIZE),
                          (float)(chunkOrigin.z + CHUNK_SIZE)}};
         chunk_set_rtree_leaf(chunkCopy,
-                             rtree_create_and_insert(s->rtree, &chunkBox, 1, 1, chunkCopy));
+                             rtree_create_and_insert(copy->rtree, &chunkBox, 1, 1, chunkCopy));
 
         // enqueue new shape buffers
-        _shape_chunk_enqueue_refresh(s, chunkCopy);
+        _shape_chunk_enqueue_refresh(copy, chunkCopy);
 
         index3d_iterator_next(chunks_it);
     }
     index3d_iterator_free(chunks_it);
 
-    if (origin->fullname != NULL) {
-        s->fullname = string_new_copy(origin->fullname);
-    }
-
-    if (origin->pivot != NULL) {
-        *s->pivot = *origin->pivot;
-    }
-
-    // copy transform parameters
-    Transform *const originTr = shape_get_root_transform(origin);
-    Transform *const t = shape_get_root_transform(s);
-    {
-        const char *name = transform_get_name(originTr);
-        if (name != NULL) {
-            transform_set_name(t, name);
-        }
-
-        transform_ensure_rigidbody_copy(t, originTr);
-
-        transform_set_hidden_branch(t, transform_is_hidden_branch(originTr));
-        transform_set_hidden_self(t, transform_is_hidden_self(originTr));
-
-        transform_set_local_scale_vec(t, transform_get_local_scale(originTr));
-        transform_set_local_position_vec(t, transform_get_local_position(originTr, true));
-        transform_set_local_rotation(t, transform_get_local_rotation(originTr));
-
-        // Note: do not parent automatically
-    }
-
-    return s;
+    return copy;
 }
 
 void shape_flush(Shape *shape) {
@@ -1339,7 +1311,7 @@ float3 shape_block_to_world(const Shape *s, const float x, const float y, const 
     if (s == NULL)
         return float3_zero;
 
-    Transform *t = shape_get_root_transform(s);
+    Transform *t = shape_get_transform(s);
     float3 local = shape_block_to_local(s, x, y, z);
     float3 world;
     transform_refresh(t, false, true); // refresh ltw for intra-frame calculations
@@ -1360,7 +1332,7 @@ float3 shape_world_to_block(const Shape *s, const float x, const float y, const 
     if (s == NULL)
         return float3_zero;
 
-    Transform *t = shape_get_root_transform(s);
+    Transform *t = shape_get_transform(s);
     float3 world = {x, y, z};
     float3 local;
     transform_refresh(t, false, true); // refresh wtl for intra-frame calculations
@@ -1487,7 +1459,7 @@ bool shape_remove_parent(Shape *s, const bool keepWorld) {
     return transform_remove_parent(s->transform, keepWorld);
 }
 
-Transform *shape_get_root_transform(const Shape *s) {
+Transform *shape_get_transform(const Shape *s) {
     return s->transform;
 }
 
@@ -1515,7 +1487,7 @@ uint32_t shape_count_shape_descendants(const Shape *s) {
 }
 
 DoublyLinkedListNode *shape_get_transform_children_iterator(const Shape *s) {
-    return transform_get_children_iterator(shape_get_root_transform((s)));
+    return transform_get_children_iterator(shape_get_transform((s)));
 }
 
 // MARK: - Chunks & buffers -

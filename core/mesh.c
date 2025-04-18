@@ -72,8 +72,8 @@ Mesh* mesh_new(void) {
 }
 
 Mesh* mesh_new_copy(const Mesh* m) {
-    Mesh* copy = (Mesh*)malloc(sizeof(Mesh));
-    copy->transform = transform_new_with_ptr(MeshTransform, (void*)(uintptr_t)m, &_mesh_void_free);
+    Mesh* copy = mesh_new();
+    transform_copy(copy->transform, m->transform);
 
     copy->vb = (Vertex*)malloc(m->vbCount * sizeof(Vertex));
     memcpy(copy->vb, m->vb, m->vbCount * sizeof(Vertex));

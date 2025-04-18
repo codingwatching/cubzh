@@ -41,6 +41,7 @@ typedef enum {
 } TextAlignment;
 
 WorldText *world_text_new(void);
+WorldText *world_text_new_copy(const WorldText *wt);
 void world_text_release(WorldText *wt); // releases transform
 
 Transform *world_text_get_transform(const WorldText *wt);

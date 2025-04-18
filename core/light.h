@@ -27,6 +27,7 @@ typedef enum {
 } LightType;
 
 Light *light_new(void);
+Light *light_new_copy(const Light *l);
 Light *light_new_point(const float radius, const float hardness, const uint8_t priority);
 Light *light_new_spot(const float range,
                       const float angle,

@@ -557,7 +557,7 @@ bool chunk_v6_write_shape(FILE *fd,
     shapeParentId = *shapeId;
     (*shapeId)++;
 
-    DoublyLinkedListNode *n = transform_get_children_iterator(shape_get_root_transform(shape));
+    DoublyLinkedListNode *n = transform_get_children_iterator(shape_get_transform(shape));
     Transform *child = NULL;
 
     while (n != NULL) {
@@ -991,7 +991,7 @@ uint32_t chunk_v6_read_shape(Stream *s,
                 totalSizeRead += sizeRead + (uint32_t)sizeof(uint32_t);
 
                 // size is known, now is a good time to create the shape
-                *shape = shape_make_2(shapeSettings->isMutable);
+                *shape = shape_new_2(shapeSettings->isMutable);
                 break;
             }
             case P3S_CHUNK_ID_SHAPE_BLOCKS: {
@@ -1230,7 +1230,7 @@ uint32_t chunk_v6_read_shape(Stream *s,
         Shape *parent = (Shape *)doubly_linked_list_node_pointer(
             doubly_linked_list_node_at_index(shapes, (size_t)parentIndex));
         if (parentIndex >= 0 && parent) {
-            shape_set_parent(*shape, shape_get_root_transform(parent), false);
+            shape_set_parent(*shape, shape_get_transform(parent), false);
             shape_set_local_position(*shape,
                                      localTransform.position.x,
                                      localTransform.position.y,
@@ -1253,14 +1253,14 @@ uint32_t chunk_v6_read_shape(Stream *s,
     }
 
     if (name != NULL) {
-        transform_set_name(shape_get_root_transform(*shape), name);
+        transform_set_name(shape_get_transform(*shape), name);
         free(name);
         name = NULL;
     }
 
     if (hasCustomCollisionBox) {
         RigidBody *rb;
-        transform_ensure_rigidbody(shape_get_root_transform(*shape),
+        transform_ensure_rigidbody(shape_get_transform(*shape),
                                    RigidbodyMode_Static,
                                    PHYSICS_GROUP_DEFAULT_OBJECT,
                                    PHYSICS_COLLIDESWITH_DEFAULT_OBJECT,
@@ -1270,7 +1270,7 @@ uint32_t chunk_v6_read_shape(Stream *s,
         rigidbody_set_collider(rb, &newCollider, true);
     }
 
-    Transform *const root = shape_get_root_transform(*shape);
+    Transform *const root = shape_get_transform(*shape);
     if (root) {
         transform_set_hidden_self(root, isHiddenSelf == 1);
     }
@@ -1430,7 +1430,7 @@ bool chunk_v6_shape_create_and_write_uncompressed_buffer(const Shape *shape,
     bool hasCustomCollisionBox = collider != NULL && rigidbody_is_collider_custom_set(rb);
 
     // is hidden
-    Transform *t = shape_get_root_transform(shape);
+    Transform *t = shape_get_transform(shape);
     uint8_t isHidden = transform_is_hidden_self(t) ? 1 : 0;
 
     // get palette chunk, if not sharing palette w/ root shape
@@ -1444,7 +1444,7 @@ bool chunk_v6_shape_create_and_write_uncompressed_buffer(const Shape *shape,
                                                                &paletteMapping);
     }
 
-    const char *name = transform_get_name(shape_get_root_transform(shape));
+    const char *name = transform_get_name(shape_get_transform(shape));
     uint8_t nameLen = 0;
     if (name != NULL) {
         nameLen = (uint8_t)strlen(name);
@@ -1994,7 +1994,7 @@ bool create_shape_buffers(DoublyLinkedList *shapesBuffers,
     shapeParentId = *shapeId;
     (*shapeId)++;
 
-    DoublyLinkedListNode *n = transform_get_children_iterator(shape_get_root_transform(shape));
+    DoublyLinkedListNode *n = transform_get_children_iterator(shape_get_transform(shape));
     Transform *child = NULL;
     while (n != NULL) {
         child = (Transform *)(doubly_linked_list_node_pointer(n));

@@ -801,7 +801,7 @@ enum serialization_vox_error serialization_vox_load(Stream *s,
     }
 
     // create Shape
-    *out = shape_make_2(isMutable);
+    *out = shape_new_2(isMutable);
     shape_set_palette(*out, color_palette_new(colorAtlas), false);
 
     stream_set_cursor_position(s, blocksPosition);

@@ -96,6 +96,27 @@ Camera *camera_new(void) {
     return c;
 }
 
+Camera *camera_new_copy(const Camera *c) {
+    Camera *copy = camera_new();
+    transform_copy(copy->view, c->view);
+    copy->mode = c->mode;
+    copy->fov = c->fov;
+    copy->width = c->width;
+    copy->height = c->height;
+    copy->nearPlane = c->nearPlane;
+    copy->farPlane = c->farPlane;
+    copy->targetX = c->targetX;
+    copy->targetY = c->targetY;
+    copy->targetWidth = c->targetWidth;
+    copy->targetHeight = c->targetHeight;
+    copy->color = c->color;
+    copy->layers = c->layers;
+    copy->viewOrder = c->viewOrder;
+    copy->enabled = c->enabled;
+
+    return copy;
+}
+
 void camera_release(Camera *c) {
     transform_release(c->view);
 }

@@ -404,7 +404,7 @@ void scene_add_map(Scene *sc, Shape *map) {
         transform_remove_parent(sc->map, true);
     }
 
-    sc->map = shape_get_root_transform(map);
+    sc->map = shape_get_transform(map);
     transform_set_parent(sc->map, sc->root, true);
 
 #if DEBUG_SCENE_EXTRALOG
@@ -825,7 +825,7 @@ Block *scene_cast_ray_shape_only(Scene *sc,
         float3 ldf = {hit.blockCoords.x, hit.blockCoords.y, hit.blockCoords.z};
         const FACE_INDEX_INT_T face = ray_impacted_block_face(&localImpact, &ldf);
 
-        hit.hitTr = shape_get_root_transform(sh);
+        hit.hitTr = shape_get_transform(sh);
         hit.type = Hit_Block;
         hit.faceTouched = face;
     }

@@ -64,9 +64,9 @@ typedef uint8_t ShapeDrawMode;
 #define SHAPE_DRAWMODE_GREY 4
 #define SHAPE_DRAWMODE_GRID 8
 
-Shape *shape_make(void);
-Shape *shape_make_2(const bool isMutable);
-Shape *shape_make_copy(Shape *const origin);
+Shape *shape_new(void);
+Shape *shape_new_2(const bool isMutable);
+Shape *shape_new_copy(Shape *const s);
 
 /// Returns false if retain fails
 bool shape_retain(Shape *const shape);
@@ -241,7 +241,7 @@ bool shape_set_parent(Shape *s, Transform *parent, const bool keepWorld);
 /// for external usage i.e. for shapes that exist as a lua Shape, transform removal needs to be
 /// registered in scene, see lua_object for examples
 bool shape_remove_parent(Shape *s, const bool keepWorld);
-Transform *shape_get_root_transform(const Shape *s);
+Transform *shape_get_transform(const Shape *s);
 uint32_t shape_count_shape_descendants(const Shape *s);
 DoublyLinkedListNode *shape_get_transform_children_iterator(const Shape *s);
 
