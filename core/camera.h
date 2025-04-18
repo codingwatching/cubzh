@@ -27,6 +27,7 @@ typedef enum {
 } ProjectionMode;
 
 Camera *camera_new(void);
+Camera *camera_new_copy(const Camera *c);
 void camera_release(Camera *c);
 void camera_free(Camera *c);
 

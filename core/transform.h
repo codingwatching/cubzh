@@ -79,6 +79,8 @@ typedef Transform **Transform_Array;
 /// MARK: - Lifecycle -
 Transform *transform_new(TransformType type);
 Transform *transform_new_with_ptr(TransformType type, void *ptr, pointer_free_function ptrFreeFn);
+Transform *transform_new_copy(const Transform *t);
+void transform_copy(Transform *dst, const Transform *src);
 void transform_init_ID_thread_safety(void);
 uint16_t transform_get_id(const Transform *t);
 /// Increases ref count and returns false if the retain count can't be increased
@@ -122,7 +124,7 @@ bool transform_set_parent(Transform *const t, Transform *parent, bool keepWorld)
 bool transform_remove_parent(Transform *t, bool keepWorld);
 Transform *transform_get_parent(Transform *t);
 bool transform_is_parented(Transform *t);
-DoublyLinkedListNode *transform_get_children_iterator(Transform *t);
+DoublyLinkedListNode *transform_get_children_iterator(const Transform *t);
 Transform_Array transform_get_children_copy(Transform *t, size_t *count);
 size_t transform_get_children_count(Transform *t);
 void *transform_get_ptr(Transform *const t);
@@ -236,6 +238,7 @@ void transform_utils_box_fit_recurse(Transform *t,
                                      bool applyTransaction);
 void transform_utils_set_mtx(Transform *t, const Matrix4x4 *mtx);
 bool transform_utils_has_shadow(const Transform *t);
+Transform* transform_utils_copy_recurse(const Transform *t);
 
 // MARK: - Misc. -
 void transform_set_animations_enabled(Transform *const t, const bool enabled);

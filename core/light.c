@@ -47,6 +47,23 @@ Light *light_new(void) {
     return l;
 }
 
+Light *light_new_copy(const Light *l) {
+    Light *copy = light_new();
+    transform_copy(copy->transform, l->transform);
+    *copy->color = *l->color;
+    copy->type = l->type;
+    copy->range = l->range;
+    copy->hardness = l->hardness;
+    copy->angle = l->angle;
+    copy->intensity = l->intensity;
+    copy->priority = l->priority;
+    copy->layers = l->layers;
+    copy->enabled = l->enabled;
+    copy->shadow = l->shadow;
+
+    return copy;
+}
+
 Light *light_new_point(const float radius, const float hardness, const uint8_t priority) {
     Light *l = light_new();
 

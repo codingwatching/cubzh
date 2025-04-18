@@ -19,6 +19,7 @@ extern "C" {
 typedef struct _Quad Quad;
 
 Quad *quad_new(void);
+Quad *quad_new_copy(const Quad* q);
 void quad_release(Quad *q);
 void quad_free(Quad *q); // called in transform_release, does not free transform
 

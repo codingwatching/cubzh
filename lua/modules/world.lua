@@ -629,7 +629,7 @@ end
 -- Load a map into the world
 local function loadMap(d, n, didLoad)
 	Object:Load(d, function(j)
-		local map = MutableShape(j, { includeChildren = true })
+		local map = MutableShape(j, { recurse = true })
 		loaded.map = map
 
 		map.Scale = n or 5

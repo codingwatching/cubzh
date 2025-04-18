@@ -496,7 +496,7 @@ uint32_t chunk_v5_read_shape(Stream *s,
                 shapeSizeRead = true;
 
                 // size is known, now is a good time to create the shape
-                *shape = shape_make_2(shapeSettings->isMutable);
+                *shape = shape_new_2(shapeSettings->isMutable);
                 if (serializedPalette != NULL) {
                     shape_set_palette(*shape, serializedPalette, false);
                 } else {

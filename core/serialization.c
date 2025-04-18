@@ -99,7 +99,7 @@ Shape *assets_get_root_shape(DoublyLinkedList *list, bool remove) {
         Asset *r = (Asset *)doubly_linked_list_node_pointer(n);
         if (r->type == AssetType_Shape) {
             Shape *s = (Shape *)r->ptr;
-            if (transform_get_parent(shape_get_root_transform(s)) == NULL) {
+            if (transform_get_parent(shape_get_transform(s)) == NULL) {
                 if (remove) {
                     free(r);
                     doubly_linked_list_delete_node(list, n);

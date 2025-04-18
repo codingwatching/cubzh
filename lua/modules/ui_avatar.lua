@@ -201,7 +201,7 @@ uiavatar.getHead = function(_, usernameOrId, size, uikit, config)
 	end
 
 	if cachedHead ~= nil then
-		local headCopy = Shape(cachedHead, { includeChildren = true })
+		local headCopy = Shape(cachedHead, { recurse = true })
 		headCopy.setEyes = cachedHead.setEyes
 
 		local uiHead = ui:createShape(headCopy, { spherized = true })
@@ -216,7 +216,7 @@ uiavatar.getHead = function(_, usernameOrId, size, uikit, config)
 		head, requests = avatar:getPlayerHead({ usernameOrId = usernameOrId })
 		-- headCache[usernameOrId] = head
 
-		-- local headCopy = Shape(head, { includeChildren = true })
+		-- local headCopy = Shape(head, { recurse = true })
 		-- headCopy.setEyes = head.setEyes
 
 		local uiHead = ui:createShape(head, { spherized = false })

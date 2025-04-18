@@ -20,6 +20,9 @@
 #include "scene.h"
 #include "utils.h"
 #include "mesh.h"
+#include "camera.h"
+#include "light.h"
+#include "world_text.h"
 
 #define TRANSFORM_DIRTY_NONE 0
 // local mtx, ltw & wtl matrices are dirty, and children down the hierarchy need refresh
@@ -164,6 +167,7 @@ static void _transform_utils_box_to_aabox_full(Transform *t,
                                                Box *aab,
                                                const float3 *offset,
                                                SquarifyType squarify);
+static void _transform_utils_copy_recurse(const Transform *t, Transform *copy);
 static void _transform_free(Transform *const t);
 
 // MARK: - Lifecycle -
@@ -206,6 +210,47 @@ Transform *transform_new_with_ptr(TransformType type, void *ptr, pointer_free_fu
     t->ptr = ptr;
     t->ptr_free = ptrFreeFn;
     return t;
+}
+
+Transform *transform_new_copy(const Transform *t) {
+    if (t == NULL) {
+        return NULL;
+    }
+
+    switch (t->type) {
+        case AudioSourceTransform: // TODO not accessible to Core
+        case AudioListenerTransform: // one listener per scene
+        case HierarchyTransform:
+        case PointTransform: {
+            Transform *copy = transform_new(t->type);
+            transform_copy(copy, t);
+            return copy;
+        }
+        case ShapeTransform:
+            return shape_get_transform(shape_new_copy((Shape *)t->ptr));
+        case QuadTransform:
+            return quad_get_transform(quad_new_copy((Quad*)t->ptr));
+        case CameraTransform:
+            return camera_get_view_transform(camera_new_copy((Camera*)t->ptr));
+        case LightTransform:
+            return light_get_transform(light_new_copy((Light*)t->ptr));
+        case WorldTextTransform:
+            return world_text_get_transform(world_text_new_copy((WorldText*)t->ptr));
+        case MeshTransform:
+            return mesh_get_transform(mesh_new_copy((Mesh*)t->ptr));
+        default:
+            vx_assert(false); // always implement for new types
+    }
+}
+
+void transform_copy(Transform *dst, const Transform *src) {
+    transform_set_local_rotation(dst, src->localRotation);
+    transform_set_local_position_vec(dst, &src->localPosition);
+    transform_set_local_scale_vec(dst, &src->localScale);
+    dst->flags = src->flags;
+    transform_ensure_rigidbody_copy(dst, src);
+    dst->name = string_new_copy(src->name);
+    dst->shadowDecalSize = src->shadowDecalSize;
 }
 
 void transform_init_ID_thread_safety(void) {
@@ -515,7 +560,7 @@ bool transform_is_parented(Transform *t) {
     return t->parent != NULL;
 }
 
-DoublyLinkedListNode *transform_get_children_iterator(Transform *t) {
+DoublyLinkedListNode *transform_get_children_iterator(const Transform *t) {
     if (t->children == NULL)
         return NULL;
     return doubly_linked_list_first(t->children);
@@ -1249,6 +1294,12 @@ bool transform_utils_has_shadow(const Transform *t) {
     }
 }
 
+Transform* transform_utils_copy_recurse(const Transform *t) {
+    Transform *copy = transform_new_copy(t);
+    _transform_utils_copy_recurse(t, copy);
+    return copy;
+}
+
 // MARK: - Misc. -
 
 void transform_set_animations_enabled(Transform *const t, const bool enabled) {
@@ -1695,6 +1746,22 @@ static void _transform_utils_box_to_aabox_full(Transform *t,
     }
 
     box_to_aabox2(b, aab, transform_get_ltw(t), offset, squarify);
+}
+
+void _transform_utils_copy_recurse(const Transform *t, Transform *copy) {
+    DoublyLinkedListNode *n = transform_get_children_iterator(t);
+    const Transform *child;
+    Transform *childCopy;
+    while (n != NULL) {
+        child = (const Transform*)(doubly_linked_list_node_pointer(n));
+        childCopy = transform_new_copy(child);
+        if (childCopy != NULL) {
+            transform_set_parent(childCopy, copy, false);
+            transform_release(childCopy); // now owned by hierarchy
+            _transform_utils_copy_recurse(child, childCopy);
+        }
+        n = doubly_linked_list_node_next(n);
+    }
 }
 
 #pragma clang diagnostic pop

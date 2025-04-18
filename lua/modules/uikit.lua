@@ -1016,7 +1016,7 @@ function createUI(system)
 		node.pivot.LocalRotation = Number3.Zero
 
 		local aabb = Box()
-		aabb:Fit(node.shape, { recursive = true })
+		aabb:Fit(node.shape, { recurse = true })
 
 		node.object.LocalScale = backupScale -- restore node scale
 

@@ -148,6 +148,35 @@ WorldText *world_text_new(void) {
     return wt;
 }
 
+WorldText *world_text_new_copy(const WorldText *wt) {
+    WorldText *copy = world_text_new();
+    transform_copy(copy->transform, wt->transform);
+    copy->text = string_new_copy(wt->text);
+    if (wt->drawmodes != NULL) {
+        copy->drawmodes = (WorldTextDrawmodes*)malloc(sizeof(WorldTextDrawmodes));
+        memcpy(copy->drawmodes, wt->drawmodes, sizeof(WorldTextDrawmodes));
+    }
+    copy->anchorX = wt->anchorX;
+    copy->anchorY = wt->anchorY;
+    copy->color = wt->color;
+    copy->bgColor = wt->bgColor;
+    copy->width = wt->width;
+    copy->height = wt->height;
+    copy->maxWidth = wt->maxWidth;
+    copy->maxDistance = wt->maxDistance;
+    copy->padding = wt->padding;
+    copy->fontSize = wt->fontSize;
+    copy->layers = wt->layers;
+    copy->options = wt->options;
+    copy->type = wt->type;
+    copy->fontIdx = wt->fontIdx;
+    copy->sortOrder = wt->sortOrder;
+    copy->weight = wt->weight;
+    copy->slant = wt->slant;
+
+    return copy;
+}
+
 void world_text_release(WorldText *wt) {
     transform_release(wt->transform);
 }

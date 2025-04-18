@@ -87,6 +87,27 @@ Quad *quad_new(void) {
     return q;
 }
 
+Quad *quad_new_copy(const Quad* q) {
+    Quad *copy = quad_new();
+    transform_copy(copy->transform, q->transform);
+    quad_set_data(copy, q->data, q->size); // TODO: use registry (see lua_quad)
+    copy->width = q->width;
+    copy->height = q->height;
+    copy->anchorX = q->anchorX;
+    copy->anchorY = q->anchorY;
+    copy->tilingU = q->tilingU;
+    copy->tilingV = q->tilingV;
+    copy->offsetU = q->offsetU;
+    copy->offsetV = q->offsetV;
+    copy->cutout = q->cutout;
+    copy->layers = q->layers;
+    copy->flags = q->flags;
+    copy->sortOrder = q->sortOrder;
+    *copy->rgba = *q->rgba;
+
+    return copy;
+}
+
 void quad_release(Quad *q) {
     transform_release(q->transform);
 }

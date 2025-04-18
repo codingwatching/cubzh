@@ -78,7 +78,7 @@
 // shape_get_model_matrix
 // shape_set_parent
 // shape_remove_parent
-// shape_get_root_transform
+// shape_get_transform
 // shape_get_pivot_transform
 // shape_move_children
 // shape_count_shape_descendants
@@ -142,7 +142,7 @@
 
 // check default values
 void test_shape_make(void) {
-    Shape *s = shape_make();
+    Shape *s = shape_new();
     int3 box_size = {1, 1, 1};
 
     TEST_CHECK(shape_get_palette((const Shape *)s) == NULL);
@@ -159,14 +159,14 @@ void test_shape_make(void) {
 
 // check that the copy is independant from the source
 void test_shape_make_copy(void) {
-    Shape *src = shape_make();
+    Shape *src = shape_new();
     shape_set_lua_mutable(src, true);
     {
         ColorAtlas *atlas = color_atlas_new();
         TEST_ASSERT(atlas != NULL);
         shape_set_palette(src, color_palette_new(atlas), false);
     }
-    Shape *copy = shape_make_copy(src);
+    Shape *copy = shape_new_copy(src);
 
     TEST_CHECK(shape_is_lua_mutable(copy));
 
@@ -179,7 +179,7 @@ void test_shape_make_copy(void) {
 
 // check that we can retain a shape
 void test_shape_retain(void) {
-    Shape *s = shape_make();
+    Shape *s = shape_new();
     // Transform *t = transform_utils_make_with_shape(s);
 
     bool ok = shape_retain((Shape *const)s);
@@ -195,7 +195,7 @@ void test_shape_retain(void) {
 
 // check that shape_release does not crash
 void test_shape_release(void) {
-    Shape *s = shape_make();
+    Shape *s = shape_new();
     // Transform *t = transform_utils_make_with_shape(s);
     shape_retain((Shape *const)s);
 
@@ -205,7 +205,7 @@ void test_shape_release(void) {
 
 // check for coherent id
 void test_shape_get_id(void) {
-    const Shape *s = shape_make();
+    const Shape *s = shape_new();
     const uint16_t id = shape_get_id(s);
 
     TEST_CHECK(id < 1000);
@@ -215,7 +215,7 @@ void test_shape_get_id(void) {
 
 // check that shape's palette atlas is the one provided
 void test_shape_get_palette(void) {
-    Shape *s = shape_make();
+    Shape *s = shape_new();
     // const SHAPE_COLOR_INDEX_INT_T idx = 5;
     // const SHAPE_COORDS_INT_T x = 1, y = 2, z = 3;
     ColorAtlas *atlas = color_atlas_new();
@@ -230,7 +230,7 @@ void test_shape_get_palette(void) {
 
 // check that the block is removed (air)
 void test_shape_remove_block(void) {
-    Shape *s = shape_make();
+    Shape *s = shape_new();
     const SHAPE_COLOR_INDEX_INT_T idx = 5;
     const SHAPE_COORDS_INT_T x = 1, y = 2, z = 3;
     {
@@ -251,7 +251,7 @@ void test_shape_remove_block(void) {
 
 // check that the box is coherent
 void test_shape_get_bounding_box_size(void) {
-    Shape *s = shape_make();
+    Shape *s = shape_new();
     {
         ColorAtlas *atlas = color_atlas_new();
         TEST_ASSERT(atlas != NULL);
@@ -270,7 +270,7 @@ void test_shape_get_bounding_box_size(void) {
 
 // same tests as test_shape_get_bounding_box_size
 void test_shape_get_model_aabb(void) {
-    Shape *s = shape_make();
+    Shape *s = shape_new();
     {
         ColorAtlas *atlas = color_atlas_new();
         TEST_ASSERT(atlas != NULL);
@@ -290,7 +290,7 @@ void test_shape_get_model_aabb(void) {
 
 // check that the fullname is the one we provided
 void test_shape_set_fullname(void) {
-    Shape *s = shape_make();
+    Shape *s = shape_new();
     const char *name = "shape_name";
     shape_set_fullname(s, name);
 
@@ -302,7 +302,7 @@ void test_shape_set_fullname(void) {
 
 // same test as test_shape_set_fullname
 void test_shape_get_fullname(void) {
-    Shape *s = shape_make();
+    Shape *s = shape_new();
     const char *name = "shape_name";
     shape_set_fullname(s, name);
 
@@ -330,7 +330,7 @@ void test_shape_addblock_1(void) {
     TEST_ASSERT(sc != NULL);
 
     // create a mutable shape having an octree
-    Shape *sh = shape_make_2(true); // isMutable
+    Shape *sh = shape_new_2(true); // isMutable
     TEST_ASSERT(sh != NULL);
 
     {
@@ -427,7 +427,7 @@ void test_shape_addblock_2(void) {
     TEST_ASSERT(sc != NULL);
 
     // create a mutable shape having an octree
-    Shape *sh = shape_make_2(true); // isMutable
+    Shape *sh = shape_new_2(true); // isMutable
     TEST_ASSERT(sh != NULL);
 
     {
@@ -516,7 +516,7 @@ void test_shape_addblock_3(void) {
     Scene *sc = scene_new(NULL);
     TEST_CHECK(sc != NULL);
 
-    Shape *sh = shape_make();
+    Shape *sh = shape_new();
     TEST_CHECK(sh != NULL);
 
     // add block 1
