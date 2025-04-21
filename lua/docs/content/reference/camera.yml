@@ -238,20 +238,45 @@ functions:
             Camera.Forward = myShape.Position - Camera.Position
 
             -- make the shape's bounding box cover approximately 60% of the screen, depending on perspective
-            Camera:FitToScreen(myShape, { coverage=0.6 })
+            Camera:FitToScreen(myShape, { coverage = 0.6 })
+
+            -- here's how to set independent constraints vertically and horizontally:
+            Camera:FitToScreen(myShape, { coverage = 0.8, orientation = "horizontal" })
+            local d = (Camera.Position - myShape.Position).SquaredLength
+            local p = Camera.Position:Copy() -- save position for horizontal fit
+            Camera:FitToScreen(myShape, { coverage = 0.6, orientation = "vertical" })
+            local d2 = (Camera.Position - myShape.Position).SquaredLength
+            if d > d2 then -- if horizontal fit is better, go back to the saved position
+              Camera.Position = p
+            end
     
     - name: "WorldToScreen"
       description: |
-          Converts a world point to an unsigned normalized screen point (between 0.0 and 1.0) through this camera projection.
+          Converts a world position ([Number3]) into unsigned normalized screen coordinates through this camera projection. The returned [Number2] coordinates are between `{0, 0}` (bottom left corner of the screen) and `{1, 1}` (top right corner of the screen).
+
+      samples:
+        - code: |
+            local screenCoords = Camera:WorldToScreen(someObject.Position)
+            -- screenPos is a Number2, with X and Y components between 0 and 1
+            -- to obtain screen point values, multiply by Screen.Size:
+            local screenPos = screenCoords * Screen.Size
+            -- this is useful when positioning UI elements:
+            local text = uikit:createText("Hello, world!")
+            text.pos = { -- text's anchor is bottom left, offsetting to center
+              screenPos.X - text.Width * 0.5,
+              screenPos.Y - text.Height * 0.5
+            }
+
+
       arguments: 
-        - name: "point"
+        - name: "position"
           type: "Number3"
       return:
         - type: "Number2"
     
     - name: "ScreenToRay"
       description: |
-          Converts an unsigned normalized screen point (between 0.0 and 1.0) into a world [Ray] through this camera projection.
+          Converts unsigned normalized screen coordinates ([Number2] between `{0, 0}` (bottom left) and `{1, 1}` (top right)) into a [Ray] based on this camera projection.
       arguments: 
         - name: "point"
           type: "Number2"
