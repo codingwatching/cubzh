@@ -64,7 +64,7 @@ properties:
     - name: "Intensity"
       type: "number"
       description: |
-          Intensity of the light, default is `1.8`. A value between `0.0` and `1.0` dims illumination of the scene, whereas values higher than `1.0` adds light color over the scene.
+          Intensity of the light, default is `1.0`. A value between `0.0` and `1.0` dims illumination of the scene, whereas values higher than `1.0` adds light color over the scene.
 
           This can be set on global `Light` object to control all lights' intensity at once, or on a light instance to override its individual intensity.
 
