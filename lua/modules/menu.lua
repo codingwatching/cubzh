@@ -1585,7 +1585,7 @@ if DEV_MODE == true then
 				displayedStr = ""
 				fullStr = str
 			end
-			aiCharacterText.Text = displayedStr
+			aiCharacterText.Text = displayedStr:sub(-10000)
 			charsPerSecond = math.max(1, math.ceil((#fullStr - #displayedStr) / textRevealMaxDuration))
 			
 			if revealTextTick ~= nil then
@@ -1595,7 +1595,7 @@ if DEV_MODE == true then
 			revealTextTick = LocalEvent:Listen(LocalEvent.Name.Tick, function(dt)
 				local charsToAdd = math.min(math.ceil(dt * charsPerSecond), #fullStr - #displayedStr)
 				displayedStr = displayedStr .. fullStr:sub(#displayedStr + 1, #displayedStr + charsToAdd) 
-				aiCharacterText.Text = displayedStr
+				aiCharacterText.Text = displayedStr:sub(-10000)
 				if #displayedStr >= #fullStr then
 					revealTextTick:Remove()
 					revealTextTick = nil
@@ -1611,7 +1611,7 @@ if DEV_MODE == true then
 				aiCharacterText.object.Scale = 1.0
 				aiCharacterText.Color = Color.White
 			end
-			aiCharacterText.Text = text -- set now to prepare layout
+			aiCharacterText.Text = text:sub(-10000) -- set now to prepare layout
 			aiCharacterText:show()
 			aiCharacterLoadingAnimation:hide()
 			refreshLayout(true)
@@ -1651,11 +1651,11 @@ if DEV_MODE == true then
 				sfx("waterdrop_2", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 				aiUINeedsFirstLayout = true
 
-				local modelSelected = 1
-				local models = { "Claude 3.7", "Gemini 2.5", "Grok 3"}
+				local modelSelected = 3
+				local models = { "Claude 3.7", "Gemini 2.5", "Grok 3", "Grok 3 Mini"}
 				local modelNames = { "claude-3-7-sonnet-20250219", "gemini-2.5-pro-exp-03-25", "grok-3-beta", "grok-3-mini-beta" }
 
-				local comboBtn = ui:buttonSecondary({ content = "Claude 3.7", textSize = "small" })
+				local comboBtn = ui:buttonSecondary({ content = models[modelSelected], textSize = "small", unfocuses = false })
 				modelCombo = ui:comboBox({ choices = models, button = comboBtn, textSize = "small", optionsPosition = "top" })
 				modelCombo.onSelect = function(self, index)
 					self.Text = models[index]
