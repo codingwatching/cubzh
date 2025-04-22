@@ -60,3 +60,10 @@ properties:
     # - name: "Gravity"
     #   type: "number"
     #   description: "Overrides default gravity if set."
+
+    - name: "UsePBR"
+      type: "boolean"
+      description: |
+          When set to `true`, the world will load with physically-based rendering (PBR) capabilities. It will allow meshes to use metallic-roughness in their [Mesh.Material](/reference/mesh#property-material).
+
+          This is `false` by default.

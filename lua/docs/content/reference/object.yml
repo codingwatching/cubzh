@@ -131,9 +131,9 @@ properties:
           - `PhysicsMode.TriggerPerBlock`: if [This] is a [Shape], its model blocks are available for casts and collision callbacks, and is passed through by other dynamic objects.
           - `PhysicsMode.Static`: [This]'s collision box is available for casts, collision callbacks, and acts as an obstacle for other dynamic objects.
           - `PhysicsMode.StaticPerBlock`: if [This] is a [Shape], its model blocks are available for casts, collision callbacks, and act as obstacles for other dynamic objects.
-          - `PhysicsMode.Dynamic`: [This]'s world-aligned collision box is available for casts, collision callbacks, may act as obstacles for other dynamic objects, and is itself fully simulated.
+          - `PhysicsMode.Dynamic`: [This]'s world-aligned collision box is available for casts, collision callbacks, may act as obstacles for other dynamic objects, and is itself fully simulated. When setting this mode, any children that may collide with the object will be automatically set to `PhysicsMode.Disabled`.
 
-          By default, objects are set to `PhysicsMode.Static`.
+          By default, players are `PhysicsMode.Dynamic`, shapes are `PhysicsMode.Static`, all other objects are `PhysicsMode.Disabled`.
         
           You may use `Dev.DisplayColliders` to visualize each object's collision settings.
 
@@ -752,12 +752,24 @@ functions:
           The callback function is called with the descendant as the only argument.
 
           The `config` table options are as follows,
-          - `includeRoot` whether to include [This] in the iteration. Default `false`.
+          - `includeRoot` whether to include [This] in the iteration. Default `true`.
           - `depth` the maximum depth of the iteration. Default `-1` (unlimited).
           - `deepFirst` whether to iterate in depth-first order. Default `false`.
+
+          If you were to remove an object from its parent while recursing through it, the object removal will be delayed until the full recursion is completed.
 
       samples:
         - code: |
             o:Recurse(function(descendant)
               print(descendant.Name)
             end, { includeRoot = true })
+
+    - name: "Copy"
+      arguments:
+        - name: "config"
+          type: "table"
+          optional: true
+      description: |
+          Creates a copy of the object, including all its properties and current state.
+          
+          To copy a composite object, you may call `o:Copy({ recurse = true })`. This will copy and replicate the full object hierarchy.

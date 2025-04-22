@@ -206,7 +206,7 @@ functions:
 
     - name: "FitToScreen"
       description: |
-          Fits the given [Shape] or [Box] to the screen, taking into account the camera's [Projection](#property-projection) mode. This function moves the camera back until the target fits on screen.
+          Fits the given [Shape], [Mesh] or [Box] to the screen, taking into account the camera's [Projection](#property-projection) mode. This function moves the camera back until the target fits on screen.
 
           For example, to fit an object at the center of the screen, first have the camera look at the target (`camera.Forward = target.Position - camera.Position`) before calling this function.
 
@@ -217,6 +217,18 @@ functions:
         -
           - name: "target"
             type: "Shape"
+          - name: "options"
+            type: "table"
+            optional: true
+        -
+          - name: "target"
+            type: "Box"
+          - name: "options"
+            type: "table"
+            optional: true
+        -
+          - name: "target"
+            type: "Mesh"
           - name: "options"
             type: "table"
             optional: true

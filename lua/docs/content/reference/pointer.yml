@@ -188,7 +188,7 @@ properties:
         - code: |
             Pointer.Zoom = function(zoomValue)
                 -- example: move the camera forward/backward based on the zoom value
-                Camera.Position = Camera.Position + Camera.Forward * zoomSpeed * zoomValue
+                Camera.Position = Camera.Position - Camera.Forward * zoomSpeed * zoomValue
             end
 
     - name: "Cancel"
