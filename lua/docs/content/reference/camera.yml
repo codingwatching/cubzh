@@ -254,18 +254,24 @@ functions:
       description: |
           Converts a world position ([Number3]) into unsigned normalized screen coordinates through this camera projection. The returned [Number2] coordinates are between `{0, 0}` (bottom left corner of the screen) and `{1, 1}` (top right corner of the screen).
 
+          ⚠️ [WorldToScreen](#functions-worldtoscreen) can return [nil] if the given position can't be seen by the camera (not on screen).
+
       samples:
         - code: |
             local screenCoords = Camera:WorldToScreen(someObject.Position)
-            -- screenPos is a Number2, with X and Y components between 0 and 1
-            -- to obtain screen point values, multiply by Screen.Size:
-            local screenPos = screenCoords * Screen.Size
-            -- this is useful when positioning UI elements:
-            local text = uikit:createText("Hello, world!")
-            text.pos = { -- text's anchor is bottom left, offsetting to center
-              screenPos.X - text.Width * 0.5,
-              screenPos.Y - text.Height * 0.5
-            }
+            -- screenCoords is a Number2 between {0, 0} (bottom left) and {1, 1} (top right),
+            -- it can be nil if someObject.Position can't be seen by the camera.
+            if screenCoords ~= nil then 
+              -- to obtain screen point values, multiply by Screen.Size:
+              local screenPos = screenCoords * Screen.Size
+
+              -- this is useful when positioning UI elements:
+              local text = require("uikit"):createText("Hello, world!")
+              text.pos = { -- text's anchor is bottom left, offsetting to center
+                screenPos.X - text.Width * 0.5,
+               screenPos.Y - text.Height * 0.5
+              }
+            end
 
 
       arguments: 
