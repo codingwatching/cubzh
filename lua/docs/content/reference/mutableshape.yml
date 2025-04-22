@@ -7,12 +7,11 @@ constructors:
   - description: |
         Creates a [MutableShape] which model can be empty, loaded from an imported [Item] (see [Items]), or copied from an existing [Shape] or [MutableShape].
 
-        The optional [table] parameter can be used to override default configuration:
-        `{includeChildren = false, bakedLight = false}`.
-
-        `bakedLight` (false by default) determines whether or not the shape should be loaded with baked lighting.  If `true`, it will use the baked lighting information saved with the original item, or compute it from scratch if there was none. Any subsequent changes to the shape's blocks will automatically maintain its baked lighting.
-
-        When copying a [Shape], `includeChildren` (false by default) determines if children should be copied as well.
+        The optional [table] parameter can be used to override default configuration: `{recurse = false, bakedLight = false}`.
+        - `recurse` (false by default) will copy and replicate the full shape hierarchy, including all children objects.
+        - `bakedLight` (false by default) determines whether or not the shape should be loaded with baked lighting.  If `true`, it will use the baked lighting information saved with the original item, or compute it from scratch if there was none. Any subsequent changes to the shape's blocks will automatically maintain its baked lighting.
+    
+        The first step after creating a shape is usually to add it to the world using [SetParent](#function-setparent) or [AddChild](#function-addchild), then place it by setting its [Position](#property-position).
     argument-sets:
       -
         - name: "config"
@@ -39,15 +38,18 @@ constructors:
 
     samples:
       - code: |
-          -- CREATE SHAPE FROM LOADED ITEM
+          -- create shape from items declared in the [Items] table
+          -- the created copy will be a mutable shape
           local myMutableShape = MutableShape(Items.someuser.someitem)
-          World:AddChild(myMutableShape) -- adds created MutableShape to the World
+
+          -- add to the world and place it
+          World:AddChild(myMutableShape)
+          myMutableShape.Position = { 0, 5, 15 }
       - 
         code: |
-          -- COPY SHAPE, INCLUDING CHILDREN:
-          local s2 = MutableShape(s1, {includeChildren = true})
-          World:AddChild(s2) -- adds copied MutableShape to the World
-
+          -- create a full copy of a composite shape, including all children objects
+          -- the created copy will be a mutable shape
+          local myMutableShape = MutableShape(myCompositeShape, {includeChildren = true})
 properties:
 
 functions:
