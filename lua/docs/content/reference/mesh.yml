@@ -10,7 +10,7 @@ properties:
     - name: "Pivot"
       type: "Number3"
       description: |
-          [This]'s pivot is a point expressed in model space, that acts as a reference for its transformations:
+          [This]'s pivot is a point expressed in model space (the space where vertices are placed), that acts as a reference for its transformations:
           - translation is applied from its parent's pivot to its own pivot
           - rotation is applied around the pivot
 
@@ -49,22 +49,22 @@ properties:
     - name: "Depth"
       read-only: true
       type: "number"
-      description: "Returns [This]'s depth, expressed in model space. Shortcut to [This].[BoundingBox](#property-boundingbox).[Size](/reference/box#property-size).[Z](/reference/number3#property-z)."
+      description: "Returns [This]'s depth, expressed in model space (the space where vertices are placed). Shortcut to [This].[BoundingBox](#property-boundingbox).[Size](/reference/box#property-size).[Z](/reference/number3#property-z)."
 
     - name: "Height"
       read-only: true
       type: "number"
-      description: "Returns [This]'s height, expressed in model space. Shortcut to [This].[BoundingBox](#property-boundingbox).[Size](/reference/box#property-size).[Y](/reference/number3#property-y)."
+      description: "Returns [This]'s height, expressed in model space (the space where vertices are placed). Shortcut to [This].[BoundingBox](#property-boundingbox).[Size](/reference/box#property-size).[Y](/reference/number3#property-y)."
 
     - name: "Width"
       read-only: true
       type: "number"
-      description: "Returns [This]'s width, expressed in model space. Shortcut to [This].[BoundingBox](#property-boundingbox).[Size](/reference/box#property-size).[X](/reference/number3#property-x)."
+      description: "Returns [This]'s width, expressed in model space (the space where vertices are placed). Shortcut to [This].[BoundingBox](#property-boundingbox).[Size](/reference/box#property-size).[X](/reference/number3#property-x)."
     
     - name: "Size"
       read-only: true
       type: "Number3"
-      description: "Returns [This]'s bounding box size, expressed in model space. Shortcut to [This].[BoundingBox](#property-boundingbox).[Size](/reference/box#property-size)."
+      description: "Returns [This]'s bounding box size, expressed in model space (the space where vertices are placed). Shortcut to [This].[BoundingBox](#property-boundingbox).[Size](/reference/box#property-size)."
 
     - name: "Min"
       read-only: true
@@ -94,7 +94,7 @@ properties:
       description: |
         A table of material properties, they are typically set for you when imported from an external file. See the [Assets.Load](/reference/assets#functions-load) function for detail on how to import a mesh.
 
-        The following properties can generally be accessed and changed: `{ metallic, roughness, albedo, emissive, cutout, opaque, doublesided, unlit }`,
+        The following properties can generally be accessed and changed: `{ metallic, roughness, albedo, emissive, cutout, opaque, doublesided, unlit, filtering }`,
         - `metallic` is the metallic factor, expressed as a number between `0.0` and `1.0`. It has no effect if the material uses a metallic-roughness map instead.
         - `roughness` is the roughness factor, expressed as a number between `0.0` and `1.0`. It has no effect if the material uses a metallic-roughness map instead.
         - `albedo` is a [Color]. If the mesh has an albedo texture, it is applied multiplicatively.
