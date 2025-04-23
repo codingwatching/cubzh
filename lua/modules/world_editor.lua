@@ -737,7 +737,6 @@ local statesSettings = {
 			setState(states.DEFAULT)
 		end,
 		onStateEnd = function()
-			print("destroy object onStateEnd")
 			saveWorld()
 		end,
 	},

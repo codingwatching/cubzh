@@ -35,6 +35,7 @@ local loaded = {
 	-- not used anymore, some old worlds might still have it
 	map = nil,
 	mapName = nil,
+	mapScale = nil,
 }
 
 -- Ambience field definitions with serialization/deserialization functions
@@ -499,8 +500,12 @@ local serializeWorldBase64 = function(world)
 	local d = Data()
 	d:WriteByte(SERIALIZE_VERSION) -- version
 	
-	if world.mapName then
-		writeChunkMap(d, world.mapName, world.mapScale or 5)
+	if loaded.mapName then
+		if loaded.mapScale ~= nil then
+			writeChunkMap(d, loaded.mapName, loaded.mapScale)
+		else
+			writeChunkMap(d, loaded.mapName, MAP_SCALE_DEFAULT)
+		end
 	end
 	
 	if world.ambience then
@@ -520,6 +525,7 @@ local deserializeWorldBase64 = function(str)
 		objectsInfo = {},
 		nbObjects = 0,
 		mapName = nil,
+		mapScale = nil,
 		ambience = nil,
 	}
 	
@@ -631,8 +637,11 @@ local function loadMap(d, n, didLoad)
 	Object:Load(d, function(j)
 		local map = MutableShape(j, { recurse = true })
 		loaded.map = map
-
-		map.Scale = n or 5
+		if n ~= nil then
+			map.Scale = n
+		else
+			map.Scale = MAP_SCALE_DEFAULT
+		end
 		map:Recurse(function(o)
 			o.CollisionGroups = COLLISION_GROUP_MAP
 			o.CollidesWithGroups = COLLISION_GROUP_OBJECT + COLLISION_GROUP_PLAYER
@@ -867,13 +876,19 @@ world.load = function(config)
 		minimum_item_size_for_shadows_sqr = config.optimisations.minimum_item_size_for_shadows^2 or 1,
 		map = nil,
 		mapName = worldInfo.mapName,
+		mapScale = worldInfo.mapScale,
 	}
 
 	-- Load objects and ambience after map is loaded (or immediately if skipping map)
 	local loadObjectsAndAmbience = function()
 		if config.skipMap then
-			Map.Scale = world.mapScale or 5
+			if type(loaded.mapScale) == "number" then
+				Map.Scale = loaded.mapScale
+			else
+				Map.Scale = MAP_SCALE_DEFAULT
+			end
 			loaded.map = Map
+			loaded.mapScale = Map.Scale
 		else
 			if config.onLoad then
 				config.onLoad(loaded.map, "Map")
@@ -914,8 +929,8 @@ world.load = function(config)
 	end
 	
 	-- Load map or proceed directly to objects
-	if not config.skipMap and world.mapName ~= nil then
-		loadMap(world.mapName, world.mapScale, loadObjectsAndAmbience)
+	if not config.skipMap and loaded.mapName ~= nil then
+		loadMap(loaded.mapName, loaded.mapScale, loadObjectsAndAmbience)
 	else
 		loadObjectsAndAmbience()
 	end
