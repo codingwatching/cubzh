@@ -1,5 +1,7 @@
 mod = {}
 
+local TEXT_COLOR = Color(200, 200, 200)
+
 mod.createModalContent = function(_, config)
 	local time = require("time")
 	local theme = require("uitheme").current
@@ -73,7 +75,7 @@ mod.createModalContent = function(_, config)
 
 	local content = require("modal"):createContent()
 
-	content.title = config.world.title
+	content.title = ""
 	content.icon = "🌎"
 	content.node = worldDetails
 
@@ -115,6 +117,7 @@ mod.createModalContent = function(_, config)
 	cell.Height = 100
 	cell:setParent(nil)
 
+	local title
 	local name
 	local editNameBtn
 	local by
@@ -122,17 +125,36 @@ mod.createModalContent = function(_, config)
 	local author
 	local likeBtn
 	local editDescriptionBtn
+	local editIconBtn
 	local nameArea
 	local description
 	local views
 	local creationDate
 	local updateDate
+	local serverSizeText
+	local serverSizeSlider
 
-	local thumbnailRatio = 1 -- 16 / 9
+	local iconRatio = 1 -- 16 / 9
 
-	local thumbnailArea = ui:frame({ color = Color(20, 20, 22) })
-	thumbnailArea:setParent(cell)
+	local iconArea = ui:frame({ color = Color(20, 20, 22) })
+	iconArea:setParent(cell)
 
+	if createMode then
+		title = ui:createTextInput(config.world.title, "World Name")
+	else
+		title = ui:createText(config.world.title, { color = Color.White, size = "big", outline = 0.5 })
+	end
+	title:setParent(cell)
+	
+	local descriptionTitle = ui:createText("Description", { color = Color.White, size = "default"})
+	descriptionTitle:setParent(cell)
+
+	local badgesTitle = ui:createText("Badges", { color = Color.White, size = "default"})
+	badgesTitle:setParent(cell)
+
+	local badgesComingSoon = ui:createText("Coming soon", { color = TEXT_COLOR, size = "small"})
+	badgesComingSoon:setParent(cell)
+	
 	if createMode then
 		nameArea = ui:frame()
 		nameArea:setParent(worldDetails)
@@ -182,6 +204,56 @@ mod.createModalContent = function(_, config)
 				editNameBtn:enable()
 			end
 		end
+
+		editIconBtn = ui:buttonSecondary({ content = "✏️ Edit icon", textSize = "small" })
+		editIconBtn:setParent(cell)
+		editIconBtn.onRelease = function()
+			File:OpenAndReadAll(function(success, data)
+				if not success then
+					print("could not read file")
+					return
+				end
+	
+				if data == nil then
+					return
+				end
+
+				print("setting icon for world id:", world.id)
+				systemApi:setWorldIcon(world.id, data, function(err)
+					if err ~= nil then
+						print("could not set world icon")
+					end
+					print("icon set!")
+				end)
+			end)
+		end
+
+		serverSizeText = ui:createText("Server Size: …", { color = Color.White, size = "small"})
+		serverSizeText:setParent(cell)
+
+		serverSizeSlider = ui:slider({
+			min = 1,
+			max = 32,
+			defaultValue = 1,
+			hapticFeedback = true,
+			onValueChange = function(value)
+				if world.maxPlayers ~= nil then
+					world.maxPlayers = value
+					serverSizeText.Text = "Server Size: " .. world.maxPlayers
+				end
+			end,
+		})
+
+		serverSizeSlider.onRelease = function()
+			if world.maxPlayers ~= nil then
+				local req = systemApi:patchWorld(world.id, { maxPlayers = world.maxPlayers }, function(_, _)
+					-- not handling response yet
+				end)
+				table.insert(requests, req)
+			end
+		end
+		
+		serverSizeSlider:setParent(cell)
 	end
 
 	local secondaryTextColor = Color(150, 150, 150)
@@ -192,7 +264,7 @@ mod.createModalContent = function(_, config)
 	updateDate = ui:createText("✨ updated … ago", secondaryTextColor, "small")
 	updateDate:setParent(cell)
 
-	by = ui:createText("🛠️ created by", secondaryTextColor, "small")
+	by = ui:createText("🛠️ by ", secondaryTextColor, "small")
 	by:setParent(cell)
 
 	if createMode then
@@ -207,7 +279,7 @@ mod.createModalContent = function(_, config)
 	views = ui:createText("👁 …", secondaryTextColor, "small")
 	views:setParent(cell)
 
-	description = ui:createText("description", Color.White, "small")
+	description = ui:createText("description", { color = TEXT_COLOR, size = "small" })
 	description:setParent(cell)
 
 	likeBtn = ui:buttonNeutral({ content = "🤍 …", textSize = "small" })
@@ -240,7 +312,7 @@ mod.createModalContent = function(_, config)
 						else
 							description.empty = false
 							description.Text = text
-							description.Color = theme.textColor
+							description.Color = TEXT_COLOR
 							local req = systemApi:patchWorld(world.id, { description = text }, function(_, _)
 								-- not handling response yet
 							end)
@@ -281,7 +353,7 @@ mod.createModalContent = function(_, config)
 	-- refreshes UI with what's in local config.world / world
 	privateFields.refreshWorld = function()
 		if world.thumbnail ~= nil then
-			thumbnailArea:setImage(world.thumbnail)
+			iconArea:setImage(world.thumbnail)
 		end
 
 		if name ~= nil then
@@ -296,11 +368,16 @@ mod.createModalContent = function(_, config)
 			else
 				description.empty = false
 				description.Text = world.description
-				description.Color = theme.textColor
+				description.Color = TEXT_COLOR
+			end
+
+			if world.maxPlayers then
+				serverSizeText.Text = "Server Size: " .. world.maxPlayers
+				serverSizeSlider:setValue(world.maxPlayers)
 			end
 		else
 			description.Text = world.description or ""
-			description.Color = theme.textColor
+			description.Color = TEXT_COLOR
 		end
 
 		if likeBtn then
@@ -373,7 +450,7 @@ mod.createModalContent = function(_, config)
 			end
 		end
 
-		content.title = world.title or "…"
+		content.title = ""
 
 		-- update description text
 		if description ~= nil then
@@ -400,6 +477,7 @@ mod.createModalContent = function(_, config)
 			"title",
 			"created",
 			"updated",
+			"maxPlayers",
 		}, function(worldInfo, err)
 			if err ~= nil then
 				-- TODO: handle error (retry button?)
@@ -415,6 +493,7 @@ mod.createModalContent = function(_, config)
 			world.views = worldInfo.views
 			world.created = worldInfo.created
 			world.updated = worldInfo.updated
+			world.maxPlayers = worldInfo.maxPlayers
 
 			privateFields:refreshWorld()
 		end)
@@ -426,6 +505,7 @@ mod.createModalContent = function(_, config)
 				width = 250,
 				callback = function(thumbnail, err)
 					if err ~= nil then
+						print("error getting world thumbnail:", err)
 						return
 					end
 					world.thumbnail = thumbnail
@@ -480,23 +560,15 @@ mod.createModalContent = function(_, config)
 
 	worldDetails.refresh = function(self)
 		if world.thumbnail ~= nil then
-			thumbnailArea:setImage(world.thumbnail)
+			iconArea:setImage(world.thumbnail)
 		end
-
-		-- local createMode = config.mode == "create"
 
 		local padding = theme.padding
-		local width = self.Width - padding * 2
+		local width = self.Width - theme.padding * 2 -- remove scroll padding
+		local iconSize = math.min(100, self.Width * 0.3)
 
-		local thumbnailHeight = self.Height * 0.3
-		local thumbnailWidth = thumbnailHeight * thumbnailRatio
-		if thumbnailWidth > width then
-			thumbnailWidth = width
-			thumbnailHeight = thumbnailWidth * 1.0 / thumbnailRatio
-		end
-
-		thumbnailArea.Width = thumbnailWidth
-		thumbnailArea.Height = thumbnailHeight
+		iconArea.Width = iconSize
+		iconArea.Height = iconSize
 
 		description.object.MaxWidth = width - padding * 2
 
@@ -505,20 +577,54 @@ mod.createModalContent = function(_, config)
 		local author = author or authorBtn
 		local singleLineHeight = math.max(by.Height, author.Height)
 
-		local contentHeight = thumbnailArea.Height
+		local widthAsideIcon = width - iconSize - theme.paddingBig
+
+		if createMode then
+			title.Width = widthAsideIcon
+		else
+			title.object.MaxWidth = widthAsideIcon
+		end
+
+		by.object.Scale = 1 author.object.Scale = 1
+		local w = by.Width + author.Width
+		if w > widthAsideIcon then
+			local scale = widthAsideIcon / w
+			by.object.Scale = scale
+			author.object.Scale = scale
+		end
+		local authorLineHeight = math.max(by.Height, author.Height)
+
+		-- header contains the icon, the title and the author
+		-- + edit icon button in create mode
+		local headerHeight = title.Height + authorLineHeight + padding
+		if editIconBtn then
+			headerHeight = headerHeight + editIconBtn.Height + padding
+		end
+		headerHeight = math.max(headerHeight, iconArea.Height)
+
+		local contentHeight = headerHeight
 			+ padding
 			+ viewAndLikesHeight -- views and likes
-			+ theme.paddingBig
-			+ singleLineHeight -- author
 			+ padding
+			+ descriptionTitle.Height
+			+ padding
+			+ description.Height
+			+ theme.paddingBig
+			+ badgesTitle.Height
+			+ padding
+			+ badgesComingSoon.Height
+			+ theme.paddingBig
 			+ singleLineHeight -- publication date
 			+ padding
 			+ singleLineHeight -- update date
-			+ theme.paddingBig
-			+ description.Height
 
 		if name ~= nil then
 			contentHeight = contentHeight + name.Height + padding
+		end
+
+		if serverSizeText then
+			local h = math.max(serverSizeText.Height, serverSizeSlider.Height)
+			contentHeight = contentHeight + h + padding
 		end
 
 		if editDescriptionBtn then
@@ -528,10 +634,29 @@ mod.createModalContent = function(_, config)
 		cell.Height = contentHeight
 		cell.Width = width
 
-		local y = contentHeight - thumbnailArea.Height
+		local y = contentHeight - iconArea.Height
 
-		thumbnailArea.pos.X = width * 0.5 - thumbnailArea.Width * 0.5
-		thumbnailArea.pos.Y = y
+		-- icon
+		iconArea.pos.X = 0
+		iconArea.pos.Y = y
+
+		-- title
+		y = contentHeight - title.Height
+		title.pos = { iconSize + theme.paddingBig, y }
+
+		-- author
+		y = y - padding
+		by.pos = { iconSize + theme.paddingBig, y - authorLineHeight * 0.5 - by.Height * 0.5 }
+		author.pos = { by.pos.X + by.Width, y - authorLineHeight * 0.5 - author.Height * 0.5 }
+		y = y - authorLineHeight
+
+		-- edit icon
+		if editIconBtn then
+			y = y - padding - editIconBtn.Height
+			editIconBtn.pos = { iconSize + theme.paddingBig, y }
+		end
+
+		y = math.min(iconArea.pos.Y, y)
 
 		-- view and likes
 		y = y - padding - viewAndLikesHeight * 0.5
@@ -540,13 +665,35 @@ mod.createModalContent = function(_, config)
 		privateFields.alignViewsAndLikes()
 		y = y - viewAndLikesHeight * 0.5
 
-		-- author
-		y = y - theme.paddingBig - singleLineHeight * 0.5
-		by.pos = { padding, y - by.Height * 0.5 }
-		author.pos = { by.pos.X + by.Width + padding, y - author.Height * 0.5 }
-		y = y - singleLineHeight * 0.5
+		-- server size
+		if serverSizeText then
+			local h = math.max(serverSizeText.Height, serverSizeSlider.Height)
+			y = y - h * 0.5 - padding
+			serverSizeText.pos = { padding, y - serverSizeText.Height * 0.5 }
+			serverSizeSlider.Width = math.min(width - serverSizeText.Width - theme.paddingBig, 200)
+			serverSizeSlider.pos = { width - serverSizeSlider.Width - padding, y - serverSizeSlider.Height * 0.5 }
+			y = y - h * 0.5
+		end
 
-		y = y - padding - singleLineHeight * 0.5
+		-- description
+		y = y - padding - descriptionTitle.Height
+		descriptionTitle.pos = { padding, y }
+		y = y - padding - description.Height
+		description.pos = { padding, y }
+
+		if editDescriptionBtn ~= nil then
+			y = y - padding - editDescriptionBtn.Height
+			editDescriptionBtn.pos = { width * 0.5 - editDescriptionBtn.Width * 0.5, y }
+		end
+
+		-- badges
+		y = y - theme.paddingBig - badgesTitle.Height
+		badgesTitle.pos = { padding, y }
+		y = y - padding - badgesComingSoon.Height
+		badgesComingSoon.pos = { padding, y }
+
+		-- info
+		y = y - theme.paddingBig - singleLineHeight * 0.5
 		creationDate.pos = { padding, y - creationDate.Height * 0.5 }
 		y = y - singleLineHeight * 0.5
 
@@ -564,14 +711,6 @@ mod.createModalContent = function(_, config)
 			editNameBtn.Height = h
 			editNameBtn.Width = h
 			editNameBtn.pos = { name.pos.X + name.Width + padding, y }
-		end
-
-		y = y - theme.paddingBig - description.Height
-		description.pos = { padding, y }
-
-		if editDescriptionBtn ~= nil then
-			y = y - padding - editDescriptionBtn.Height
-			editDescriptionBtn.pos = { width * 0.5 - editDescriptionBtn.Width * 0.5, y }
 		end
 
 		scroll.Width = self.Width

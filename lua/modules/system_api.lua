@@ -140,8 +140,6 @@ mod.getLoginOptions = function(_, usernameOrEmail, callback)
 			return
 		end
 
-		-- print(resp.Body:ToString())
-
 		res.magickey = res["magic-key"]
 
 		if res.password == nil and res.magickey == nil then
@@ -490,6 +488,9 @@ moduleMT.createWorld = function(self, data, callback)
 		else
 			world.views = 0
 		end
+		if world.maxPlayers ~= nil then
+			world.maxPlayers = math.floor(world.maxPlayers)
+		end
 
 		callback(nil, world)
 	end)
@@ -527,8 +528,24 @@ moduleMT.patchWorld = function(self, worldID, data, callback)
 		else
 			world.views = 0
 		end
+		if world.maxPlayers ~= nil then
+			world.maxPlayers = math.floor(world.maxPlayers)
+		end
 
 		callback(nil, world)
+	end)
+	return req
+end
+
+-- callback(err) (nil err on success)
+moduleMT.setWorldIcon = function(self, worldID, data, callback)
+	local url = self.kApiAddr .. "/worlds/" .. worldID .. "/thumbnail"
+	local req = System:HttpPost(url, data, function(res)
+		if res.StatusCode ~= 200 then
+			callback(api:error(res.StatusCode, "could not set world icon"))
+			return
+		end
+		callback(nil)
 	end)
 	return req
 end
