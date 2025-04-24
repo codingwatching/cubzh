@@ -136,11 +136,66 @@ mod.createModalContent = function(_, config)
 
 	local iconRatio = 1 -- 16 / 9
 
+	local iconMask = ui:frame({ 
+		image = {
+			data = Data:FromBundle("images/round-corner-mask.png"),
+			slice9 = { 0.5, 0.5 },
+			slice9Scale = 1.0,
+			slice9Width = 20,
+			-- alpha = true,
+			cutout = true, -- mask only seem to work with cutout, not alpha
+		},
+		mask = true,
+	})
+	-- iconMask.IsMask = true
+	iconMask:setParent(cell)
+
 	local iconArea = ui:frame({ color = Color(20, 20, 22) })
-	iconArea:setParent(cell)
+	iconArea:setParent(iconMask)
 
 	if createMode then
 		title = ui:createTextInput(config.world.title, "World Name")
+		editTitleBtn = ui:buttonSecondary({ content = "✏️" })
+
+		local function focus()
+			title:focus()
+		end
+
+		local function submit()
+			local sanitized, err = api.checkWorldName(title.Text)
+			if err == nil then
+				local req = systemApi:patchWorld(world.id, { title = sanitized }, function(err, world)
+					if err == nil then
+						-- World update succeeded.
+						-- Notify that the content has changed.
+						if content.onContentUpdate then
+							content.onContentUpdate(world)
+						end
+					end
+				end)
+				table.insert(requests, req)
+			end
+
+			editTitleBtn.Text = "✏️"
+			editTitleBtn.onRelease = focus
+		end
+
+		title.onFocus = function(_)
+			editTitleBtn.Text = "✅"
+			editTitleBtn.onRelease = submit
+		end
+		
+		title.onTextChange = function(self)
+			local _, err = api.checkWorldName(self.Text)
+			if err ~= nil then
+				editTitleBtn:disable()
+			else
+				editTitleBtn:enable()
+			end
+		end
+
+		editTitleBtn.onRelease = focus
+		editTitleBtn:setParent(cell)
 	else
 		title = ui:createText(config.world.title, { color = Color.White, size = "big", outline = 0.5 })
 	end
@@ -156,55 +211,6 @@ mod.createModalContent = function(_, config)
 	badgesComingSoon:setParent(cell)
 	
 	if createMode then
-		nameArea = ui:frame()
-		nameArea:setParent(worldDetails)
-
-		name = ui:createTextInput("", "World Name?")
-		name:setParent(cell)
-		name.pos = { 0, 0 }
-
-		editNameBtn = ui:buttonSecondary({ content = "✏️" })
-		editNameBtn:setParent(cell)
-
-		local function focus()
-			name:focus()
-		end
-
-		local function submit()
-			local sanitized, err = api.checkWorldName(name.Text)
-			if err == nil then
-				local req = systemApi:patchWorld(world.id, { title = sanitized }, function(err, world)
-					if err == nil then
-						-- World update succeeded.
-						-- Notify that the content has changed.
-						if content.onContentUpdate then
-							content.onContentUpdate(world)
-						end
-					end
-				end)
-				table.insert(requests, req)
-			end
-
-			editNameBtn.Text = "✏️"
-			editNameBtn.onRelease = focus
-		end
-
-		editNameBtn.onRelease = focus
-
-		name.onFocus = function(_)
-			editNameBtn.Text = "✅"
-			editNameBtn.onRelease = submit
-		end
-
-		name.onTextChange = function(self)
-			local _, err = api.checkWorldName(self.Text)
-			if err ~= nil then
-				editNameBtn:disable()
-			else
-				editNameBtn:enable()
-			end
-		end
-
 		editIconBtn = ui:buttonSecondary({ content = "✏️ Edit icon", textSize = "small" })
 		editIconBtn:setParent(cell)
 		editIconBtn.onRelease = function()
@@ -505,7 +511,6 @@ mod.createModalContent = function(_, config)
 				width = 250,
 				callback = function(thumbnail, err)
 					if err ~= nil then
-						print("error getting world thumbnail:", err)
 						return
 					end
 					world.thumbnail = thumbnail
@@ -569,6 +574,8 @@ mod.createModalContent = function(_, config)
 
 		iconArea.Width = iconSize
 		iconArea.Height = iconSize
+		iconMask.Width = iconSize
+		iconMask.Height = iconSize
 
 		description.object.MaxWidth = width - padding * 2
 
@@ -580,7 +587,7 @@ mod.createModalContent = function(_, config)
 		local widthAsideIcon = width - iconSize - theme.paddingBig
 
 		if createMode then
-			title.Width = widthAsideIcon
+			title.Width = widthAsideIcon - editTitleBtn.Width - theme.paddingTiny
 		else
 			title.object.MaxWidth = widthAsideIcon
 		end
@@ -618,10 +625,6 @@ mod.createModalContent = function(_, config)
 			+ padding
 			+ singleLineHeight -- update date
 
-		if name ~= nil then
-			contentHeight = contentHeight + name.Height + padding
-		end
-
 		if serverSizeText then
 			local h = math.max(serverSizeText.Height, serverSizeSlider.Height)
 			contentHeight = contentHeight + h + padding
@@ -637,12 +640,21 @@ mod.createModalContent = function(_, config)
 		local y = contentHeight - iconArea.Height
 
 		-- icon
-		iconArea.pos.X = 0
-		iconArea.pos.Y = y
+		-- iconArea.pos.X = 0
+		-- iconArea.pos.Y = y
+		iconMask.pos.X = 0
+		iconMask.pos.Y = y
 
 		-- title
 		y = contentHeight - title.Height
 		title.pos = { iconSize + theme.paddingBig, y }
+
+		if editTitleBtn then
+			local h = title.Height
+			editTitleBtn.Height = h
+			editTitleBtn.Width = h
+			editTitleBtn.pos = { title.pos.X + title.Width + theme.paddingTiny, y }	
+		end
 
 		-- author
 		y = y - padding
@@ -656,7 +668,7 @@ mod.createModalContent = function(_, config)
 			editIconBtn.pos = { iconSize + theme.paddingBig, y }
 		end
 
-		y = math.min(iconArea.pos.Y, y)
+		y = math.min(iconMask.pos.Y, y)
 
 		-- view and likes
 		y = y - padding - viewAndLikesHeight * 0.5
@@ -700,18 +712,6 @@ mod.createModalContent = function(_, config)
 		y = y - padding - singleLineHeight * 0.5
 		updateDate.pos = { padding, y - updateDate.Height * 0.5 }
 		y = y - singleLineHeight * 0.5
-
-		if name ~= nil then
-			y = y - padding - name.Height
-			name.pos = { padding, y }
-
-			local h = name.Height
-			name.Width = width - h - padding * 3
-
-			editNameBtn.Height = h
-			editNameBtn.Width = h
-			editNameBtn.pos = { name.pos.X + name.Width + padding, y }
-		end
 
 		scroll.Width = self.Width
 

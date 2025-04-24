@@ -325,11 +325,7 @@ itemGrid.create = function(_, config)
 
 						local titleFrame = ui:frameTextBackground()
 						titleFrame:setParent(cell)
-						if type == "items" then
-							titleFrame.pos = { theme.paddingTiny, theme.paddingTiny }
-						elseif type == "worlds" then
-							titleFrame.pos = { theme.paddingTiny * 2, theme.paddingTiny * 2 }
-						end
+						titleFrame.pos = { theme.paddingTiny, theme.paddingTiny }
 						titleFrame.LocalPosition.Z = config.uikit.kForegroundDepth
 
 						local title = ui:createText("…", Color.White, "small")
@@ -414,17 +410,10 @@ itemGrid.create = function(_, config)
 									self.likesFrame.Height = self.likesLabel.Height + theme.paddingTiny * 2
 									self.likesFrame.Width = self.likesLabel.Width + theme.paddingTiny * 2
 
-									if type == "items" then
-										self.likesFrame.pos = {
-											self.Width - self.likesFrame.Width - theme.paddingTiny,
-											self.Height - self.likesFrame.Height - theme.paddingTiny,
-										}
-									elseif type == "worlds" then
-										self.likesFrame.pos = {
-											self.Width - self.likesFrame.Width - theme.paddingTiny * 2,
-											self.Height - self.likesFrame.Height - theme.paddingTiny * 2,
-										}
-									end
+									self.likesFrame.pos = {
+										self.Width - self.likesFrame.Width - theme.paddingTiny,
+										self.Height - self.likesFrame.Height - theme.paddingTiny,
+									}
 								end
 							end
 
@@ -477,9 +466,9 @@ itemGrid.create = function(_, config)
 
 											local thumbnail = ui:frame({ image = img })
 											thumbnail:setParent(cell)
-											thumbnail.Width = cell.Width - theme.paddingTiny * 2
-											thumbnail.Height = cell.Height - theme.paddingTiny * 2
-											thumbnail.pos = { theme.paddingTiny, theme.paddingTiny }
+											thumbnail.Width = cell.Width
+											thumbnail.Height = cell.Height
+											thumbnail.pos = { 0, 0 }
 
 											cell.thumbnail = thumbnail
 										end

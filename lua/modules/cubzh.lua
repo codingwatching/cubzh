@@ -9,11 +9,14 @@ local CONFIG = {
 	ITEM_CELL_SIZE = 150,
 	FRIEND_CELL_SIZE = 100,
 	TINY_PADDING = 2,
-	CELL_PADDING = 5,
+	CELL_PADDING = 10,
 	LOAD_CONTENT_DELAY = 0.3,
 	AVATAR_DEFAULT_YAW = math.rad(-170),
 	AVATAR_DEFAULT_PITCH = 0,
 	TINY_FONT_SCALE = 0.8,
+	SPACE_ABOVE_CATEGORY_TITLE = 12,
+	SPACE_BELLOW_CATEGORY_TITLE = 12,
+	SPACE_BELLOW_CATEGORY_CONTENT = 8,
 }
 
 local function avatarBox()
@@ -1155,9 +1158,6 @@ function home()
 		local recycledFriendCells = {}
 		local friendAvatarCache = {}
 
-		local cellSelector = ui:frameScrollCellSelector()
-		cellSelector:setParent(nil)
-
 		local t = 0.0
 		tickListener = LocalEvent:Listen(LocalEvent.Name.Tick, function(dt)
 			t = t + dt
@@ -1168,11 +1168,18 @@ function home()
 
 		local function cellResizeFn(self)
 			self.Width = self.parent.Width
-			self.title.pos = { padding * 2, self.Height - self.title.Height - padding }
+			self.title.pos = { 
+				padding * 2, 
+				self.Height - self.title.Height - CONFIG.SPACE_ABOVE_CATEGORY_TITLE 
+			}
 
 			if self.scroll then
-				self.scroll.pos = { padding, padding }
-				self.scroll.Height = self.Height - self.title.Height - padding * 3
+				self.scroll.pos = { padding, CONFIG.SPACE_BELLOW_CATEGORY_CONTENT }
+				self.scroll.Height = self.Height 
+				- self.title.Height 
+				- CONFIG.SPACE_ABOVE_CATEGORY_TITLE 
+				- CONFIG.SPACE_BELLOW_CATEGORY_TITLE 
+				- CONFIG.SPACE_BELLOW_CATEGORY_CONTENT
 				self.scroll.Width = self.Width - padding * 2
 			end
 
@@ -1211,21 +1218,21 @@ function home()
 			end
 
 			if self.avatar then
-				self.avatar.pos = { padding, padding }
-				self.avatar.Height = self.Height - padding * 2
-				self.avatar.Width = self.Width - padding * 2
+				self.avatar.pos = { theme.paddingTiny, theme.paddingTiny }
+				self.avatar.Height = self.Height - theme.paddingTiny * 2
+				self.avatar.Width = self.Width - theme.paddingTiny * 2
 			end
 
 			if self.thumbnail then
-				self.thumbnail.pos = { padding, padding }
-				self.thumbnail.Width = self.Width - padding * 2
-				self.thumbnail.Height = self.Height - padding * 2
+				self.thumbnail.pos = { 0, 0 }
+				self.thumbnail.Width = self.Width
+				self.thumbnail.Height = self.Height
 			end
 
 			if self.likesFrame then
 				self.likesFrame.pos = {
-					padding + theme.paddingTiny,
-					self.Height - self.likesFrame.Height - padding - theme.paddingTiny,
+					self.Width - self.likesFrame.Width - theme.paddingTiny,
+					self.Height - self.likesFrame.Height - theme.paddingTiny,
 				}
 				self.titleFrame.LocalPosition.Z = -500 -- ui.kForegroundDepth
 			end
@@ -1257,8 +1264,8 @@ function home()
 
 			if self.likesFrame then
 				self.likesFrame.pos = {
-					padding,
-					self.Height - self.likesFrame.Height - padding,
+					self.Width - self.likesFrame.Width - theme.paddingTiny,
+					self.Height - self.likesFrame.Height - theme.paddingTiny,
 				}
 				self.titleFrame.LocalPosition.Z = -500 -- ui.kForegroundDepth
 			end
@@ -1330,12 +1337,12 @@ function home()
 
 				local titleFrame = ui:frameTextBackground()
 				titleFrame:setParent(cell)
-				titleFrame.pos = { padding + theme.paddingTiny, padding + theme.paddingTiny }
+				titleFrame.pos = { theme.paddingTiny, theme.paddingTiny }
 
 				local title = ui:createText("…", {
 					color = Color.White,
 					size = "small",
-					bold = true,
+					bold = false,
 				})
 				title:setParent(titleFrame)
 				title.pos = { theme.paddingTiny, theme.paddingTiny }
@@ -1359,9 +1366,6 @@ function home()
 				cell.parentDidResize = worldCellResizeFn
 
 				cell.onPress = function(self)
-					cellSelector:setParent(self)
-					cellSelector.Width = self.Width
-					cellSelector.Height = self.Height
 					Client:HapticFeedback()
 				end
 
@@ -1369,9 +1373,7 @@ function home()
 					Menu:ShowWorld({ world = self.world })
 				end
 
-				cell.onCancel = function(_)
-					cellSelector:setParent(nil)
-				end
+				cell.onCancel = function(_) end
 			end
 
 			cell.category = category or ""
@@ -1444,8 +1446,8 @@ function home()
 			cell.likesFrame.Width = cell.likes.Width + theme.paddingTiny * 2
 			cell.likesFrame.Height = cell.likes.Height + theme.paddingTiny * 2
 			cell.likesFrame.pos = {
-				padding + theme.paddingTiny,
-				cell.Height - cell.likesFrame.Height - padding - theme.paddingTiny,
+				cell.Width - cell.likesFrame.Width - theme.paddingTiny,
+				cell.Height - cell.likesFrame.Height - theme.paddingTiny,
 			}
 			cell.titleFrame.LocalPosition.Z = -500 -- ui.kForegroundDepth
 
@@ -1546,9 +1548,6 @@ function home()
 				cell.parentDidResize = itemCellResizeFn
 
 				cell.onPress = function(self)
-					cellSelector:setParent(self)
-					cellSelector.Width = self.Width
-					cellSelector.Height = self.Height
 					Client:HapticFeedback()
 				end
 
@@ -1556,9 +1555,7 @@ function home()
 					Menu:ShowItem({ item = self.item })
 				end
 
-				cell.onCancel = function(_)
-					cellSelector:setParent(nil)
-				end
+				cell.onCancel = function(_) end
 			end
 
 			cell.category = category or ""
@@ -1625,8 +1622,8 @@ function home()
 			cell.likesFrame.Width = cell.likes.Width + theme.paddingTiny * 2
 			cell.likesFrame.Height = cell.likes.Height + theme.paddingTiny * 2
 			cell.likesFrame.pos = {
-				padding,
-				cell.Height - cell.likesFrame.Height - padding,
+				cell.Width - cell.likesFrame.Width - theme.paddingTiny,
+				cell.Height - cell.likesFrame.Height - theme.paddingTiny,
 			}
 			cell.titleFrame.LocalPosition.Z = -500 -- ui.kForegroundDepth
 
@@ -1676,12 +1673,21 @@ function home()
 			if cell == nil then
 				cell = ui:frameScrollCell()
 				cell.Width = CONFIG.FRIEND_CELL_SIZE
+
+				local lastSeen = ui:createText("", {
+					color = Color(131, 131, 148),
+					size = "small",
+					outline = 0.3,
+					outlineColor = Color(18, 18, 20),
+				})
+				lastSeen.object.Scale = CONFIG.TINY_FONT_SCALE
+				lastSeen:setParent(cell)
+				lastSeen.LocalPosition.Z = ui.kForegroundDepth
+				cell.lastSeen = lastSeen
+
 				cell.parentDidResize = worldCellResizeFn
 
 				cell.onPress = function(self)
-					cellSelector:setParent(self)
-					cellSelector.Width = self.Width
-					cellSelector.Height = self.Height
 					Client:HapticFeedback()
 				end
 
@@ -1692,9 +1698,7 @@ function home()
 					})
 				end
 
-				cell.onCancel = function(_)
-					cellSelector:setParent(nil)
-				end
+				cell.onCancel = function(_) end
 			end
 			return cell
 		end
@@ -1742,24 +1746,6 @@ function home()
 
 							avatar.username = username
 							avatar.usernameFrame = usernameFrame
-
-							-- LAST SEEN
-							local lastSeenFrame = ui:frameTextBackground()
-							lastSeenFrame:setParent(avatar)
-							lastSeenFrame.LocalPosition.Z = ui.kForegroundDepth
-
-							local lastSeen = ui:createText("", {
-								color = Color.White,
-								size = "small",
-								italic = true,
-							})
-
-							lastSeen.object.Scale = CONFIG.TINY_FONT_SCALE
-							lastSeen:setParent(lastSeenFrame)
-							lastSeen.pos = { theme.paddingTiny, theme.paddingTiny }
-
-							avatar.lastSeenFrame = lastSeenFrame
-							avatar.lastSeen = lastSeen
 						end
 
 						avatar:setParent(friendCell)
@@ -1772,7 +1758,7 @@ function home()
 						-- username text scale to fit in the cell
 						local scale = math.min(
 							1,
-							(CONFIG.FRIEND_CELL_SIZE - padding * 2 - theme.paddingTiny * 2) / avatar.username.Width
+							(CONFIG.FRIEND_CELL_SIZE - theme.paddingTiny * 4) / avatar.username.Width
 						)
 						avatar.username.object.Scale = scale
 
@@ -1788,13 +1774,11 @@ function home()
 							hours_label = "h",
 							days_label = "d",
 						})
-						avatar.lastSeen.Text = "👁️ " .. t .. units .. " ago"
-						avatar.lastSeenFrame.Width = avatar.lastSeen.Width + theme.paddingTiny * 2
-						avatar.lastSeenFrame.Height = avatar.lastSeen.Height + theme.paddingTiny * 2
-						avatar.lastSeenFrame.pos.Y = CONFIG.FRIEND_CELL_SIZE
-							- avatar.lastSeenFrame.Height
-							- padding
-							- theme.paddingTiny
+						friendCell.lastSeen.Text = "" .. t .. units .. " ago"
+						friendCell.lastSeen.pos = {
+							CONFIG.FRIEND_CELL_SIZE - friendCell.lastSeen.Width - theme.paddingTiny,
+							CONFIG.FRIEND_CELL_SIZE - friendCell.lastSeen.Height - theme.paddingTiny,
+						}
 
 						friendCell.avatar = avatar
 
@@ -1849,7 +1833,7 @@ function home()
 				end,
 			},
 			{
-				title = "✨ Featured Worlds",
+				title = "✨ Featured",
 				cellSize = CONFIG.WORLD_CELL_SIZE,
 				loadCell = function(index, dataFetcher)
 					if index <= dataFetcher.nbEntities then
@@ -1980,7 +1964,12 @@ function home()
 			})
 			title:setParent(cell)
 
-			cell.Height = title.Height + (category.cellSize or 100) + padding * 3
+			cell.Height = title.Height 
+			+ (category.cellSize or 100) 
+			+ CONFIG.SPACE_ABOVE_CATEGORY_TITLE 
+			+ CONFIG.SPACE_BELLOW_CATEGORY_TITLE
+			+ CONFIG.SPACE_BELLOW_CATEGORY_CONTENT
+
 			cell.title = title
 
 			cell.button = ui:buttonLink({ content = "", textSize = "small" })
@@ -2001,7 +1990,12 @@ function home()
 			})
 			title:setParent(cell)
 
-			cell.Height = title.Height + (category.cellSize or 100) + padding * 3 + CONFIG.CELL_PADDING * 2
+			cell.Height = title.Height 
+			+ (category.cellSize or 100) 
+			+ CONFIG.SPACE_ABOVE_CATEGORY_TITLE 
+			+ CONFIG.SPACE_BELLOW_CATEGORY_TITLE
+			+ CONFIG.SPACE_BELLOW_CATEGORY_CONTENT
+
 			cell.title = title
 
 			cell.button = ui:buttonLink({ content = "", textSize = "small" })
@@ -2077,7 +2071,7 @@ function home()
 			-- gradientColor = Color(37, 23, 59), -- Color(155, 97, 250),
 			padding = {
 				top = Screen.SafeArea.Top + CONFIG.CELL_PADDING,
-				bottom = CONFIG.CELL_PADDING,
+				bottom = 0,
 				left = 0,
 				right = 0,
 			},

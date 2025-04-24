@@ -1186,8 +1186,10 @@ function createUI(system)
 				data = frameScrollCellQuadData,
 				slice9 = { 0.5, 0.5 },
 				slice9Scale = DEFAULT_SLICE_9_SCALE,
+				slice9Width = 20,
 				cutout = true,
 			},
+			mask = true,
 		})
 	end
 
