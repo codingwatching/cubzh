@@ -617,6 +617,15 @@ local statesSettings = {
 	[states.OBJECT_SELECTED] = {
 		onStateBegin = function(obj)
 			selectedObject = obj
+
+			local objectsWithColliders = {}
+			obj:Recurse(function(o)
+				if o.Physics ~= nil then
+					table.insert(objectsWithColliders, o)
+				end
+			end, { includeRoot = true })
+			Dev.DisplayColliders = objectsWithColliders
+
 			require("box_gizmo"):toggle(obj, Color.White)
 			objectNameInput.Text = obj.Name
 			objectNameInput.onTextChange = function(o)
@@ -671,6 +680,7 @@ local statesSettings = {
 			tryPickObjectUp(pe)
 		end,
 		onStateEnd = function()
+			Dev.DisplayColliders = false
 			objectNameInput.onTextChange = nil
 			objectNameInput.Text = ""
 
