@@ -50,7 +50,7 @@ coins.createModalContent = function(_, config)
 		o.LocalRotation.Y = o.LocalRotation.Y + dt * 2
 	end
 
-	local coinShape = ui:createShape(shape, { spherized = true })
+	local coinShape = ui:createShape(shape, { spherized = false })
 	coinShape:setParent(balanceFrame)
 
 	local amountText = ui:createText("-", { color = Color(253, 222, 44), size = "big", font = Font.Pixel })
@@ -140,50 +140,64 @@ coins.createModalContent = function(_, config)
 	})
 	scroll:setParent(historyFrame)
 
-	content.idealReducedContentSize = function(_, width, height)
-		width = math.min(width, 500)
-		height = math.min(height, 800)
+	local function layoutBalanceFrameContent()
+		local height = balanceFrame.Height
+		balanceText.pos = { theme.padding, height - theme.padding - balanceText.Height }
 
-		local coinSize = 100
-
-		local balanceFrameHeight = balanceText.Height
-			+ coinSize
-			+ grantedText.Height
-			+ purchasedText.Height
-			+ earnedText.Height
-			+ theme.padding * 4
-
-		balanceFrame.Width = width
-		balanceFrame.Height = balanceFrameHeight
-
-		balanceText.pos = { theme.padding, balanceFrameHeight - theme.padding - balanceText.Height }
-
-		coinShape.Width = coinSize
-		coinShape.Height = coinSize
-		local w = coinSize + theme.padding + amountText.Width
-		coinShape.pos = {
-			balanceFrame.Width * 0.5 - w * 0.5,
-			balanceText.pos.Y - coinSize - theme.padding,
-		}
-		amountText.pos = {
-			coinShape.pos.X + coinShape.Width + theme.padding,
-			coinShape.pos.Y + coinShape.Height * 0.5 - amountText.Height * 0.5,
+		earnedText.pos = {
+			theme.padding,
+			theme.padding,
 		}
 
 		grantedText.pos = {
 			theme.padding,
-			coinShape.pos.Y - grantedText.Height - theme.padding,
+			earnedText.pos.Y + earnedText.Height,
 		}
 
 		purchasedText.pos = {
 			theme.padding,
-			grantedText.pos.Y - purchasedText.Height,
+			grantedText.pos.Y + grantedText.Height,
 		}
 
-		earnedText.pos = {
-			theme.padding,
-			purchasedText.pos.Y - earnedText.Height,
+		local w = balanceFrame.Width - theme.padding - math.max(
+			balanceText.Width, 
+			purchasedText.Width,
+			grantedText.Width, 
+			earnedText.Width
+		)
+
+		local cw = amountText.Width + coinShape.Width + theme.paddingBig
+
+		coinShape.pos = {
+			balanceFrame.Width - w * 0.5 - cw * 0.5,
+			height * 0.5 - coinShape.Height * 0.5,
 		}
+
+		amountText.pos = {
+			coinShape.pos.X + coinShape.Width + theme.paddingBig,
+			height * 0.5 - amountText.Height * 0.5,
+		}
+		
+	end
+
+	content.idealReducedContentSize = function(_, width, height)
+		width = math.min(width, 500)
+		height = math.min(height, 800)
+
+		local coinSize = 60
+		coinShape.Width = coinSize
+		coinShape.Height = coinSize
+
+		local h = math.max(grantedText.Height + purchasedText.Height + earnedText.Height, coinSize)
+
+		local balanceFrameHeight = balanceText.Height
+			+ h
+			+ theme.padding * 3
+
+		balanceFrame.Width = width
+		balanceFrame.Height = balanceFrameHeight
+
+		layoutBalanceFrameContent()
 
 		historyFrame.Width = width
 		historyFrame.Height = height - balanceFrame.Height - theme.padding
@@ -213,6 +227,7 @@ coins.createModalContent = function(_, config)
 				grantedText.Text = "grants: -"
 				purchasedText.Text = "purchased: -"
 				earnedText.Text = "earned: -"
+				layoutBalanceFrameContent()
 				return
 			end
 			System:DebugEvent("User shows bank account", {
@@ -225,6 +240,7 @@ coins.createModalContent = function(_, config)
 			grantedText.Text = string.format("grants: %d", balance.grantedCoins)
 			purchasedText.Text = string.format("purchased: %d", balance.purchasedCoins)
 			earnedText.Text = string.format("earned: %d", balance.earnedCoins)
+			layoutBalanceFrameContent()
 		end)
 		table.insert(requests, req)
 
