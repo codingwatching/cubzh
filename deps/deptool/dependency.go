@@ -9,6 +9,7 @@ import (
 const ( // Supported dependencies
 	DependencyLibluau = "libluau"
 	DependencyLibpng  = "libpng"
+	DependencyLibjolt = "libjolt"
 
 	// Supported platforms
 	PlatformAll     = "all"
@@ -23,7 +24,7 @@ const ( // Supported dependencies
 )
 
 var (
-	supportedDependencies = []string{DependencyLibluau, DependencyLibpng}
+	supportedDependencies = []string{DependencyLibluau, DependencyLibpng, DependencyLibjolt}
 	supportedPlatforms    = []string{PlatformSource, PlatformAndroid, PlatformIOS, PlatformMacos, PlatformWindows, PlatformLinux}
 )
 
