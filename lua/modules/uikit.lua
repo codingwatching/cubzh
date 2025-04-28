@@ -2779,11 +2779,15 @@ function createUI(system)
 		local loadBottom
 		local unloadTop
 		local unloadBottom
+		local displayTop
+		local displayBottom
 
 		local loadRight
 		local loadLeft
 		local unloadRight
 		local unloadLeft
+		local displayRight
+		local displayLeft
 
 		local scrollHandle = self:createFrame(Color(0, 0, 0, 0.5))
 		scrollHandle:setParent(node)
@@ -2927,35 +2931,47 @@ function createUI(system)
 			if down then
 				container.pos.Y = node.Height - padding.top + scrollPosition
 
-				loadTop = -scrollPosition + SCROLL_LOAD_MARGIN
-				loadBottom = loadTop - node.Height - SCROLL_LOAD_MARGIN * 2
+				displayTop = -scrollPosition
+				displayBottom = displayTop - node.Height
 
-				unloadTop = scrollPosition + SCROLL_UNLOAD_MARGIN
-				unloadBottom = loadTop - node.Height - SCROLL_UNLOAD_MARGIN * 2
+				loadTop = displayTop + SCROLL_LOAD_MARGIN
+				loadBottom = displayBottom - SCROLL_LOAD_MARGIN
+
+				unloadTop = displayTop + SCROLL_UNLOAD_MARGIN
+				unloadBottom = displayBottom - SCROLL_UNLOAD_MARGIN
 			elseif up then
 				container.pos.Y = padding.bottom - scrollPosition
 
-				loadBottom = scrollPosition - SCROLL_LOAD_MARGIN
-				loadTop = loadBottom + node.Height + SCROLL_LOAD_MARGIN * 2
+				displayBottom = scrollPosition
+				displayTop = displayBottom + node.Height
 
-				unloadBottom = -scrollPosition - SCROLL_UNLOAD_MARGIN
-				unloadTop = loadBottom + node.Height + SCROLL_UNLOAD_MARGIN * 2
+				loadBottom = displayBottom - SCROLL_LOAD_MARGIN
+				loadTop = displayTop + SCROLL_LOAD_MARGIN
+
+				unloadTop = displayTop + SCROLL_UNLOAD_MARGIN
+				unloadBottom = displayBottom - SCROLL_UNLOAD_MARGIN
 			elseif right then
 				container.pos.X = padding.left + scrollPosition
 
-				loadLeft = -scrollPosition - SCROLL_LOAD_MARGIN
-				loadRight = loadLeft + node.Width + SCROLL_LOAD_MARGIN * 2
+				displayLeft = -scrollPosition
+				displayRight = displayLeft + node.Width
+				
+				loadLeft = displayLeft - SCROLL_LOAD_MARGIN
+				loadRight = displayRight + SCROLL_LOAD_MARGIN
 
-				unloadLeft = -scrollPosition - SCROLL_UNLOAD_MARGIN
-				unloadRight = loadLeft + node.Width + SCROLL_UNLOAD_MARGIN * 2
+				unloadLeft = displayLeft - SCROLL_UNLOAD_MARGIN
+				unloadRight = displayRight + SCROLL_UNLOAD_MARGIN
 			elseif left then
 				container.pos.X = node.Width - padding.right - scrollPosition
 
-				loadLeft = scrollPosition - node.Width - SCROLL_LOAD_MARGIN
-				loadRight = loadLeft + node.Width + SCROLL_LOAD_MARGIN * 2
+				displayLeft = scrollPosition
+				displayRight = displayLeft + node.Width
 
-				unloadLeft = scrollPosition - node.Width - SCROLL_LOAD_MARGIN * 2
-				unloadRight = loadLeft + node.Width + SCROLL_UNLOAD_MARGIN * 2
+				loadLeft = displayLeft - SCROLL_LOAD_MARGIN
+				loadRight = displayRight + SCROLL_LOAD_MARGIN
+
+				unloadLeft = displayLeft - SCROLL_UNLOAD_MARGIN
+				unloadRight = displayRight + SCROLL_UNLOAD_MARGIN
 			end
 
 			cellIndex = 1
@@ -3003,6 +3019,18 @@ function createUI(system)
 							end
 							cells[cellIndex] = cell
 						end
+
+						if cell:isVisible() then
+							if cellInfo.bottom > displayTop or cellInfo.top < displayBottom then
+								cell:hide()
+							end
+						else
+							if (cellInfo.bottom <= displayTop and cellInfo.bottom >= displayBottom) 
+							 or (cellInfo.top <= displayTop and cellInfo.top >= displayBottom) then
+								cell:show()
+							end
+						end
+
 					elseif cellInfo.top <= unloadBottom or cellInfo.bottom >= unloadTop then
 						cell = cells[cellIndex]
 						if cell ~= nil then
@@ -3051,12 +3079,6 @@ function createUI(system)
 					then
 						cell = cells[cellIndex]
 						if cell == nil then
-							-- print(
-							-- 	"LOAD",
-							-- 	cellIndex,
-							-- 	"[" .. cellInfo.left .. " - " .. cellInfo.right .. "]",
-							-- 	"[" .. loadLeft .. " - " .. loadRight .. "]"
-							-- )
 							cell = config.loadCell(cellIndex, config.userdata, container)
 							-- here if cell == nil, it means cell already loaded once now gone
 							-- let's just not display anything in this area.
@@ -3067,15 +3089,21 @@ function createUI(system)
 							end
 							cells[cellIndex] = cell
 						end
+
+						if cell:isVisible() then
+							if cellInfo.left > displayRight or cellInfo.right < displayLeft then
+								cell:hide()
+							end
+						else
+							if (cellInfo.left <= displayRight and cellInfo.left >= displayLeft) 
+							 or (cellInfo.right <= displayRight and cellInfo.right >= displayLeft) then
+								cell:show()
+							end
+						end
+
 					elseif cellInfo.right <= unloadLeft or cellInfo.left >= unloadRight then
 						cell = cells[cellIndex]
 						if cell ~= nil then
-							-- print(
-							-- 	"UNLOAD",
-							-- 	cellIndex,
-							-- 	"[" .. cellInfo.left .. " - " .. cellInfo.right .. "]",
-							-- 	"[" .. unloadLeft .. " - " .. unloadRight .. "]"
-							-- )
 							-- TODO: FIX LOAD/UNLOAD, sometimes cells are loaded and unloaded during same frame
 							config.unloadCell(cellIndex, cell, config.userdata)
 							cells[cellIndex] = nil
