@@ -45,7 +45,7 @@ CUBZH_MENU_SECONDARY_BUTTON_HEIGHT = 40
 
 DEV_MODE = System.LocalUserIsAuthor and System.ServerIsInDevMode
 IN_WORLD_EDITOR = Environment["worldId"] == "world_editor"
-AI_ASSISTANT_ENABLED = not IN_WORLD_EDITOR
+AI_ASSISTANT_ENABLED = false -- not IN_WORLD_EDITOR
 
 -- VARS
 
