@@ -195,7 +195,7 @@ void ::vx::fs::importFile(ImportFileCallback callback) {
     [op setCanChooseFiles:YES];
     [op setCanChooseDirectories:NO];
     [op setAllowsMultipleSelection:NO];
-    [op setAllowedFileTypes:[NSArray arrayWithObjects:@"vox", @"pcubes", @"3zh", @"glb", @"gltf", @"jpg", @"jpeg", @"gif", nil]];
+    [op setAllowedFileTypes:[NSArray arrayWithObjects:@"vox", @"pcubes", @"3zh", @"glb", @"gltf", @"png", @"jpg", @"jpeg", @"gif", nil]];
 
     [op beginWithCompletionHandler:^(NSInteger result){
         if (result == NSModalResponseOK) {

@@ -1,5 +1,11 @@
 coins = {}
 
+local STORE_ITEM_HEIGHT = 125
+local STORE_ITEM_WIDTH = 125
+
+local storeItemCellQuadDataTop = nil
+local storeItemCellQuadDataBottom = nil
+
 -- Creates modal content to present user coins.
 -- (should be used to create or pushed within modal)
 coins.createModalContent = function(_, config)
@@ -50,10 +56,17 @@ coins.createModalContent = function(_, config)
 		o.LocalRotation.Y = o.LocalRotation.Y + dt * 2
 	end
 
-	local coinShape = ui:createShape(shape, { spherized = true })
+	local coinShape = ui:createShape(shape, { spherized = false })
 	coinShape:setParent(balanceFrame)
 
-	local amountText = ui:createText("-", { color = Color(253, 222, 44), size = "big", font = Font.Pixel })
+	local amountText = ui:createText("-", { 
+		color = Color(253, 222, 44), 
+		size = "big", 
+		outline = 0.4,
+		outlineColor = Color.Black,
+		bold = true,
+		-- font = Font.Pixel 
+	})
 	amountText:setParent(balanceFrame)
 
 	local grantedText = ui:createText(string.format("grants: -"), { color = Color(252, 167, 27), size = "small" })
@@ -111,7 +124,7 @@ coins.createModalContent = function(_, config)
 			c.op.Text = string.format("🇵 ➡️ %d", -transaction.amount)
 		end
 		c.description.Text = transaction.info.description or transaction.info.reason or ""
-		c.Height = 50
+		c.Height = 45
 		return c
 	end
 
@@ -122,7 +135,7 @@ coins.createModalContent = function(_, config)
 
 	local scroll = ui:scroll({
 		padding = {
-			top = theme.padding,
+			top = 0,
 			bottom = theme.padding,
 			left = 0,
 			right = 0,
@@ -140,60 +153,202 @@ coins.createModalContent = function(_, config)
 	})
 	scroll:setParent(historyFrame)
 
-	content.idealReducedContentSize = function(_, width, height)
-		width = math.min(width, 500)
-		height = math.min(height, 800)
-
-		local coinSize = 100
-
-		local balanceFrameHeight = balanceText.Height
-			+ coinSize
-			+ grantedText.Height
-			+ purchasedText.Height
-			+ earnedText.Height
-			+ theme.padding * 4
-
-		balanceFrame.Width = width
-		balanceFrame.Height = balanceFrameHeight
-
-		balanceText.pos = { theme.padding, balanceFrameHeight - theme.padding - balanceText.Height }
-
-		coinShape.Width = coinSize
-		coinShape.Height = coinSize
-		local w = coinSize + theme.padding + amountText.Width
-		coinShape.pos = {
-			balanceFrame.Width * 0.5 - w * 0.5,
-			balanceText.pos.Y - coinSize - theme.padding,
+	local packs = {
+		{
+			price = 0.99,
+			coins = 80,
+		},
+		{
+			price = 4.99,
+			coins = 400,
+		},
+		{
+			price = 9.99,
+			coins = 800,
+		},
+		{
+			subscription = true,	
+			price = 9.99,
+			coins = 1000,
+		},
+		{
+			price = 19.99,
+			coins = 1700,
+		},
+		{
+			price = 49.99,
+			coins = 4500,
+		},
+		{
+			price = 99.99,
+			coins = 10000,
+		},
+		{
+			price = 199.99,
+			coins = 22500,
 		}
-		amountText.pos = {
-			coinShape.pos.X + coinShape.Width + theme.padding,
-			coinShape.pos.Y + coinShape.Height * 0.5 - amountText.Height * 0.5,
+	}
+	local packCells = {}
+
+	local packsScroll = ui:scroll({
+		padding = {
+			top = 0,
+			bottom = 0,
+			left = 0,
+			right = 0,
+		},
+		direction = "right",
+		-- backgroundColor = Color(200, 200, 200),
+		cellPadding = theme.padding,
+		loadCell = function(index)
+			if index <= #packs then
+				local c = packCells[index]
+				if c == nil then
+					-- c = ui:frameScrollCell()
+
+					c = ui:frame()
+
+					if storeItemCellQuadDataTop == nil then
+						storeItemCellQuadDataTop = Data:FromBundle("images/store-item-top.png")
+					end
+					if storeItemCellQuadDataBottom == nil then
+						storeItemCellQuadDataBottom = Data:FromBundle("images/store-item-bottom.png")
+					end
+					local topBackground = ui:frame({
+						image = {
+							data = storeItemCellQuadDataTop,
+							slice9 = { 0.5, 0.5 },
+							slice9Scale = 1.0,
+							slice9Width = 20,
+							alpha = true,
+							-- cutout = true,
+						},
+						-- mask = true,
+					})
+					topBackground:setParent(c)
+
+					local bottomBackground = ui:frame({
+						image = {
+							data = storeItemCellQuadDataBottom,
+							slice9 = { 0.5, 0.5 },
+							slice9Scale = 1.0,
+							slice9Width = 20,
+							alpha = true,
+							-- cutout = true,
+						},
+						-- mask = true,
+					})
+					bottomBackground:setParent(c)
+
+					c.Width = STORE_ITEM_WIDTH
+					c.Height = STORE_ITEM_HEIGHT
+
+					topBackground.Width = STORE_ITEM_WIDTH
+					topBackground.Height = STORE_ITEM_HEIGHT - 40
+					topBackground.pos = { 0, c.Height - topBackground.Height }
+
+					bottomBackground.Width = STORE_ITEM_WIDTH
+					bottomBackground.Height = 40
+					bottomBackground.pos = { 0, 0 }
+
+					local price = ui:createText(string.format("$%.2f", packs[index].price), { color = Color.White, size = "small" })
+					price:setParent(bottomBackground)
+					price.pos = { bottomBackground.Width * 0.5 - price.Width * 0.5, bottomBackground.Height * 0.5 - price.Height * 0.5 }
+
+					local coins = ui:createText(string.format("%d", packs[index].coins), { 
+						color = Color(253, 222, 44), 
+						size = "default",
+						outline = 0.4,
+						outlineColor = Color.Black,
+						bold = true,
+					})
+					coins:setParent(topBackground)
+					coins.pos = { topBackground.Width * 0.5 - coins.Width * 0.5, theme.padding }
+
+					packCells[index] = c
+				end
+				c:show()
+				return c
+			end
+		end,
+		unloadCell = function(_, cell)
+			cell:hide()
+		end,
+	})
+	packsScroll:setParent(node)
+
+	local function layoutBalanceFrameContent()
+		local height = balanceFrame.Height
+		balanceText.pos = { theme.padding, height - theme.padding - balanceText.Height }
+
+		earnedText.pos = {
+			theme.padding,
+			theme.padding,
 		}
 
 		grantedText.pos = {
 			theme.padding,
-			coinShape.pos.Y - grantedText.Height - theme.padding,
+			earnedText.pos.Y + earnedText.Height,
 		}
 
 		purchasedText.pos = {
 			theme.padding,
-			grantedText.pos.Y - purchasedText.Height,
+			grantedText.pos.Y + grantedText.Height,
 		}
 
-		earnedText.pos = {
-			theme.padding,
-			purchasedText.pos.Y - earnedText.Height,
+		local w = balanceFrame.Width - theme.padding - math.max(
+			balanceText.Width, 
+			purchasedText.Width,
+			grantedText.Width, 
+			earnedText.Width
+		)
+
+		local cw = amountText.Width + coinShape.Width + theme.paddingBig
+
+		coinShape.pos = {
+			balanceFrame.Width - w * 0.5 - cw * 0.5,
+			height * 0.5 - coinShape.Height * 0.5,
 		}
+
+		amountText.pos = {
+			coinShape.pos.X + coinShape.Width + theme.paddingBig,
+			height * 0.5 - amountText.Height * 0.5,
+		}
+		
+	end
+
+	content.idealReducedContentSize = function(_, width, height)
+		width = math.min(width, 500)
+		height = math.min(height, 800)
+
+		local coinSize = 60
+		coinShape.Width = coinSize
+		coinShape.Height = coinSize
+
+		local h = math.max(grantedText.Height + purchasedText.Height + earnedText.Height, coinSize)
+
+		local balanceFrameHeight = balanceText.Height
+			+ h
+			+ theme.padding * 3
+
+		balanceFrame.Width = width
+		balanceFrame.Height = balanceFrameHeight
+
+		layoutBalanceFrameContent()
+
+		packsScroll.Width = width
+		packsScroll.Height = STORE_ITEM_HEIGHT
 
 		historyFrame.Width = width
-		historyFrame.Height = height - balanceFrame.Height - theme.padding
+		historyFrame.Height = height - balanceFrame.Height - packsScroll.Height - theme.padding * 2
 
 		-- detailText.pos = { theme.padding, theme.padding }
 
 		historyText.pos = { theme.padding, historyFrame.Height - theme.padding - historyText.Height }
 
 		balanceFrame.pos = { 0, height - balanceFrame.Height }
-		historyFrame.pos = { 0, balanceFrame.pos.Y - historyFrame.Height - theme.padding }
+		packsScroll.pos = { 0, balanceFrame.pos.Y - packsScroll.Height - theme.padding }
+		historyFrame.pos = { 0, 0 }
 
 		scroll.Height = historyFrame.Height - historyText.Height - theme.padding * 2
 		scroll.Width = historyFrame.Width - theme.padding * 2
@@ -213,6 +368,7 @@ coins.createModalContent = function(_, config)
 				grantedText.Text = "grants: -"
 				purchasedText.Text = "purchased: -"
 				earnedText.Text = "earned: -"
+				layoutBalanceFrameContent()
 				return
 			end
 			System:DebugEvent("User shows bank account", {
@@ -225,6 +381,7 @@ coins.createModalContent = function(_, config)
 			grantedText.Text = string.format("grants: %d", balance.grantedCoins)
 			purchasedText.Text = string.format("purchased: %d", balance.purchasedCoins)
 			earnedText.Text = string.format("earned: %d", balance.earnedCoins)
+			layoutBalanceFrameContent()
 		end)
 		table.insert(requests, req)
 

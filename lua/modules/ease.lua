@@ -120,24 +120,28 @@ ease._common = function(self, object, duration, config)
 
 		local fieldType = typeof(t.object[k])
 		if fieldType ~= typeof(v) then
-			if
-				fieldType == "Number3" -- see if value can be turned into Number3
-				and typeof(v) == "table"
-				and #v == 3
-				and type(v[1]) == "number"
-				and type(v[2]) == "number"
-				and type(v[3]) == "number"
-			then
-				v = Number3(v[1], v[2], v[3])
-			elseif
-				fieldType == "Rotation" -- see if value can be turned into Rotation
-				and typeof(v) == "table"
-				and #v == 3
-				and type(v[1]) == "number"
-				and type(v[2]) == "number"
-				and type(v[3]) == "number"
-			then
-				v = Rotation(v[1], v[2], v[3])
+			if fieldType == "Number3" and typeof(v) == "table" then -- see if table can be turned into Number3
+				local len = #v
+				if len == 1 and type(v[1]) == "number" then
+					v = Number3(v[1], t.object[k].Y, t.object[k].Z)
+				elseif len == 2 and type(v[1]) == "number" and type(v[2]) == "number" then
+					v = Number3(v[1], v[2], t.object[k].Z)
+				elseif len == 3 and type(v[1]) == "number" and type(v[2]) == "number" and type(v[3]) == "number" then
+					v = Number3(v[1], v[2], v[3])
+				else
+					error("ease: can't ease from " .. fieldType .. " to " .. typeof(v))
+				end
+			elseif fieldType == "Rotation" and typeof(v) == "table" then -- see if table can be turned into Rotation
+				local len = #v
+				if len == 1 and type(v[1]) == "number" then
+					v = Rotation(v[1], t.object[k].Y, t.object[k].Z)
+				elseif len == 2 and type(v[1]) == "number" and type(v[2]) == "number" then
+					v = Rotation(v[1], v[2], t.object[k].Z)
+				elseif len == 3 and type(v[1]) == "number" and type(v[2]) == "number" and type(v[3]) == "number" then
+					v = Rotation(v[1], v[2], v[3])
+				else
+					error("ease: can't ease from " .. fieldType .. " to " .. typeof(v))
+				end
 			else
 				error("ease: can't ease from " .. fieldType .. " to " .. typeof(v))
 			end

@@ -239,7 +239,7 @@ creations.createModalContent = function(_, config)
 							System.EditWorld(world.id)
 						end
 
-						worldDetailsContent.bottomRight = { btnEdit, btnEditCode }
+						worldDetailsContent.bottomCenter = { btnEditCode, btnEdit }
 
 						worldDetailsContent.idealReducedContentSize = function(content, width, height)
 							content.Width = width
@@ -676,7 +676,7 @@ creations.createModalContent = function(_, config)
 						System.EditWorld(entity.id)
 					end
 
-					worldDetailsContent.bottomRight = { btnEdit, btnEditCode }
+					worldDetailsContent.bottomCenter = { btnEditCode, btnEdit }
 				end
 
 				worldDetailsContent.idealReducedContentSize = function(content, width, height)

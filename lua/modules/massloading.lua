@@ -80,7 +80,7 @@ massLoading.load = function(_, collection, config)
 	end
 
 	local function loadObject(template, data)
-		config.onLoad(Shape(template, { recurse = true }), data)
+		config.onLoad(template:Copy({ recurse = true }), data)
 		loadedNextObject()
 	end
 
