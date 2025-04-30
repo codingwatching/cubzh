@@ -60,7 +60,11 @@ func Autoconfigure(objectStorageBuildFunc ObjectStorageBuildFunc, depsDirPath, c
 				platform = PlatformSource
 			}
 
-			_, exists := areDependencyFilesInstalled(depsDirPath, depName, depInfo.Version, platform)
+			_, exists, err := areDependencyFilesInstalled(depsDirPath, depName, depInfo.Version, platform)
+			if err != nil {
+				return fmt.Errorf("failed to check if dependency files exist: %w", err)
+			}
+
 			if !exists || force {
 				err = DownloadArtifacts(objectStorageBuildFunc, depsDirPath, depName, depInfo.Version, platform, force)
 				if err != nil {

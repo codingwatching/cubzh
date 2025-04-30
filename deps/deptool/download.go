@@ -28,7 +28,10 @@ func DownloadArtifacts(objectStorageBuildFunc ObjectStorageBuildFunc, depsDirPat
 		return fmt.Errorf("version is required")
 	}
 
-	destinationDirPath, exists := areDependencyFilesInstalled(depsDirPath, depName, version, platform)
+	destinationDirPath, exists, err := areDependencyFilesInstalled(depsDirPath, depName, version, platform)
+	if err != nil {
+		return fmt.Errorf("failed to check if dependency files exist: %w", err)
+	}
 
 	if exists {
 		if !forceFlag {
