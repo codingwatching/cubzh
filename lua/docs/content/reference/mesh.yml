@@ -1,5 +1,5 @@
 keywords: ["blip", "lua", "luau", "mesh", "model", "3D", "vertices", "material"]
-type: "Sky"
+type: "Assets"
 extends: ""
 description: |
     A [Mesh] is an [Object] that carries a 3D model made of vertices.

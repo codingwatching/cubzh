@@ -1,5 +1,5 @@
 keywords: ["blip", "lua", "luau", "asset", "assets", "load", "import"]
-type: "Sky"
+type: "Assets"
 extends: ""
 description: |
     [Assets] contains useful functions related to loading external assets into your world.
