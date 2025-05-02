@@ -8,8 +8,10 @@
             "version": "0.665"
         },
         "libpng": {
-            "version": "1.6.47", 
-            "use_source": ["windows"] 
+            "version": "1.6.47",
+            "use_source": [
+                "windows"
+            ]
         },
         "libjolt": {
             "version": "5.3.0"
