@@ -2,10 +2,10 @@
 
 # Examples:
 #
-# ./build.sh -p android
-# ./build.sh -p ios
-# ./build.sh -p macos
-# ./build.sh -p windows
+# ./build.sh -p android -v 1.6.48
+# ./build.sh -p ios -v 1.6.48
+# ./build.sh -p macos -v 1.6.48
+# ./build.sh -p windows -v 1.6.48
 #
 
 # exit on error
@@ -52,6 +52,13 @@ fi
 # `platform` is required
 if [ -z "$platform" ]; then
   echo "❌ Platform is not specified"
+  echo "Usage: $0 -p platform -v version"
+  exit 1
+fi
+
+# `version` is required
+if [ -z "$version" ]; then
+  echo "❌ Version is not specified"
   echo "Usage: $0 -p platform -v version"
   exit 1
 fi

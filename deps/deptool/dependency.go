@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 )
 
 const ( // Supported dependencies
@@ -40,6 +39,10 @@ func constructDepArtifactsPath(depName, version, platform string) string {
 	return filepath.Join(depName, version, "prebuilt", platform)
 }
 
+func constructDepArtifactsArchivePath(depName, version, platform string) string {
+	return constructDepArtifactsPath(depName, version, platform) + ".tar.gz"
+}
+
 // Check if a dependency is installed
 //
 // Return values:
@@ -47,8 +50,9 @@ func constructDepArtifactsPath(depName, version, platform string) string {
 // - bool: whether the dependency is installed
 // - error
 func areDependencyFilesInstalled(depsDirPath, depName, version, platform string) (string, bool, error) {
-	// fullDepPath is like: [...]/cubzh/deps/libpng/1.6.47/prebuilt/macos
-	fullDepPath := filepath.Join(depsDirPath, constructDepArtifactsPath(depName, version, platform))
+	// fullDepPath is like: [...]/cubzh/deps/libpng/1.6.47/prebuilt/macos.tar.gz
+	fullDepPath := filepath.Join(depsDirPath, constructDepArtifactsArchivePath(depName, version, platform))
+	fullDepPathChecksum := fullDepPath + ".sha256"
 
 	// check if the directory exists
 	_, err := os.Stat(fullDepPath)
@@ -61,38 +65,15 @@ func areDependencyFilesInstalled(depsDirPath, depName, version, platform string)
 		return "", false, fmt.Errorf("failed to check if directory exists: %w", err)
 	}
 
-	// directory exists (but it can be empty)
-
-	headerFileCount := 0
-	sourceFileCount := 0
-	libFileCount := 0
-
-	// walk the directory recursively and check if there are any files
-	err = filepath.Walk(fullDepPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if !info.IsDir() { // found a file
-			if strings.HasSuffix(path, ".h") || strings.HasSuffix(path, ".hpp") {
-				headerFileCount++
-			} else if strings.HasSuffix(path, ".c") || strings.HasSuffix(path, ".cpp") {
-				sourceFileCount++
-			} else if strings.HasSuffix(path, ".a") || strings.HasSuffix(path, ".lib") {
-				libFileCount++
-			}
-		}
-
-		return nil
-	})
+	// check if the checksum file exists
+	_, err = os.Stat(fullDepPathChecksum)
 	if err != nil {
-		return "", false, fmt.Errorf("failed to walk directory: %w", err)
-	}
-
-	// if no headers or (no libs and no sources) found,
-	// it means the dependency is not installed
-	if headerFileCount == 0 || (libFileCount == 0 && sourceFileCount == 0) {
-		return fullDepPath, false, nil
+		if os.IsNotExist(err) {
+			// checksum file does not exist
+			return fullDepPath, false, nil
+		}
+		// error
+		return "", false, fmt.Errorf("failed to check if checksum file exists: %w", err)
 	}
 
 	return fullDepPath, true, nil

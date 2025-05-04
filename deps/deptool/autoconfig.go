@@ -78,9 +78,17 @@ func Autoconfigure(objectStorageBuildFunc ObjectStorageBuildFunc, depsDirPath, c
 
 	// for each dependency, activate the dependency version
 	for depName, depInfo := range config.Deps {
-		err = ActivateDependency(depsDirPath, depName, depInfo.Version)
-		if err != nil {
-			return fmt.Errorf("failed to activate dependency [%s][%s]: %w", depName, depInfo.Version, err)
+		for _, platform := range platforms {
+
+			// if the platform is in use_source, use the "source" platform
+			if slices.Contains(depInfo.UseSource, platform) {
+				platform = PlatformSource
+			}
+
+			err = ActivateDependency(depsDirPath, depName, depInfo.Version, platform)
+			if err != nil {
+				return fmt.Errorf("failed to activate dependency [%s][%s]: %w", depName, depInfo.Version, err)
+			}
 		}
 	}
 
