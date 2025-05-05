@@ -444,7 +444,7 @@ mod.createModalContent = function(_, config)
 		end
 
 		local viewAndLikesWidth = likeBtn.Width
-		likeBtn.pos.X = parent.Width * 0.5 - viewAndLikesWidth * 0.5
+		likeBtn.pos.X = parent.Width - viewAndLikesWidth - theme.padding
 	end
 
 	itemDetails._width = function(_)
