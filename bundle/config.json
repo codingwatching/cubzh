@@ -8,7 +8,7 @@
             "version": "0.665"
         },
         "libpng": {
-            "version": "1.6.47",
+            "version": "1.6.48",
             "use_source": [
                 "windows"
             ]

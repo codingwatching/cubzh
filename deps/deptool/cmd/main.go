@@ -52,9 +52,9 @@ func main() {
 	// deptool activate
 	{
 		var activateCmd = &cobra.Command{
-			Use:   "activate <dependency> <version>",
+			Use:   "activate <dependency> <version> <platform>",
 			Short: "Activate a version of dependency",
-			Args:  cobra.ExactArgs(2),
+			Args:  cobra.ExactArgs(3),
 			RunE:  activateCmdFunc,
 		}
 		rootCmd.AddCommand(activateCmd)
@@ -121,11 +121,12 @@ func downloadCmdFunc(cmd *cobra.Command, args []string) error {
 	return deptool.DownloadArtifacts(objectStorageBuildFunc, depsDirPath, depName, version, platform, forceFlag)
 }
 
-// deptool activate <dependency> <version>
+// deptool activate <dependency> <version> <platform>
 // example: deptool activate libluau 0.661
 func activateCmdFunc(cmd *cobra.Command, args []string) error {
 	depName := args[0]
 	version := args[1]
+	platform := args[2]
 
 	// find git repo root directory
 	gitRepoRootDir, err := findPathToFirstParentGitRepo()
@@ -135,7 +136,7 @@ func activateCmdFunc(cmd *cobra.Command, args []string) error {
 
 	depsDirPath := filepath.Join(gitRepoRootDir, "deps")
 
-	return deptool.ActivateDependency(depsDirPath, depName, version)
+	return deptool.ActivateDependency(depsDirPath, depName, version, platform)
 }
 
 // deptool autoconfig platforms [<cubzh repo root dir path>]

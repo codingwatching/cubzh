@@ -6,8 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/voxowl/objectstorage"
 )
 
 // DownloadArtifacts downloads artifacts from object storage to the local filesystem
@@ -51,14 +49,10 @@ func DownloadArtifacts(objectStorageBuildFunc ObjectStorageBuildFunc, depsDirPat
 	}
 
 	// Construct the S3 key prefix
-	s3KeyPrefix := fmt.Sprintf("%s/%s/%s/", depName, version, platform)
+	archiveS3Key := fmt.Sprintf("%s/%s/%s.tar.gz", depName, version, platform)
+	checksumS3Key := archiveS3Key + ".sha256"
 
-	// List objects in the platform prefix
-	keys, err := objectStorage.List(s3KeyPrefix, objectstorage.ListOpts{})
-	if err != nil {
-		return err
-	}
-
+	keys := []string{archiveS3Key, checksumS3Key}
 	for _, key := range keys {
 		// Download the object at key
 		objectContent, err := objectStorage.Download(key)
@@ -72,7 +66,7 @@ func DownloadArtifacts(objectStorageBuildFunc ObjectStorageBuildFunc, depsDirPat
 		{
 			// Split the key into parts
 			parts := strings.Split(key, "/") // keys always have "/" separators
-			if len(parts) < 4 {
+			if len(parts) != 3 {
 				return fmt.Errorf("invalid key format: %s", key)
 			}
 			// Insert "prebuilt" after the second element
