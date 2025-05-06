@@ -1415,12 +1415,36 @@ end
 -- DEV MODE / AI BUTTON
 
 if DEV_MODE == true then
+	historyBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
+	historyBtn:setParent(topBar)
+
+	local historyIcon = ui:frame({
+		image = {
+			data = Data:FromBundle("images/icon-history.png"),
+			alpha = true,
+		},
+	})
+	historyIcon.Width = 50
+	historyIcon.Height = 50
+
+	historyIcon.parentDidResize = function(self)
+		local parent = self.parent
+		self.Height = parent.Height - PADDING * 2
+		self.Width = self.Height
+		self.pos = { PADDING, PADDING }
+	end
+	historyIcon:setParent(historyBtn)
+
+	historyBtn.onPress = topBarBtnPress
+	historyBtn.onCancel = topBarBtnRelease
+	historyBtn.onRelease = function(self)
+		topBarBtnRelease(self)
+		showModal(MODAL_KEYS.HISTORY)
+	end
+
 	if AI_ASSISTANT_ENABLED then
 		aiBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
 		aiBtn:setParent(topBar)
-
-		historyBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
-		historyBtn:setParent(topBar)
 
 		local aiUINeedsFirstLayout = false
 
@@ -1898,30 +1922,6 @@ if DEV_MODE == true then
 				removeAIPrompt()
 			end
 		end
-
-		local historyIcon = ui:frame({
-			image = {
-				data = Data:FromBundle("images/icon-history.png"),
-				alpha = true,
-			},
-		})
-		historyIcon.Width = 50
-		historyIcon.Height = 50
-
-		historyIcon.parentDidResize = function(self)
-			local parent = self.parent
-			self.Height = parent.Height - PADDING * 2
-			self.Width = self.Height
-			self.pos = { PADDING, PADDING }
-		end
-		historyIcon:setParent(historyBtn)
-
-		historyBtn.onPress = topBarBtnPress
-		historyBtn.onCancel = topBarBtnRelease
-		historyBtn.onRelease = function(self)
-			topBarBtnRelease(self)
-			showModal(MODAL_KEYS.HISTORY)
-		end
 	end
 
 	if IN_WORLD_EDITOR == true then
@@ -2387,7 +2387,7 @@ topBar.parentDidResize = function(self)
 
 	-- HISTORY BUTTON
 
-	if historyBtn ~= nil and historyBtn:isVisible() then
+	if historyBtn ~= nil then
 		historyBtn.Height = height
 		historyBtn.Width = height
 		historyBtn.pos = { previousBtn.pos.X + previousBtn.Width, 0 }
