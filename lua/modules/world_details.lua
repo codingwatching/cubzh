@@ -124,6 +124,7 @@ mod.createModalContent = function(_, config)
 	local authorBtn
 	local author
 	local likeBtn
+	local reportBtn
 	local editDescriptionBtn
 	local editIconBtn
 	local nameArea

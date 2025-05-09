@@ -112,6 +112,7 @@ mod.createModalContent = function(_, config)
 	local updateDate
 	local identifier
 	local btnCopyIdentifier
+	local reportBtn
 
 	local secondaryTextColor = Color(150, 150, 150)
 

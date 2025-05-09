@@ -45,7 +45,7 @@ CUBZH_MENU_SECONDARY_BUTTON_HEIGHT = 40
 
 DEV_MODE = System.LocalUserIsAuthor and System.ServerIsInDevMode
 IN_WORLD_EDITOR = Environment["worldId"] == "world_editor"
-AI_ASSISTANT_ENABLED = false -- not IN_WORLD_EDITOR
+AI_ASSISTANT_ENABLED = not IN_WORLD_EDITOR
 
 -- VARS
 
@@ -1684,10 +1684,14 @@ if DEV_MODE == true then
 				sfx("waterdrop_2", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 				aiUINeedsFirstLayout = true
 
-				local modelSelected = 3
+				local modelSelected = 4
 				local models = { "Claude 3.7", "Gemini 2.5", "Grok 3", "Grok 3 Mini" }
-				local modelNames =
-					{ "claude-3-7-sonnet-20250219", "gemini-2.5-pro-exp-03-25", "grok-3-beta", "grok-3-mini-beta" }
+				local modelNames = {
+					"claude-3-7-sonnet-20250219",
+					"gemini-2.5-pro-exp-03-25",
+					"grok-3-beta",
+					"grok-3-mini-beta",
+				}
 
 				local comboBtn =
 					ui:buttonSecondary({ content = models[modelSelected], textSize = "small", unfocuses = false })
