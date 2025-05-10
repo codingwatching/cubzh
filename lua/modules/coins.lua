@@ -292,6 +292,17 @@ coins.createModalContent = function(_, config)
 					coins:setParent(topBackground)
 					coins.pos = { topBackground.Width * 0.5 - coins.Width * 0.5, theme.padding }
 
+					c.onPress = function()
+						-- cellSelector:setParent(cell)
+						-- cellSelector.Width = cell.Width
+						-- cellSelector.Height = cell.Height
+						-- cellSelector.LocalPosition.Z = -1
+					end
+
+					c.onRelease = function()
+						System:IAPPurchase("blip.coins.1")
+					end
+
 					packCells[index] = c
 				end
 				c:show()

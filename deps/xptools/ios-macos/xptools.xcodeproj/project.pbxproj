@@ -121,6 +121,8 @@
 		10975C912DCFC73C009637FD /* iap.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 10975C8E2DCFC73C009637FD /* iap.hpp */; };
 		10975C922DCFC73C009637FD /* iap.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 10975C8E2DCFC73C009637FD /* iap.hpp */; };
 		10975C942DCFC816009637FD /* iap.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10975C932DCFC816009637FD /* iap.mm */; };
+		10975C952DCFF431009637FD /* iap.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10975C932DCFC816009637FD /* iap.mm */; };
+		10975C962DCFF431009637FD /* iap.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10975C932DCFC816009637FD /* iap.mm */; };
 		10C541292CA70FBD008CB6C7 /* HttpRequest.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10C541282CA70FBD008CB6C7 /* HttpRequest.mm */; };
 		10C5412A2CA70FBD008CB6C7 /* HttpRequest.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10C541282CA70FBD008CB6C7 /* HttpRequest.mm */; };
 		10C5412B2CA70FBD008CB6C7 /* HttpRequest.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10C541282CA70FBD008CB6C7 /* HttpRequest.mm */; };
@@ -1018,6 +1020,7 @@
 				850BDEA02D19EC0F00A85B76 /* HttpRequest.cpp in Sources */,
 				850BDEA12D19EC0F00A85B76 /* OperationQueue.cpp in Sources */,
 				850BDEA22D19EC0F00A85B76 /* URL.cpp in Sources */,
+				10975C962DCFF431009637FD /* iap.mm in Sources */,
 				850BDEA32D19EC0F00A85B76 /* HttpRequest.mm in Sources */,
 				850BDEA42D19EC0F00A85B76 /* Connection.cpp in Sources */,
 				850BDEA52D19EC0F00A85B76 /* web-macos.mm in Sources */,
@@ -1064,6 +1067,7 @@
 				85BB0190279F3B56000F1B10 /* HttpRequest.cpp in Sources */,
 				858ABB872A52F5CD007AE641 /* OperationQueue.cpp in Sources */,
 				85D52F6B29D9EE2900070F19 /* URL.cpp in Sources */,
+				10975C952DCFF431009637FD /* iap.mm in Sources */,
 				10C541292CA70FBD008CB6C7 /* HttpRequest.mm in Sources */,
 				85471B4327E3E4AA000575D5 /* Connection.cpp in Sources */,
 				10EE2BC5272C091100EC374C /* web-macos.mm in Sources */,

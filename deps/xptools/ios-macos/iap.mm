@@ -101,11 +101,11 @@
 // Static instance to manage IAP
 static IAPManager *iapManager = nil;
 
-bool vx::IAP::IsAvailable() {
+bool vx::IAP::isAvailable() {
     return [SKPaymentQueue canMakePayments];
 }
 
-void vx::IAP::Purchase(std::string productID) {
+void vx::IAP::purchase(std::string productID) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         iapManager = [[IAPManager alloc] init];

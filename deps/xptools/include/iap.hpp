@@ -13,8 +13,8 @@
 namespace vx {
 class IAP {
 public:
-    static bool IsAvailable();
-    static void Purchase(std::string productID);
+    static bool isAvailable();
+    static void purchase(std::string productID);
 private:
     // void* _platformImpl;
 };
