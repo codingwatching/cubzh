@@ -116,6 +116,11 @@
 		10974C8B244D690C008153FE /* filesystem.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10974C89244D690C008153FE /* filesystem.mm */; };
 		10974C8F244D6AB1008153FE /* device-ios.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10974C8C244D6916008153FE /* device-ios.mm */; };
 		10974C90244D6D69008153FE /* device.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 10974C88244D66B6008153FE /* device.hpp */; };
+		10975C8F2DCFC73C009637FD /* iap.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 10975C8E2DCFC73C009637FD /* iap.hpp */; };
+		10975C902DCFC73C009637FD /* iap.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 10975C8E2DCFC73C009637FD /* iap.hpp */; };
+		10975C912DCFC73C009637FD /* iap.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 10975C8E2DCFC73C009637FD /* iap.hpp */; };
+		10975C922DCFC73C009637FD /* iap.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 10975C8E2DCFC73C009637FD /* iap.hpp */; };
+		10975C942DCFC816009637FD /* iap.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10975C932DCFC816009637FD /* iap.mm */; };
 		10C541292CA70FBD008CB6C7 /* HttpRequest.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10C541282CA70FBD008CB6C7 /* HttpRequest.mm */; };
 		10C5412A2CA70FBD008CB6C7 /* HttpRequest.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10C541282CA70FBD008CB6C7 /* HttpRequest.mm */; };
 		10C5412B2CA70FBD008CB6C7 /* HttpRequest.mm in Sources */ = {isa = PBXBuildFile; fileRef = 10C541282CA70FBD008CB6C7 /* HttpRequest.mm */; };
@@ -339,6 +344,8 @@
 		10974C88244D66B6008153FE /* device.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = device.hpp; sourceTree = "<group>"; };
 		10974C89244D690C008153FE /* filesystem.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = filesystem.mm; sourceTree = "<group>"; };
 		10974C8C244D6916008153FE /* device-ios.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "device-ios.mm"; sourceTree = "<group>"; };
+		10975C8E2DCFC73C009637FD /* iap.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = iap.hpp; sourceTree = "<group>"; };
+		10975C932DCFC816009637FD /* iap.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = iap.mm; sourceTree = "<group>"; };
 		10C541282CA70FBD008CB6C7 /* HttpRequest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = HttpRequest.mm; sourceTree = "<group>"; };
 		10C63D2A246C4F61003DEC3E /* strings.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = strings.cpp; sourceTree = "<group>"; };
 		10C63D2B246C4F61003DEC3E /* strings.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = strings.hpp; sourceTree = "<group>"; };
@@ -517,6 +524,7 @@
 				85BB018D279F3850000F1B10 /* HttpRequest.hpp */,
 				85FED0252B0AB80F00C68F6D /* HttpRequestOpts.hpp */,
 				85BB018E279F391D000F1B10 /* HttpResponse.hpp */,
+				10975C8E2DCFC73C009637FD /* iap.hpp */,
 				8518D0A127BA6DF100A438D6 /* json.hpp */,
 				85471B2E27E3E006000575D5 /* LocalConnection.hpp */,
 				858ABB892A52F5E6007AE641 /* Macros.h */,
@@ -588,6 +596,7 @@
 				8534FDD5240E97D5004B3494 /* device-macos.mm */,
 				10974C89244D690C008153FE /* filesystem.mm */,
 				10C541282CA70FBD008CB6C7 /* HttpRequest.mm */,
+				10975C932DCFC816009637FD /* iap.mm */,
 				850623592877898C00B270A6 /* miniaudio_impl.mm */,
 				85BD47D62A5DABAE00556C6E /* notifications.mm */,
 				85FA71DF2D9709CC00CBD3F7 /* passkey.mm */,
@@ -642,6 +651,7 @@
 				102145062C75E0C000099E38 /* device.hpp in Headers */,
 				102145072C75E0C000099E38 /* Connection.hpp in Headers */,
 				102145082C75E0C000099E38 /* OperationQueue.hpp in Headers */,
+				10975C922DCFC73C009637FD /* iap.hpp in Headers */,
 				102145092C75E0C000099E38 /* Channel.hpp in Headers */,
 				1021450A2C75E0C000099E38 /* vxtime.h in Headers */,
 				1021450B2C75E0C000099E38 /* preferences.hpp in Headers */,
@@ -675,6 +685,7 @@
 				85FCECA628072D3200CD6115 /* WSBackend.hpp in Headers */,
 				10847CBD270EE8C6006A5E91 /* device.hpp in Headers */,
 				85471B3227E3E006000575D5 /* Connection.hpp in Headers */,
+				10975C912DCFC73C009637FD /* iap.hpp in Headers */,
 				85471B3B27E3E10C000575D5 /* Channel.hpp in Headers */,
 				10847CBE270EE8C6006A5E91 /* vxtime.h in Headers */,
 				85AF77432AA1C40F007480C2 /* preferences.hpp in Headers */,
@@ -708,6 +719,7 @@
 				850BDE7D2D19EC0F00A85B76 /* device.hpp in Headers */,
 				850BDE7E2D19EC0F00A85B76 /* Connection.hpp in Headers */,
 				850BDE7F2D19EC0F00A85B76 /* OperationQueue.hpp in Headers */,
+				10975C902DCFC73C009637FD /* iap.hpp in Headers */,
 				850BDE802D19EC0F00A85B76 /* Channel.hpp in Headers */,
 				850BDE812D19EC0F00A85B76 /* vxtime.h in Headers */,
 				850BDE822D19EC0F00A85B76 /* preferences.hpp in Headers */,
@@ -741,6 +753,7 @@
 				10974C90244D6D69008153FE /* device.hpp in Headers */,
 				85471B3127E3E006000575D5 /* Connection.hpp in Headers */,
 				858ABB8D2A52F5EE007AE641 /* OperationQueue.hpp in Headers */,
+				10975C8F2DCFC73C009637FD /* iap.hpp in Headers */,
 				85471B3A27E3E10C000575D5 /* Channel.hpp in Headers */,
 				1033951D25626D130083F4C0 /* vxtime.h in Headers */,
 				85AF77422AA1C40F007480C2 /* preferences.hpp in Headers */,
@@ -1085,6 +1098,7 @@
 				851F2A432B63C45E00E2863F /* HttpCookie.cpp in Sources */,
 				85BB0189279EFA0E000F1B10 /* HttpClient.cpp in Sources */,
 				85471B6A27E47DAB000575D5 /* WSServerConnection.cpp in Sources */,
+				10975C942DCFC816009637FD /* iap.mm in Sources */,
 				1005120B2CC6A77500B16FB1 /* WSConnection.mm in Sources */,
 				853C93AE25A384290030C45D /* tracking.cpp in Sources */,
 				8598D6D0240EF46B008A6D4C /* device_c.cpp in Sources */,
