@@ -156,36 +156,44 @@ coins.createModalContent = function(_, config)
 	local packs = {
 		{
 			price = 0.99,
-			coins = 80,
+			coins = 160,
+			icon = "images/coins-pack-1.png",
 		},
 		{
 			price = 4.99,
-			coins = 400,
-		},
-		{
-			price = 9.99,
 			coins = 800,
+			icon = "images/coins-pack-2.png",
 		},
 		{
-			subscription = true,	
 			price = 9.99,
-			coins = 1000,
+			coins = 1600,
+			icon = "images/coins-pack-3.png",
 		},
+		-- {
+		-- 	subscription = true,	
+		-- 	price = 9.99,
+		-- 	coins = 2000,
+		-- 	icon = "images/coins-pack-premium.png",
+		-- },
 		{
 			price = 19.99,
-			coins = 1700,
+			coins = 3200,
+			icon = "images/coins-pack-4.png",
 		},
 		{
 			price = 49.99,
-			coins = 4500,
+			coins = 8000,
+			icon = "images/coins-pack-5.png",
 		},
 		{
 			price = 99.99,
-			coins = 10000,
+			coins = 16000,
+			icon = "images/coins-pack-6.png",
 		},
 		{
 			price = 199.99,
-			coins = 22500,
+			coins = 32000,
+			icon = "images/coins-pack-7.png",
 		}
 	}
 	local packCells = {}
@@ -251,11 +259,30 @@ coins.createModalContent = function(_, config)
 					bottomBackground.Height = 40
 					bottomBackground.pos = { 0, 0 }
 
-					local price = ui:createText(string.format("$%.2f", packs[index].price), { color = Color.White, size = "small" })
+					local icon = ui:frame({
+						image = {
+							data = Data:FromBundle(packs[index].icon),
+							alpha = true,
+						},
+					})
+					icon.Width = topBackground.Height
+					icon.Height = topBackground.Height
+					icon.pos = { topBackground.Width * 0.5 - icon.Width * 0.5, topBackground.Height * 0.5 - icon.Height * 0.5 }
+					icon:setParent(topBackground)
+
+					local txt = string.format("$%.2f", packs[index].price)
+					if packs[index].subscription then
+						txt = string.format("$%.2f/mo", packs[index].price)
+					end
+					local price = ui:createText(txt, { color = Color.White, size = "small" })
 					price:setParent(bottomBackground)
 					price.pos = { bottomBackground.Width * 0.5 - price.Width * 0.5, bottomBackground.Height * 0.5 - price.Height * 0.5 }
 
-					local coins = ui:createText(string.format("%d", packs[index].coins), { 
+					local txt = string.format("%d", packs[index].coins)
+					if packs[index].subscription then
+						txt = string.format("%d/mo", packs[index].coins)
+					end
+					local coins = ui:createText(txt, { 
 						color = Color(253, 222, 44), 
 						size = "default",
 						outline = 0.4,
