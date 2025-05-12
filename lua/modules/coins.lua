@@ -158,16 +158,19 @@ coins.createModalContent = function(_, config)
 			price = 0.99,
 			coins = 160,
 			icon = "images/coins-pack-1.png",
+            productID = "blip.coins.1",
 		},
 		{
 			price = 4.99,
 			coins = 800,
 			icon = "images/coins-pack-2.png",
+			productID = "blip.coins.2",
 		},
 		{
 			price = 9.99,
 			coins = 1600,
 			icon = "images/coins-pack-3.png",
+			productID = "blip.coins.3",
 		},
 		-- {
 		-- 	subscription = true,	
@@ -179,21 +182,25 @@ coins.createModalContent = function(_, config)
 			price = 19.99,
 			coins = 3200,
 			icon = "images/coins-pack-4.png",
+			productID = "blip.coins.4",
 		},
 		{
 			price = 49.99,
 			coins = 8000,
 			icon = "images/coins-pack-5.png",
+			productID = "blip.coins.5",
 		},
 		{
 			price = 99.99,
 			coins = 16000,
 			icon = "images/coins-pack-6.png",
+			productID = "blip.coins.6",	
 		},
 		{
 			price = 199.99,
 			coins = 32000,
 			icon = "images/coins-pack-7.png",
+			productID = "blip.coins.7",
 		}
 	}
 	local packCells = {}
@@ -302,7 +309,7 @@ coins.createModalContent = function(_, config)
 						topBackground.Color = Color(255, 255, 255)
 						bottomBackground.Color = Color(255, 255, 255)
 						icon.Color = Color(255, 255, 255)
-						System:IAPPurchase("blip.coins.1")
+						System:IAPPurchase(packs[index].productID)
 					end
 
 					c.onCancel = function()

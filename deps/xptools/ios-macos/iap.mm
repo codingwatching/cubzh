@@ -3,7 +3,7 @@
 //  xptools
 //
 //  Created by Adrian Duermael on 05/10/2025.
-//  Copyright © 2020 voxowl. All rights reserved.
+//  Copyright © 2025 voxowl. All rights reserved.
 //
 
 #include "iap.hpp"
@@ -16,17 +16,18 @@
 // Private interface for StoreKit delegate
 @interface IAPManager : NSObject <SKProductsRequestDelegate, SKPaymentTransactionObserver>
 @property (nonatomic, strong) SKProductsRequest *productsRequest;
-@property (nonatomic, strong) NSMutableArray<SKProduct *> *products;
-@property (nonatomic, strong) NSMutableDictionary<NSString *, NSValue *> *callbacks; // Store C++ callbacks
-- (void)startPurchase:(NSString *)productID withCallback:(std::function<void(const vx::IAP::PurchaseResult&)> *)callback;
+@property (nonatomic, strong) NSMutableArray<SKProduct *> *productsCache;
+@property (nonatomic, strong) NSValue *pending;
+- (void)startPurchase:(vx::IAP::Purchase_SharedPtr) purchase;
 @end
 
 @implementation IAPManager
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _products = [[NSMutableArray alloc] init];
-        _callbacks = [[NSMutableDictionary alloc] init];
+        _productsRequest = nil;
+        _productsCache = [[NSMutableArray alloc] init];
+        _pending = nil;
         [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
     }
     return self;
@@ -36,15 +37,20 @@
     [[SKPaymentQueue defaultQueue] removeTransactionObserver:self];
 }
 
-- (void)startPurchase:(NSString *)productID withCallback:(std::function<void(const vx::IAP::PurchaseResult&)> *)callback {
-    // Store the callback
-    if (callback) {
-        self.callbacks[productID] = [NSValue valueWithPointer:new std::function<void(const vx::IAP::PurchaseResult&)>(*callback)];
+- (void)startPurchase:(vx::IAP::Purchase_SharedPtr) purchase {
+    if (self.pending != nil) {
+        NSLog(@"⚠️ purchase pending, can't start another one");
+        return;
     }
 
+    vx::IAP::Purchase_SharedPtr *purchasePtr = new vx::IAP::Purchase_SharedPtr(purchase);
+    self.pending = [NSValue valueWithPointer: purchasePtr];
+
+    NSString *nsProductID = [NSString stringWithUTF8String:purchase->productID.c_str()];
+
     // Check if product is already cached
-    for (SKProduct *product in self.products) {
-        if ([product.productIdentifier isEqualToString:productID]) {
+    for (SKProduct *product in self.productsCache) {
+        if ([product.productIdentifier isEqualToString:nsProductID]) {
             SKPayment *payment = [SKPayment paymentWithProduct:product];
             [[SKPaymentQueue defaultQueue] addPayment:payment];
             return;
@@ -52,7 +58,7 @@
     }
 
     // Request product details
-    NSSet *productIdentifiers = [NSSet setWithObject:productID];
+    NSSet *productIdentifiers = [NSSet setWithObject:nsProductID];
     self.productsRequest = [[SKProductsRequest alloc] initWithProductIdentifiers:productIdentifiers];
     self.productsRequest.delegate = self;
     [self.productsRequest start];
@@ -63,26 +69,47 @@
     NSString *productID = response.products.count > 0 ? response.products.firstObject.productIdentifier : response.invalidProductIdentifiers.firstObject;
 
     if (response.products.count > 0) {
-        [self.products addObjectsFromArray:response.products];
+        [self.productsCache addObjectsFromArray:response.products];
         // Start purchase for the first valid product
         SKProduct *product = response.products.firstObject;
         SKPayment *payment = [SKPayment paymentWithProduct:product];
         [[SKPaymentQueue defaultQueue] addPayment:payment];
     } else {
         NSLog(@"No products found for identifiers: %@", response.invalidProductIdentifiers);
-        // Notify app of invalid product ID
-        vx::IAP::PurchaseResult result(vx::IAP::PurchaseResult::Status::InvalidProduct, productID.UTF8String);
-        result.errorMessage = "Invalid product identifier";
-        [self invokeCallbackForProductID:productID withResult:result];
+
+        if (self.pending != nil) {
+            vx::IAP::Purchase_SharedPtr *purchasePtr = static_cast<vx::IAP::Purchase_SharedPtr *>([self.pending pointerValue]);
+            vx::IAP::Purchase_SharedPtr purchase = *purchasePtr;
+            free(purchasePtr);
+            self.pending = nil;
+
+            purchase->errorMessage = "Invalid product identifier";
+            if (purchase->callback != nullptr) {
+                purchase->callback(purchase);
+            }
+        }
     }
     self.productsRequest = nil;
 }
 
 // SKPaymentTransactionObserver
 - (void)paymentQueue:(SKPaymentQueue *)queue updatedTransactions:(NSArray<SKPaymentTransaction *> *)transactions {
+    if (self.pending == nil) {
+        return;
+    }
+
+    vx::IAP::Purchase_SharedPtr *purchasePtr = static_cast<vx::IAP::Purchase_SharedPtr *>([self.pending pointerValue]);
+    vx::IAP::Purchase_SharedPtr purchase = *purchasePtr;
+
     for (SKPaymentTransaction *transaction in transactions) {
         NSString *productID = transaction.payment.productIdentifier;
-        vx::IAP::PurchaseResult result(vx::IAP::PurchaseResult::Status::Failed, productID.UTF8String);
+        std::string transactionProductID = std::string([productID UTF8String]);
+
+        if (transactionProductID != purchase->productID) {
+            continue;
+        }
+
+        purchase->status = vx::IAP::Purchase::Status::Failed;
 
         switch (transaction.transactionState) {
             case SKPaymentTransactionStatePurchased: {
@@ -90,21 +117,17 @@
                 NSURL *receiptURL = [[NSBundle mainBundle] appStoreReceiptURL];
                 NSData *receiptData = [NSData dataWithContentsOfURL:receiptURL];
                 if (receiptData) {
-                    result.status = vx::IAP::PurchaseResult::Status::Success;
-                    result.transactionID = transaction.transactionIdentifier.UTF8String;
-                    result.receiptData = [receiptData base64EncodedStringWithOptions:0].UTF8String;
+                    purchase->status = vx::IAP::Purchase::Status::Success;
+                    purchase->transactionID = transaction.transactionIdentifier.UTF8String;
+                    purchase->receiptData = [receiptData base64EncodedStringWithOptions:0].UTF8String;
 
-                    vx::URL url = vx::URL::make("https://api.cu.bzh/purchases/verify?userID=test");
+                    vx::URL url = vx::URL::make(purchase->verifyURL);
                     vx::HttpRequest_SharedPtr req = vx::HttpRequest::make("POST", url.host(), url.port(), url.path(), url.queryParams(), true);
-                    // req->setHeaders();
+                    req->setHeaders(purchase->verifyRequestHeaders);
 
-                    IAPManager *iapManager = self;
-
-                    req->setCallback([iapManager, result, transaction](vx::HttpRequest_SharedPtr req) mutable {
-
+                    req->setCallback([transaction, purchase](vx::HttpRequest_SharedPtr req) mutable {
                         // process response
                         vx::HttpResponse& resp = req->getResponse();
-
                         // retrieve HTTP response status
                         const vx::HTTPStatus respStatus = resp.getStatus();
                         // retrieve HTTP response body
@@ -112,44 +135,46 @@
                         const bool didReadBody = resp.readAllBytes(respBody);
 
                         if ((respStatus != vx::HTTPStatus::OK && respStatus != vx::HTTPStatus::NOT_MODIFIED) || didReadBody == false) {
-                            result.errorMessage = "couldn't verify purchase";
-                            result.status = vx::IAP::PurchaseResult::Status::SuccessNotVerified;
+                            purchase->errorMessage = "couldn't verify purchase";
+                            purchase->status = vx::IAP::Purchase::Status::SuccessNotVerified;
                         }
 
-                        // parse response body
-                        // vx::hub::World world;
-                        // cJSON *jsonResp = cJSON_Parse(respBody.c_str());
-                        // _decodeWorld(jsonResp, world);
-                        // cJSON_Delete(jsonResp);
-                        // jsonResp = nullptr;
-
-                        // callback(true, respStatus, world.script, world.mapBase64, "", world.maxPlayers, std::unordered_map<std::string, std::string>());
-
-                        NSString *nsProductID = [NSString stringWithUTF8String:result.productID.c_str()];
-                        [iapManager invokeCallbackForProductID:nsProductID withResult:result];
+                        if (purchase->callback != nullptr) {
+                            purchase->callback(purchase);
+                        }
                         [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
                     });
 
                     req->sendAsync();
+                    free(purchasePtr);
+                    self.pending = nil;
+                    NSLog(@"Purchase completed for product: %@ (now verifying)", productID);
 
-                    NSLog(@"Purchase completed for product: %@", productID);
                 } else {
-                    result.errorMessage = "Failed to retrieve receipt";
+                    purchase->errorMessage = "Failed to retrieve receipt";
                     NSLog(@"Failed to retrieve receipt for product: %@", productID);
-                    [self invokeCallbackForProductID:productID withResult:result];
+                    if (purchase->callback != nullptr) {
+                        purchase->callback(purchase);
+                    }
+                    free(purchasePtr);
+                    self.pending = nil;
                     [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
                 }
                 break;
             }
             case SKPaymentTransactionStateFailed: {
                 if (transaction.error.code == SKErrorPaymentCancelled) {
-                    result.status = vx::IAP::PurchaseResult::Status::Cancelled;
-                    result.errorMessage = "User cancelled the purchase";
+                    purchase->status = vx::IAP::Purchase::Status::Cancelled;
+                    purchase->errorMessage = "User cancelled the purchase";
                 } else {
-                    result.errorMessage = transaction.error.localizedDescription.UTF8String;
+                    purchase->errorMessage = transaction.error.localizedDescription.UTF8String;
                 }
-                NSLog(@"Purchase failed for product %@: %s", productID, result.errorMessage.c_str());
-                [self invokeCallbackForProductID:productID withResult:result];
+                NSLog(@"Purchase failed for product %@: %s", productID, purchase->errorMessage.c_str());
+                if (purchase->callback != nullptr) {
+                    purchase->callback(purchase);
+                }
+                free(purchasePtr);
+                self.pending = nil;
                 [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
                 break;
             }
@@ -158,19 +183,6 @@
             case SKPaymentTransactionStateDeferred:
                 break;
         }
-    }
-}
-
-// Helper to invoke and clean up callback
-- (void)invokeCallbackForProductID:(NSString *)productID withResult:(vx::IAP::PurchaseResult)result {
-    NSValue *callbackValue = self.callbacks[productID];
-    if (callbackValue) {
-        auto *callback = static_cast<std::function<void(const vx::IAP::PurchaseResult&)> *>(callbackValue.pointerValue);
-        if (callback) {
-            (*callback)(result);
-            delete callback;
-        }
-        [self.callbacks removeObjectForKey:productID];
     }
 }
 
@@ -183,14 +195,23 @@ bool vx::IAP::isAvailable() {
     return [SKPaymentQueue canMakePayments];
 }
 
-void vx::IAP::purchase(std::string productID,
-                       std::string verifyURL,
-                       const std::unordered_map<std::string, std::string>& headers,
-                       std::function<void(const PurchaseResult&)> callback) {
+vx::IAP::Purchase_SharedPtr vx::IAP::Purchase::make(const std::string& productID,
+                                                    std::string verifyURL,
+                                                    const std::unordered_map<std::string, std::string>& verifyRequestHeaders) {
+    Purchase_SharedPtr p(new Purchase(productID, verifyURL, verifyRequestHeaders));
+    return p;
+}
+
+vx::IAP::Purchase_SharedPtr vx::IAP::purchase(std::string productID,
+                                              std::string verifyURL,
+                                              const std::unordered_map<std::string, std::string>& headers,
+                                              std::function<void(const Purchase_SharedPtr&)> callback) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         iapManager = [[IAPManager alloc] init];
     });
-    NSString *nsProductID = [NSString stringWithUTF8String:productID.c_str()];
-    [iapManager startPurchase:nsProductID withCallback:&callback];
+    Purchase_SharedPtr p = Purchase::make(productID, verifyURL, headers);
+    p->callback = callback;
+    [iapManager startPurchase: p];
+    return p;
 }
