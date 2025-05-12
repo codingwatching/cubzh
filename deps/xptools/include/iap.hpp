@@ -7,15 +7,31 @@
 //
 
 #pragma once
-
 #include <string>
+#include <functional>
 
 namespace vx {
-class IAP {
-public:
-    static bool isAvailable();
-    static void purchase(std::string productID);
-private:
-    // void* _platformImpl;
+namespace IAP {
+
+struct PurchaseResult {
+    enum class Status {
+        Success,
+        Failed,
+        Cancelled,
+        InvalidProduct
+    };
+
+    Status status;
+    std::string productID;
+    std::string transactionID; // For successful purchases
+    std::string receiptData;   // Base64-encoded receipt for server validation
+    std::string errorMessage;  // For failed or cancelled purchases
+
+    PurchaseResult(Status s, const std::string& pid) : status(s), productID(pid) {}
 };
-}
+
+bool isAvailable();
+void purchase(std::string productID, std::function<void(const PurchaseResult&)> callback);
+
+} // namespace IAP
+} // namespace vx
