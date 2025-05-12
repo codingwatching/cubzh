@@ -293,14 +293,22 @@ coins.createModalContent = function(_, config)
 					coins.pos = { topBackground.Width * 0.5 - coins.Width * 0.5, theme.padding }
 
 					c.onPress = function()
-						-- cellSelector:setParent(cell)
-						-- cellSelector.Width = cell.Width
-						-- cellSelector.Height = cell.Height
-						-- cellSelector.LocalPosition.Z = -1
+						topBackground.Color = Color(100, 100, 100)
+						bottomBackground.Color = Color(100, 100, 100)
+						icon.Color = Color(100, 100, 100)
 					end
 
 					c.onRelease = function()
+						topBackground.Color = Color(255, 255, 255)
+						bottomBackground.Color = Color(255, 255, 255)
+						icon.Color = Color(255, 255, 255)
 						System:IAPPurchase("blip.coins.1")
+					end
+
+					c.onCancel = function()
+						topBackground.Color = Color(255, 255, 255)
+						bottomBackground.Color = Color(255, 255, 255)
+						icon.Color = Color(255, 255, 255)
 					end
 
 					packCells[index] = c

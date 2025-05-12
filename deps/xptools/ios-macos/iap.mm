@@ -7,6 +7,9 @@
 //
 
 #include "iap.hpp"
+#include "URL.hpp"
+#include "HttpRequest.hpp"
+
 #import <StoreKit/StoreKit.h>
 #include <map>
 
@@ -90,13 +93,52 @@
                     result.status = vx::IAP::PurchaseResult::Status::Success;
                     result.transactionID = transaction.transactionIdentifier.UTF8String;
                     result.receiptData = [receiptData base64EncodedStringWithOptions:0].UTF8String;
+
+                    vx::URL url = vx::URL::make("https://api.cu.bzh/purchases/verify?userID=test");
+                    vx::HttpRequest_SharedPtr req = vx::HttpRequest::make("POST", url.host(), url.port(), url.path(), url.queryParams(), true);
+                    // req->setHeaders();
+
+                    IAPManager *iapManager = self;
+
+                    req->setCallback([iapManager, result, transaction](vx::HttpRequest_SharedPtr req) mutable {
+
+                        // process response
+                        vx::HttpResponse& resp = req->getResponse();
+
+                        // retrieve HTTP response status
+                        const vx::HTTPStatus respStatus = resp.getStatus();
+                        // retrieve HTTP response body
+                        std::string respBody;
+                        const bool didReadBody = resp.readAllBytes(respBody);
+
+                        if ((respStatus != vx::HTTPStatus::OK && respStatus != vx::HTTPStatus::NOT_MODIFIED) || didReadBody == false) {
+                            result.errorMessage = "couldn't verify purchase";
+                            result.status = vx::IAP::PurchaseResult::Status::SuccessNotVerified;
+                        }
+
+                        // parse response body
+                        // vx::hub::World world;
+                        // cJSON *jsonResp = cJSON_Parse(respBody.c_str());
+                        // _decodeWorld(jsonResp, world);
+                        // cJSON_Delete(jsonResp);
+                        // jsonResp = nullptr;
+
+                        // callback(true, respStatus, world.script, world.mapBase64, "", world.maxPlayers, std::unordered_map<std::string, std::string>());
+
+                        NSString *nsProductID = [NSString stringWithUTF8String:result.productID.c_str()];
+                        [iapManager invokeCallbackForProductID:nsProductID withResult:result];
+                        [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
+                    });
+
+                    req->sendAsync();
+
                     NSLog(@"Purchase completed for product: %@", productID);
                 } else {
                     result.errorMessage = "Failed to retrieve receipt";
                     NSLog(@"Failed to retrieve receipt for product: %@", productID);
+                    [self invokeCallbackForProductID:productID withResult:result];
+                    [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
                 }
-                [self invokeCallbackForProductID:productID withResult:result];
-                [[SKPaymentQueue defaultQueue] finishTransaction:transaction];
                 break;
             }
             case SKPaymentTransactionStateFailed: {
@@ -120,7 +162,7 @@
 }
 
 // Helper to invoke and clean up callback
-- (void)invokeCallbackForProductID:(NSString *)productID withResult:(vx::IAP::PurchaseResult &)result {
+- (void)invokeCallbackForProductID:(NSString *)productID withResult:(vx::IAP::PurchaseResult)result {
     NSValue *callbackValue = self.callbacks[productID];
     if (callbackValue) {
         auto *callback = static_cast<std::function<void(const vx::IAP::PurchaseResult&)> *>(callbackValue.pointerValue);
@@ -141,7 +183,10 @@ bool vx::IAP::isAvailable() {
     return [SKPaymentQueue canMakePayments];
 }
 
-void vx::IAP::purchase(std::string productID, std::function<void(const PurchaseResult&)> callback) {
+void vx::IAP::purchase(std::string productID,
+                       std::string verifyURL,
+                       const std::unordered_map<std::string, std::string>& headers,
+                       std::function<void(const PurchaseResult&)> callback) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         iapManager = [[IAPManager alloc] init];

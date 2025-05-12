@@ -18,7 +18,8 @@ struct PurchaseResult {
         Success,
         Failed,
         Cancelled,
-        InvalidProduct
+        InvalidProduct,
+        SuccessNotVerified, // seen as success from client, but server couldn't verify it
     };
 
     Status status;
@@ -31,7 +32,10 @@ struct PurchaseResult {
 };
 
 bool isAvailable();
-void purchase(std::string productID, std::function<void(const PurchaseResult&)> callback);
+void purchase(std::string productID,
+              std::string verifyURL,
+              const std::unordered_map<std::string, std::string>& headers,
+              std::function<void(const PurchaseResult&)> callback);
 
 } // namespace IAP
 } // namespace vx
