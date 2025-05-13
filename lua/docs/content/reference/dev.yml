@@ -55,3 +55,6 @@ properties:
       type: "boolean"
       description: |
           Displays a framerate counter when set to `true`, `false` by default.
+      samples:
+          - code: |
+              Dev.DisplayFPS = true
