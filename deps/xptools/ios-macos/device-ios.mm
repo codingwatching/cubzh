@@ -190,7 +190,23 @@ vx::device::PerformanceTier vx::device::getPerformanceTier() {
         "iPad14,3",   // iPad Pro 11 inch 4th Gen
         "iPad14,4",   // iPad Pro 11 inch 4th Gen
         "iPad14,5",   // iPad Pro 12.9 inch 6th Gen
-        "iPad14,6"    // iPad Pro 12.9 inch 6th Gen
+        "iPad14,6",   // iPad Pro 12.9 inch 6th Gen
+        "iPad14,8",   // iPad Air 11 inch 6th Gen (WiFi)
+        "iPad14,9",   // iPad Air 11 inch 6th Gen (WiFi+Cellular)
+        "iPad14,10",  // iPad Air 13 inch 6th Gen (WiFi)
+        "iPad14,11",  // iPad Air 13 inch 6th Gen (WiFi+Cellular)
+        "iPad15,3",   // iPad Air 11-inch 7th Gen (WiFi)
+        "iPad15,4",   // iPad Air 11-inch 7th Gen (WiFi+Cellular)
+        "iPad15,5",   // iPad Air 13-inch 7th Gen (WiFi)
+        "iPad15,6",   // iPad Air 13-inch 7th Gen (WiFi+Cellular)
+        "iPad15,7",   // iPad 11th Gen (WiFi)
+        "iPad15,8",   // iPad 11th Gen (WiFi+Cellular)
+        "iPad16,1",   // iPad mini 7th Gen (WiFi)
+        "iPad16,2",   // iPad mini 7th Gen (WiFi+Cellular)
+        "iPad16,3",   // iPad Pro 11 inch 5th Gen
+        "iPad16,4",   // iPad Pro 11 inch 5th Gen
+        "iPad16,5",   // iPad Pro 12.9 inch 7th Gen
+        "iPad16,6",   // iPad Pro 12.9 inch 7th Gen
     });
 
     const std::unordered_set<std::string> highDevices({
@@ -207,6 +223,11 @@ vx::device::PerformanceTier vx::device::getPerformanceTier() {
         "iPhone15,5", // iPhone 15 Plus
         "iPhone16,1", // iPhone 15 Pro
         "iPhone16,2", // iPhone 15 Pro Max
+        "iPhone17,1", // iPhone 16 Pro
+        "iPhone17,2", // iPhone 16 Pro Max
+        "iPhone17,3", // iPhone 16
+        "iPhone17,4", // iPhone 16 Plus
+        "iPhone17,5", // iPhone 16e
     });
 
     const std::string product = vx::device::hardwareProduct();
