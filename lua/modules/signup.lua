@@ -2,6 +2,7 @@ local signup = {}
 
 signup.startFlow = function(self, config)
 	local sfx = require("sfx")
+	local passkey = require("passkey")
 
 	if self ~= signup then
 		error("signup:startFlow(config) should be called with `:`", 2)
@@ -19,6 +20,7 @@ signup.startFlow = function(self, config)
 		loginStep = function() end,
 		loginSuccess = function() end,
 		dobStep = function() end,
+		usernameStep = function() end,
 		-- phoneNumberStep = function() end,
 		-- verifyPhoneNumberStep = function() end,
 		pushNotificationsStep = function() end,
@@ -628,6 +630,52 @@ signup.startFlow = function(self, config)
 					end)
 					table.insert(requests, req)
 				end
+
+				-- If passkey is available on the device, start the passkey login process
+				if System.PasskeySupported then
+					System:PasskeyLogin(
+						function(
+							credentialIDBase64,
+							authenticatorDataBase64,
+							rawClientDataJSONString,
+							signatureBase64,
+							userIDString,
+							err
+						)
+							if err ~= nil and err ~= "" then
+								-- do nothing?
+								return
+							end
+
+							-- Try to login with passkey
+							-- TODO: gaetan: do something with "req"? (it is unused right now)
+							local req = api:login({
+								passkeyCredentialIDBase64 = credentialIDBase64,
+								passkeyAuthenticatorDataBase64 = authenticatorDataBase64,
+								passkeyRawClientDataJSONString = rawClientDataJSONString,
+								passkeySignatureBase64 = signatureBase64,
+								passkeyUserIDString = userIDString,
+							}, function(err, accountInfo)
+								if err == nil then
+									local userID = accountInfo.credentials["user-id"]
+									local token = accountInfo.credentials.token
+
+									System.AskedForMagicKey = false
+									System:StoreCredentials(userID, token)
+
+									-- flush signup flow and restart credential checks (should go through now)
+									signupFlow:flush()
+									signupFlow:push(
+										steps.createCheckAppVersionAndCredentialsStep({ onlyCheckUserInfo = true })
+									)
+								else
+									magicKeyLabel.Text = "❌ " .. err
+									hideLoading()
+								end
+							end)
+						end
+					)
+				end
 			end, -- onEnter
 			onExit = function()
 				for _, req in ipairs(requests) do
@@ -1002,25 +1050,37 @@ signup.startFlow = function(self, config)
 							return
 						end
 
+						-- user DOB has been updated successfully on the server
+
+						-- update local value of System.IsUserUnder13
 						System.IsUserUnder13 = cache.age < 13
 
-						System:NotificationGetStatus(function(status)
-							System:DebugEvent("App gets notification status", { status = status })
+						-- TODO: gaetan: should we update the local System field HasDOB or HasEstimatedDOB?
+						-- update local value of System.HasEstimatedDOB
+						-- System.HasEstimatedDOB = true
 
-							if status == "underdetermined" then
-								-- Go to next step
-								-- signupFlow:push(steps.createUsernameInputStep())
-								signupFlow:push(steps.createPushNotificationsStep())
-								sfx("whooshes_small_1", { Volume = 0.5 })
-							else
-								-- notifications not supported or status already established
-								-- flush signup flow and restart credential checks (should go through now)
-								signupFlow:flush()
-								signupFlow:push(
-									steps.createCheckAppVersionAndCredentialsStep({ onlyCheckUserInfo = true })
-								)
-							end
-						end)
+						-- Next step: ask user to pick a username
+						signupFlow:push(steps.createUsernameStep())
+
+						-- TODO: gaetan: this block is the step next to the username input step
+						-- -- Next signup flow step: ask user for push notifications grant
+						-- System:NotificationGetStatus(function(status)
+						-- 	System:DebugEvent("App gets notification status", { status = status })
+
+						-- 	if status == "underdetermined" then
+						-- 		-- Go to next step
+						-- 		-- signupFlow:push(steps.createUsernameInputStep())
+						-- 		signupFlow:push(steps.createPushNotificationsStep())
+						-- 		sfx("whooshes_small_1", { Volume = 0.5 })
+						-- 	else
+						-- 		-- notifications not supported or status already established
+						-- 		-- flush signup flow and restart credential checks (should go through now)
+						-- 		signupFlow:flush()
+						-- 		signupFlow:push(
+						-- 			steps.createCheckAppVersionAndCredentialsStep({ onlyCheckUserInfo = true })
+						-- 		)
+						-- 	end
+						-- end)
 					end)
 					table.insert(requests, req)
 				end
@@ -1105,6 +1165,331 @@ signup.startFlow = function(self, config)
 							self.Width * 0.5 - text.Width * 0.5,
 							secondaryText.pos.Y + secondaryText.Height + padding,
 						}
+
+						LocalEvent:Send("signup_drawer_height_update", self.Height)
+					end,
+				})
+
+				drawer:show()
+
+				if skipOnFirstEnter then
+					skipOnFirstEnter = false
+					signupFlow:push(steps.createUsernameStep())
+				end
+			end,
+			onExit = function()
+				for _, req in ipairs(requests) do
+					req:Cancel()
+				end
+				drawer:updateConfig({
+					layoutContent = function(_) end,
+				})
+				drawer:hide()
+			end,
+			onRemove = function()
+				removeBackButton()
+				if drawer ~= nil then
+					drawer:remove()
+					drawer = nil
+				end
+				if config.onCancel ~= nil then
+					config.onCancel() -- TODO: can't stay here (step also removed when completing flow)
+				end
+			end,
+		})
+
+		return step
+	end
+
+	steps.createUsernameStep = function()
+		local skipOnFirstEnter = System.Username ~= nil and System.Username ~= "" -- skip this step if user already has a username
+		local requests = {}
+		local step = flow:createStep({
+			onEnter = function()
+				config.usernameStep()
+
+				showBackButton()
+
+				-- DRAWER
+
+				if drawer ~= nil then
+					drawer:clear()
+				else
+					drawer = drawerModule:create({ ui = ui })
+				end
+
+				-- DATA
+
+				local username
+				local usernameKey
+
+				-- REQUESTS
+
+				local usernameCheckRequest
+				local userCheckTimer
+				local usernameSetRequest
+
+				local function cancelTimersAndRequests()
+					if usernameCheckRequest ~= nil then
+						usernameCheckRequest:Cancel()
+						usernameCheckRequest = nil
+					end
+
+					if userCheckTimer ~= nil then
+						userCheckTimer:Cancel()
+						userCheckTimer = nil
+					end
+					if usernameSetRequest then
+						usernameSetRequest:Cancel()
+						usernameSetRequest = nil
+					end
+				end
+
+				-- UI
+
+				local text = ui:createText("Pick a username!", {
+					color = Color.White,
+					size = "default",
+					alignment = "center",
+				})
+				text:setParent(drawer)
+
+				local instructions = ui:createText(
+					"It must start with a letter (a-z) and can include letters (a-z) and numbers (0-9).",
+					{
+						color = Color(150, 150, 150),
+						size = "small",
+						alignment = "center",
+					}
+				)
+				instructions:setParent(drawer)
+
+				local statusMessage = ui:createText("...", {
+					color = Color.White,
+					size = "small",
+					alignment = "center",
+				})
+				statusMessage:setParent(nil)
+
+				local loading = require("ui_loading_animation"):create({ ui = ui })
+				loading:setParent(nil)
+
+				local function showStatusMessage(str)
+					statusMessage.Text = str
+					statusMessage.pos = {
+						instructions.pos.X + instructions.Width * 0.5 - statusMessage.Width * 0.5,
+						instructions.pos.Y + instructions.Height * 0.5 - statusMessage.Height * 0.5,
+					}
+					instructions:setParent(nil)
+					loading:setParent(nil)
+					statusMessage:setParent(drawer)
+				end
+
+				local function showLoading()
+					instructions:setParent(nil)
+					loading:setParent(drawer)
+					statusMessage:setParent(nil)
+				end
+
+				local function showInstructions()
+					instructions:setParent(drawer)
+					loading:setParent(nil)
+					statusMessage:setParent(nil)
+				end
+
+				-- Warning message
+				local warning = ui:createText("⚠️ Choose carefully, this username can't be changed afterwards.", {
+					color = Color(251, 206, 0),
+					size = "small",
+					alignment = "center",
+				})
+				warning:setParent(drawer)
+
+				-- Button
+				local confirmButton = ui:buttonPositive({
+					content = "This is it!",
+					padding = 10,
+				})
+				confirmButton:setParent(drawer)
+				confirmButton:disable()
+
+				-- Text input
+				local usernameInput = ui:createTextInput(
+					"",
+					str:upperFirstChar(loc("don't use your real name!")),
+					{ textSize = "default", bottomMargin = confirmButton.Height + theme.padding * 2 }
+				)
+				usernameInput:setParent(drawer)
+
+				-- Text input onTextChange
+				usernameInput.onTextChange = function(self)
+					confirmButton:disable()
+
+					-- disable onTextChange while we normalize the text
+					local backup = self.onTextChange
+					self.onTextChange = nil
+
+					local s = str:normalize(self.Text)
+					s = str:lower(s)
+					self.Text = s
+
+					-- re-enable onTextChange
+					self.onTextChange = backup
+
+					showLoading()
+					cancelTimersAndRequests()
+
+					if s == "" then
+						showInstructions()
+					else
+						-- use timer to avoid spamming the API
+						userCheckTimer = Timer(1.0, function()
+							-- check username
+							usernameCheckRequest = api:checkUsername(s, function(ok, response)
+								statusMessage:setParent(node)
+								loading:setParent(nil)
+
+								if ok == false or response == nil then
+									showStatusMessage("❌ failed to validate username")
+								else
+									if response.format == false then
+										showStatusMessage("❌ invalid format")
+									elseif response.available == false then
+										showStatusMessage("❌ username already taken")
+									elseif response.appropriate == false then
+										showStatusMessage("❌ username is inappropriate")
+									else
+										showStatusMessage("✅ username is available")
+										username = s
+										usernameKey = response.key
+										confirmButton:enable()
+									end
+								end
+							end)
+						end)
+					end
+					-- System:DebugEvent("User edits username in text input", { username = self.Text })
+				end
+
+				-- Button onRelease
+				confirmButton.onRelease = function()
+					cancelTimersAndRequests()
+					showLoading()
+					usernameInput:disable()
+
+					System:DebugEvent("User presses OK button to submit username", { username = usernameInput.Text })
+
+					usernameSetRequest = api:patchUserInfo({
+						username = username,
+						usernameKey = usernameKey,
+					}, function(err)
+						if err ~= nil then
+							System:DebugEvent("Request to set username fails")
+							showStatusMessage("❌ " .. err)
+							usernameInput:enable()
+							return
+						end
+						-- success
+						System.Username = username
+						LocalEvent:Send("username_set")
+
+						System:DebugEvent("User did set username in signup flow")
+
+						-- User did choose a username successfully
+						if passkey:isSupported() then
+							print("[LUAU][PASSKEY] passkey is supported, getting challenge...")
+
+							passkey:getPasskeyChallenge(function(challenge, error)
+								if error ~= nil then
+									print("[❌][LUAU][PASSKEY] getPasskeyChallenge error:", error)
+									return
+								end
+
+								passkey:createPasskey(challenge, function(error)
+									if error ~= nil then
+										print("[❌][LUAU][PASSKEY] createPasskey error:", error)
+										-- ⚠️ TODO: gaetan: show passkey error screen (with retry button & password fallback)
+										return
+									end
+									signupFlow:push(steps.createPushNotificationsStep())
+								end)
+							end)
+						else
+							-- passkey is not supported on this device,
+							-- let's show the screen to choose a password
+							signupFlow:push(steps.createPushNotificationsStep())
+						end
+					end)
+				end
+
+				drawer:updateConfig({
+					layoutContent = function(self)
+						-- here, self.Height can be reduced, but not increased
+						-- TODO: enforce this within drawer module
+
+						local padding = theme.paddingBig
+
+						-- local maxWidth = math.min(300, self.Width - padding * 2)
+						-- text.object.MaxWidth = maxWidth
+						-- secondaryText.object.MaxWidth = maxWidth
+
+						-- TODO: gaetan: compute width
+						-- local w = math.min(self.Width, math.max(text.Width, okBtn.Width, 300) + padding * 2)
+						-- self.Width = w
+
+						self.Height = Screen.SafeArea.Bottom
+							+ text.Height
+							+ warning.Height
+							+ instructions.Height
+							+ usernameInput.Height
+							+ confirmButton.Height
+							+ padding * 6
+
+						-- Position of text
+						text.object.MaxWidth = self.Width - padding * 2
+						text.pos = {
+							self.Width * 0.5 - text.Width * 0.5,
+							self.Height - text.Height - padding,
+						}
+
+						-- Position of warning
+						warning.object.MaxWidth = self.Width - padding * 2
+						warning.pos = {
+							self.Width * 0.5 - warning.Width * 0.5,
+							text.pos.Y - warning.Height - padding,
+						}
+
+						-- Position of instructions
+						instructions.object.MaxWidth = self.Width - padding * 2
+						instructions.pos = {
+							self.Width * 0.5 - instructions.Width * 0.5,
+							warning.pos.Y - instructions.Height - padding,
+						}
+
+						-- Position of usernameInput
+						usernameInput.Width = self.Width - padding * 2
+						usernameInput.pos = {
+							self.Width * 0.5 - usernameInput.Width * 0.5,
+							instructions.pos.Y - usernameInput.Height - padding,
+						}
+
+						-- Position of confirmButton
+						confirmButton.pos = {
+							self.Width * 0.5 - confirmButton.Width * 0.5,
+							usernameInput.pos.Y - confirmButton.Height - padding,
+						}
+
+						loading.pos = {
+							instructions.pos.X + instructions.Width * 0.5 - loading.Width * 0.5,
+							instructions.pos.Y + instructions.Height * 0.5 - loading.Height * 0.5,
+						}
+
+						-- Position of statusMessage is already set in showStatusMessage() function.
+						-- We don't need to set it here.
+						-- statusMessage.pos = {
+						-- 	instructions.pos.X + instructions.Width * 0.5 - statusMessage.Width * 0.5,
+						-- 	instructions.pos.Y + instructions.Height * 0.5 - statusMessage.Height * 0.5,
+						-- }
 
 						LocalEvent:Send("signup_drawer_height_update", self.Height)
 					end,

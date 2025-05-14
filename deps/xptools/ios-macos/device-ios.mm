@@ -8,16 +8,16 @@
 
 #include "device.hpp"
 
-// Obj-C
-#import <UIKit/UIKit.h>
-#import <UserNotifications/UserNotifications.h>
-
 // C
 #include <sys/sysctl.h>
-#import <sys/utsname.h>
+#include <sys/utsname.h>
 
 // C++
 #include <unordered_set>
+
+// Obj-C
+#import <UIKit/UIKit.h>
+#import <UserNotifications/UserNotifications.h>
 
 // Returns platform type
 vx::device::Platform vx::device::platform() {
@@ -54,7 +54,7 @@ uint16_t vx::device::appBuildNumber() {
     if (bundleVersion == nullptr) {
         return 0;
     }
-    const uint16_t result = [bundleVersion intValue];
+    const uint16_t result = static_cast<uint16_t>([bundleVersion intValue]);
     return result;
 }
 

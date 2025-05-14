@@ -8,6 +8,8 @@
 
 #pragma once
 
+// C++
+#include <functional>
 #include <string>
 
 namespace vx {
@@ -15,32 +17,36 @@ namespace auth {
 
 class PassKey {
 public:
+    
+    /// Type of callback function for passkey creation
+    typedef std::function<void(std::string credentialIDBase64,
+                               std::string rawClientDataJSONBase64,
+                               std::string rawAttestationObjectBase64,
+                               std::string error)> CreatePasskeyCallbackFunc;
+    
+    /// Type of callback function for passkey login
+    typedef std::function<void(std::string credentialIDBase64,
+                               std::string authenticatorDataBase64,
+                               std::string rawClientDataJSONString,
+                               std::string signatureBase64,
+                               std::string userIDString,
+                               std::string error)> LoginWithPasskeyCallbackFunc;
+    
+    /// Returns true if PassKey is available on the device, false otherwise.
     static bool IsAvailable();
-
-    PassKey(std::string domain,
-            std::string username,
-            std::string userID,
-            std::string challenge) :
-    _domain(domain),
-    _username(username),
-    _userID(userID),
-    _challenge(challenge),
-    _platformImpl(nullptr) {}
-
-    // Delete copy constructor and assignment operator
-    PassKey(const PassKey&) = delete;
-    PassKey& operator=(const PassKey&) = delete;
-
-    void initPlatformImpl();
-    void save();
-
+    
+    static std::string createPasskey(const std::string& relyingPartyIdentifier,
+                                     const std::string& challenge,
+                                     const std::string& userID,
+                                     const std::string& username,
+                                     CreatePasskeyCallbackFunc callback);
+    
+    static std::string loginWithPasskey(const std::string& relyingPartyIdentifier,
+                                        const std::string& challengeBytes,
+                                        LoginWithPasskeyCallbackFunc callback);
+    
 private:
-    std::string _domain;
-    std::string _username;
-    std::string _userID;
-    std::string _challenge;
-
-    void* _platformImpl;
+    
 };
 
 }
