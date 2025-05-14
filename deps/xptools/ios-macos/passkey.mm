@@ -17,7 +17,7 @@
 //
 
 // PasskeyDelegate class signature
-@interface PasskeyDelegate : NSObject <ASAuthorizationControllerDelegate>
+@interface PasskeyDelegate : NSObject <ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding>
 
 typedef void (^DidCompleteAuthorization)(NSString *credentialIDBase64,
                                          NSString *rawClientDataJSONBase64,
@@ -162,6 +162,41 @@ typedef void (^DidCompleteAssertion)(NSString *credentialIDBase64,
     }
 }
 
+- (nonnull ASPresentationAnchor)presentationAnchorForAuthorizationController:(nonnull ASAuthorizationController *)controller {
+#if TARGET_OS_IPHONE || TARGET_OS_SIMULATOR
+    // if we are on iOS, return the current window
+    for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]] &&
+                scene.activationState == UISceneActivationStateForegroundActive) {
+
+                UIWindowScene *windowScene = (UIWindowScene *)scene;
+
+                for (UIWindow *window in windowScene.windows) {
+                    if (window.isKeyWindow) {
+                        return window;
+                    }
+                }
+            }
+        }
+
+        // If no key window found, return any visible window as fallback
+        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]]) {
+                UIWindowScene *windowScene = (UIWindowScene *)scene;
+                if (windowScene.windows.count > 0) {
+                    return windowScene.windows.firstObject;
+                }
+            }
+        }
+
+        // Absolute fallback to avoid returning nil
+        return [[UIWindow alloc] initWithFrame:CGRectZero];
+#elif TARGET_OS_MAC
+    // if we are on macOS, return the current window
+    return [[NSApplication sharedApplication] keyWindow];
+#endif
+}
+
 @end
 
 PasskeyDelegate *passkeyDelegate = nil;
@@ -253,9 +288,7 @@ std::string vx::auth::PassKey::createPasskey(const std::string& relyingPartyIden
     }];
 
     authController.delegate = passkeyDelegate;
-
-    // TODO: gaetan: not sure if/when this is needed
-    // authController.presentationContextProvider = delegate;
+    authController.presentationContextProvider = passkeyDelegate;
 
     [authController performRequests];
 
@@ -310,7 +343,7 @@ std::string vx::auth::PassKey::loginWithPasskey(const std::string& relyingPartyI
     }];
 
     authController.delegate = passkeyDelegate;
-    // authController.presentationContextProvider = passkeyDelegate;
+    authController.presentationContextProvider = passkeyDelegate;
 
     [authController performRequests];
 

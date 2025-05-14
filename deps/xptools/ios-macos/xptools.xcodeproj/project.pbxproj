@@ -1136,6 +1136,7 @@
 					"$(PROJECT_DIR)/../../deps/libwebsockets/output_macos/lib",
 					"$(PROJECT_DIR)/../../libpng/_active_/prebuilt/macos/universal/lib-${CONFIGURATION}",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_LDFLAGS = (
 					"-lcrypto",
 					"-lssl",
@@ -1170,6 +1171,7 @@
 					"$(PROJECT_DIR)/../../deps/libwebsockets/output_macos/lib",
 					"$(PROJECT_DIR)/../../libpng/_active_/prebuilt/macos/universal/lib-${CONFIGURATION}",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_LDFLAGS = (
 					"-lcrypto",
 					"-lssl",
@@ -1203,6 +1205,7 @@
 					"$(PROJECT_DIR)/../../deps/libwebsockets/output_macos/lib",
 					"$(PROJECT_DIR)/../../libpng/_active_/prebuilt/macos/universal/lib-${CONFIGURATION}",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SYSTEM_HEADER_SEARCH_PATHS = (
@@ -1232,6 +1235,7 @@
 					"$(PROJECT_DIR)/../../deps/libwebsockets/output_macos/lib",
 					"$(PROJECT_DIR)/../../libpng/_active_/prebuilt/macos/universal/lib-${CONFIGURATION}",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SYSTEM_HEADER_SEARCH_PATHS = (
@@ -1260,6 +1264,7 @@
 					"$(PROJECT_DIR)/../../deps/libwebsockets/output_macos/lib",
 					"$(PROJECT_DIR)/../../libpng/_active_/prebuilt/macos/universal/lib-${CONFIGURATION}",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_LDFLAGS = (
 					"-lcrypto",
 					"-lssl",
@@ -1291,6 +1296,7 @@
 					"$(PROJECT_DIR)/../../deps/libwebsockets/output_macos/lib",
 					"$(PROJECT_DIR)/../../libpng/_active_/prebuilt/macos/universal/lib-${CONFIGURATION}",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_LDFLAGS = (
 					"-lcrypto",
 					"-lssl",
@@ -1465,6 +1471,7 @@
 					"$(PROJECT_DIR)/../../deps/libwebsockets/output_macos/lib",
 					"$(PROJECT_DIR)/../../libpng/_active_/prebuilt/macos/universal/lib-${CONFIGURATION}",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_LDFLAGS = (
 					"-lcrypto",
 					"-lssl",
@@ -1497,6 +1504,7 @@
 					"$(PROJECT_DIR)/../../deps/libwebsockets/output_macos/lib",
 					"$(PROJECT_DIR)/../../libpng/_active_/prebuilt/macos/universal/lib-${CONFIGURATION}",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
 				OTHER_LDFLAGS = (
 					"-lcrypto",
 					"-lssl",
