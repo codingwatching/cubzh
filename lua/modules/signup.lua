@@ -272,11 +272,13 @@ signup.startFlow = function(self, config)
 		return step
 	end
 
+	-- Step shown when user has clicked on "login" button on the splash screen
 	steps.createLoginOptionsStep = function(config)
 		local defaultConfig = {
 			username = "",
 			password = false,
 			magickey = false,
+			-- passkey = false,
 		}
 		config = conf:merge(defaultConfig, config)
 
@@ -608,20 +610,21 @@ signup.startFlow = function(self, config)
 
 					errorLabel.Text = ""
 					showLoading()
-					local req = api:getLoginOptions(usernameInput.Text, function(err, res)
-						-- res.username, res.password, res.magickey
-						if err == nil then
-							-- NOTE: res.username is sanitized
-							local step = steps.createLoginOptionsStep({
-								username = res.username,
-								password = res.password,
-								magickey = res.magickey,
-							})
-							signupFlow:push(step)
-						else
+
+					local req = api:getLoginOptions(usernameInput.Text, function(err, loginOptions)
+						if err ~= nil then
 							errorLabel.Text = "❌ " .. err
 							hideLoading()
+							return
 						end
+
+						-- NOTE: res.username is sanitized
+						signupFlow:push(steps.createLoginOptionsStep({
+							username = loginOptions.username,
+							password = loginOptions.password,
+							magickey = loginOptions.magickey,
+							-- passkey = loginOptions.passkey,
+						}))
 					end)
 					table.insert(requests, req)
 				end
@@ -802,8 +805,7 @@ signup.startFlow = function(self, config)
 				})
 				title:setParent(drawer)
 
-				local text = ui:createText("You'll get a much better experience with push notifications. ❗️", 
-				{
+				local text = ui:createText("You'll get a much better experience with push notifications. ❗️", {
 					color = Color.White,
 					alignment = "center",
 				})
@@ -1124,7 +1126,7 @@ signup.startFlow = function(self, config)
 				})
 				drawer:hide()
 			end,
-			onRemove = function() 
+			onRemove = function()
 				removeBackButton()
 				if drawer ~= nil then
 					drawer:remove()
@@ -1402,8 +1404,11 @@ signup.startFlow = function(self, config)
 							if err ~= nil then
 								checks.error("Account creation failed")
 							else
+								-- save credentials in local storage
 								System:StoreCredentials(credentials["user-id"], credentials.token)
+								--
 								System:DebugEvent("App receives account credentials")
+
 								-- Next sub-step: check if user account is complete
 								checks.checkUserAccountComplete()
 							end
@@ -1492,15 +1497,17 @@ signup.startFlow = function(self, config)
 
 							-- Update values in System
 							System.Username = userInfo.username or ""
-							System.HasEmail = userInfo.hasEmail == true or false
-							System.HasVerifiedPhoneNumber = userInfo.hasVerifiedPhoneNumber == true or false
-							System.HasUnverifiedPhoneNumber = userInfo.hasUnverifiedPhoneNumber == true or false
-							System.IsPhoneExempted = userInfo.isPhoneExempted == true or false
-							System.HasDOB = userInfo.hasDOB == true or false
-							System.HasEstimatedDOB = userInfo.hasEstimatedDOB == true or false
-							System.IsUserUnder13 = userInfo.isUnder13 == true or false
-							System.IsParentApproved = userInfo.isParentApproved == true or false
-							System.IsChatEnabled = userInfo.isChatEnabled == true or false
+							System.HasEmail = userInfo.hasEmail
+							System.HasVerifiedPhoneNumber = userInfo.hasVerifiedPhoneNumber
+							System.HasUnverifiedPhoneNumber = userInfo.hasUnverifiedPhoneNumber
+							System.IsPhoneExempted = userInfo.isPhoneExempted
+							System.HasDOB = userInfo.hasDOB
+							System.HasEstimatedDOB = userInfo.hasEstimatedDOB
+							System.IsUserUnder13 = userInfo.isUnder13
+							System.IsParentApproved = userInfo.isParentApproved
+							System.IsChatEnabled = userInfo.isChatEnabled
+							System.HasPasskey = userInfo.hasPasskey
+							System.HasPassword = userInfo.hasPassword
 
 							-- print("user id:", System.UserID)
 							-- print("userInfo.username:", userInfo.username)

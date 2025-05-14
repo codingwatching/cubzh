@@ -102,7 +102,12 @@ mod.checkPhoneNumber = function(_, phoneNumber, callback)
 end
 
 -- callback(err, res) err is nil on success
-mod.getLoginOptions = function(_, usernameOrEmail, callback)
+mod.getLoginOptions = function(self, usernameOrEmail, callback)
+	if self ~= mod then
+		error("system_api:getLoginOptions(usernameOrEmail, callback): use `:`", 2)
+	end
+
+	-- validate arguments
 	if type(usernameOrEmail) ~= "string" then
 		callback("1st arg must be a string", nil)
 		return
@@ -111,17 +116,18 @@ mod.getLoginOptions = function(_, usernameOrEmail, callback)
 		callback("2nd arg must be a function", nil)
 		return
 	end
-
 	if usernameOrEmail == "" then
-		callback("username can't be empty", nil)
+		callback("username is empy", nil)
+		return
+	end
+	if callback == nil then
+		callback("callback is nil", nil)
 		return
 	end
 
+	-- get login options from API server
 	local url = mod.kApiAddr .. "/get-login-options"
-	local body = {
-		["username-or-email"] = usernameOrEmail,
-	}
-
+	local body = { usernameOrEmail = usernameOrEmail }
 	local req = System:HttpPost(url, body, function(resp)
 		if resp.StatusCode ~= 200 then
 			if resp.StatusCode >= 500 then
@@ -137,13 +143,6 @@ mod.getLoginOptions = function(_, usernameOrEmail, callback)
 		local res, err = JSON:Decode(resp.Body)
 		if err ~= nil then
 			callback("something went wrong", nil)
-			return
-		end
-
-		res.magickey = res["magic-key"]
-
-		if res.password == nil and res.magickey == nil then
-			callback("can't authenticate account", nil)
 			return
 		end
 
@@ -193,6 +192,11 @@ mod.login = function(_, config, callback)
 		usernameOrEmail = "",
 		magickey = "",
 		password = "",
+		passkeyCredentialIDBase64 = "",
+		passkeyAuthenticatorDataBase64 = "",
+		passkeyRawClientDataJSONString = "",
+		passkeySignatureBase64 = "",
+		passkeyUserIDString = "",
 	}
 	config = conf:merge(defaultConfig, config)
 
@@ -200,7 +204,12 @@ mod.login = function(_, config, callback)
 	local body = {
 		["username-or-email"] = config.usernameOrEmail,
 		["magic-key"] = config.magickey,
-		["password"] = config.password,
+		password = config.password,
+		passkeyCredentialIDBase64 = config.passkeyCredentialIDBase64,
+		passkeyAuthenticatorDataBase64 = config.passkeyAuthenticatorDataBase64,
+		passkeyRawClientDataJSONString = config.passkeyRawClientDataJSONString,
+		passkeySignatureBase64 = config.passkeySignatureBase64,
+		passkeyUserIDString = config.passkeyUserIDString,
 	}
 
 	local _ = System:HttpPost(url, body, function(resp)
