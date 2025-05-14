@@ -1143,7 +1143,7 @@ signup.startFlow = function(self, config)
 
 	steps.createSignUpOrLoginStep = function()
 		local skipOnFirstEnter = System.HasDOB or System.HasEstimatedDOB
-		local startBtn
+		local createAccountBtn
 		local step = flow:createStep({
 			onEnter = function()
 				if not skipOnFirstEnter then
@@ -1152,25 +1152,27 @@ signup.startFlow = function(self, config)
 
 				config.signUpOrLoginStep()
 
-				titleLogo = ui:frame({ image = {
-					data = Data:FromBundle("images/blip-logo.png"),
-					alpha = true,
-				} })
+				titleLogo = ui:frame({
+					image = {
+						data = Data:FromBundle("images/blip-logo.png"),
+						alpha = true,
+					},
+				})
 
 				loginBtn = ui:buttonSecondary({ content = "Sign In", textSize = "small" })
 				loginBtn.onRelease = function()
 					signupFlow:push(steps.createLoginStep())
 				end
 
-				startBtn = ui:buttonPositive({ content = "Create Account", textSize = "default", padding = 10 })
+				createAccountBtn = ui:buttonPositive({ content = "Create Account", textSize = "default", padding = 10 })
 
-				startBtn.parentDidResize = function(self)
+				createAccountBtn.parentDidResize = function(self)
 					ease:cancel(self)
 					ease:cancel(loginBtn)
 
-					startBtn.Width = nil
-					startBtn.Width = math.min(400, math.max(startBtn.Width, Screen.Width * 0.8))
-					loginBtn.Width = startBtn.Width
+					createAccountBtn.Width = nil
+					createAccountBtn.Width = math.min(400, math.max(createAccountBtn.Width, Screen.Width * 0.8))
+					loginBtn.Width = createAccountBtn.Width
 
 					loginBtn.pos = {
 						Screen.Width * 0.5 - loginBtn.Width * 0.5,
@@ -1190,7 +1192,8 @@ signup.startFlow = function(self, config)
 						Screen.Height - Screen.SafeArea.Top - titleLogo.Height - padding,
 					}
 				end
-				startBtn:parentDidResize()
+
+				createAccountBtn:parentDidResize()
 
 				-- login btn animation
 				local targetPos = loginBtn.pos:Copy()
@@ -1198,11 +1201,12 @@ signup.startFlow = function(self, config)
 				ease:outSine(loginBtn, animationTime).pos = targetPos
 
 				-- start btn animation
-				targetPos = startBtn.pos:Copy()
-				startBtn.pos.Y = startBtn.pos.Y - 50
-				ease:outBack(startBtn, animationTime).pos = targetPos
+				targetPos = createAccountBtn.pos:Copy()
+				createAccountBtn.pos.Y = createAccountBtn.pos.Y - 50
+				ease:outBack(createAccountBtn, animationTime).pos = targetPos
 
-				startBtn.onRelease = function()
+				-- create account button callback
+				createAccountBtn.onRelease = function()
 					System:DebugEvent("User presses Create Account button")
 					signupFlow:push(steps.createDOBStep())
 					sfx("whooshes_small_1", { Volume = 0.5 })
@@ -1214,8 +1218,8 @@ signup.startFlow = function(self, config)
 				end
 			end,
 			onExit = function()
-				startBtn:remove()
-				startBtn = nil
+				createAccountBtn:remove()
+				createAccountBtn = nil
 				loginBtn:remove()
 				loginBtn = nil
 				titleLogo:remove()
