@@ -86,7 +86,10 @@ local function createCodeVerifContent(ui)
 			timer = nil,
 		}
 		scheduler.apiCall = function()
-			checkParentApprovalRequest = api:getUserInfo(System.UserID, function(userInfo, err)
+			checkParentApprovalRequest = api:getUserInfo(System.UserID, {
+				"isParentApproved",
+				"hasVerifiedPhoneNumber",
+			}, function(userInfo, err)
 				checkParentApprovalRequest = nil
 				if err ~= nil then
 					scheduler.checkParentApproval()
@@ -106,10 +109,7 @@ local function createCodeVerifContent(ui)
 				else
 					scheduler.checkParentApproval()
 				end
-			end, {
-				"isParentApproved",
-				"hasVerifiedPhoneNumber",
-			})
+			end)
 		end
 
 		scheduler.updateText = function(newText)

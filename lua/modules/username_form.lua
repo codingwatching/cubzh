@@ -53,7 +53,7 @@ mod.createModalContent = function(_, config)
 	content.node = node
 
 	local text = ui:createText(config.text, {
-		color = Color.White, 
+		color = Color.White,
 		size = "default",
 		alignment = "center",
 	})

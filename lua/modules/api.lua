@@ -242,18 +242,20 @@ end
 -- getUserInfo gets a user by its ID
 -- callback(userInfo, err)
 -- success: err == nil
--- fields parameter is optional, it can be a table-- containing extra expected user fields:
+-- fields parameter is optional, it can be nil a table containing extra expected user fields:
 -- {"created", "nbFriends"}
 -- TODO: caller should have a way to check error code -> 401 means bad credentials for signup.lua (removing installed credentials)
-mod.getUserInfo = function(_, id, callback, fields)
+-- TODO: if `id` is not provided, it could be `self`
+mod.getUserInfo = function(_, id, fields, callback)
+	-- validate arguments
 	if type(id) ~= "string" then
-		error("api:getUserInfo(userID, callback, [fields]) - userID must be a string", 2)
-	end
-	if type(callback) ~= "function" then
-		error("api:getUserInfo(userID, callback, [fields]) - callback must be a function", 2)
+		error("api:getUserInfo(userID, fields, callback) - userID must be a string", 2)
 	end
 	if fields ~= nil and type(fields) ~= "table" then
-		error("api:getUserInfo(callback, [fields]) - fields must be a table or nil", 2)
+		error("api:getUserInfo(userID, fields, callback) - fields must be a table or nil", 2)
+	end
+	if type(callback) ~= "function" then
+		error("api:getUserInfo(userID, fields, callback) - callback must be a function", 2)
 	end
 
 	local url = mod.kApiAddr .. "/users/" .. id

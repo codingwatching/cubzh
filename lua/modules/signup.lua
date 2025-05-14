@@ -986,7 +986,7 @@ signup.startFlow = function(self, config)
 					ageSlider:hide()
 					okBtn:disable()
 
-					-- -- NOTE: keeping "DOB" and not "age" in event name to compare with previous versions
+					-- NOTE: keeping "DOB" and not "age" in event name to compare with previous versions
 					System:DebugEvent("User presses OK button on DOB form", { age = cache.age, ageStr = cache.ageStr })
 
 					-- send API request to update user's age
@@ -1454,7 +1454,21 @@ signup.startFlow = function(self, config)
 						end
 
 						-- Request user account info
-						api:getUserInfo(System.UserID, function(userInfo, err)
+						api:getUserInfo(System.UserID, {
+							"username",
+							"hasEmail",
+							"hasPassword",
+							"hasPasskey",
+							"hasDOB",
+							"hasEstimatedDOB",
+							"isUnder13",
+							"isParentApproved",
+							"didCustomizeAvatar",
+							"hasVerifiedPhoneNumber",
+							"hasUnverifiedPhoneNumber",
+							"isPhoneExempted",
+							"isChatEnabled",
+						}, function(userInfo, err)
 							if err ~= nil then
 								System:DebugEvent(
 									"Request to obtain user info with credentials fails",
@@ -1499,6 +1513,8 @@ signup.startFlow = function(self, config)
 							-- print("userInfo.isUnder13:", userInfo.isUnder13)
 							-- print("userInfo.isParentApproved:", userInfo.isParentApproved)
 							-- print("userInfo.isChatEnabled:", userInfo.isChatEnabled)
+							-- print("userInfo.hasPasskey:", userInfo.hasPasskey)
+							-- print("userInfo.hasPassword:", userInfo.hasPassword)
 
 							System:NotificationGetStatus(function(status)
 								if Client.LoggedIn and status ~= "underdetermined" then
@@ -1510,20 +1526,7 @@ signup.startFlow = function(self, config)
 									signupFlow:push(steps.createSignUpOrLoginStep())
 								end
 							end)
-						end, {
-							"username",
-							"hasEmail",
-							"hasPassword",
-							"hasDOB",
-							"hasEstimatedDOB",
-							"isUnder13",
-							"isParentApproved",
-							"didCustomizeAvatar",
-							"hasVerifiedPhoneNumber",
-							"hasUnverifiedPhoneNumber",
-							"isPhoneExempted",
-							"isChatEnabled",
-						})
+						end)
 					end
 
 					-- Start with the first sub-step

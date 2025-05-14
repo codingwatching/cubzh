@@ -2095,7 +2095,7 @@ function createUI(system)
 			end
 		end
 
-		node.setColorDisabled = function(self, background, text, placeholder, border,doNotrefresh)
+		node.setColorDisabled = function(self, background, text, placeholder, border, doNotrefresh)
 			if background ~= nil then
 				node.colorsDisabled = { Color(background), Color(background) }
 				if border ~= nil then
@@ -2119,7 +2119,7 @@ function createUI(system)
 			theme.textInputBackgroundColor,
 			theme.textInputTextColor,
 			theme.textInputPlaceholderColor,
-			nil, 
+			nil,
 			true
 		)
 		node:setColorPressed(
@@ -2955,7 +2955,7 @@ function createUI(system)
 
 				displayLeft = -scrollPosition
 				displayRight = displayLeft + node.Width
-				
+
 				loadLeft = displayLeft - SCROLL_LOAD_MARGIN
 				loadRight = displayRight + SCROLL_LOAD_MARGIN
 
@@ -3025,12 +3025,13 @@ function createUI(system)
 								cell:hide()
 							end
 						else
-							if (cellInfo.bottom <= displayTop and cellInfo.bottom >= displayBottom) 
-							 or (cellInfo.top <= displayTop and cellInfo.top >= displayBottom) then
+							if
+								(cellInfo.bottom <= displayTop and cellInfo.bottom >= displayBottom)
+								or (cellInfo.top <= displayTop and cellInfo.top >= displayBottom)
+							then
 								cell:show()
 							end
 						end
-
 					elseif cellInfo.top <= unloadBottom or cellInfo.bottom >= unloadTop then
 						cell = cells[cellIndex]
 						if cell ~= nil then
@@ -3095,12 +3096,13 @@ function createUI(system)
 								cell:hide()
 							end
 						else
-							if (cellInfo.left <= displayRight and cellInfo.left >= displayLeft) 
-							 or (cellInfo.right <= displayRight and cellInfo.right >= displayLeft) then
+							if
+								(cellInfo.left <= displayRight and cellInfo.left >= displayLeft)
+								or (cellInfo.right <= displayRight and cellInfo.right >= displayLeft)
+							then
 								cell:show()
 							end
 						end
-
 					elseif cellInfo.right <= unloadLeft or cellInfo.left >= unloadRight then
 						cell = cells[cellIndex]
 						if cell ~= nil then
@@ -3730,7 +3732,12 @@ function createUI(system)
 		end
 
 		if type(content) == "string" then
-			local n = ui:createText(content, { size = config.textSize, font = config.textFont, outline = config.textOutline, outlineColor = config.textOutlineColor })
+			local n = ui:createText(content, {
+				size = config.textSize,
+				font = config.textFont,
+				outline = config.textOutline,
+				outlineColor = config.textOutlineColor,
+			})
 			n:setParent(node)
 			node.content = n
 		elseif typeof(content) == "Shape" or typeof(content) == "MutableShape" then
@@ -3834,7 +3841,7 @@ function createUI(system)
 		}
 
 		config = conf:merge(defaultConfig, config, options)
-		
+
 		local choices = config.choices
 		if choices == nil then
 			error("ui:comboBox(config): config.choices should be an array of strings", 2)
@@ -3879,7 +3886,7 @@ function createUI(system)
 						c.text = choice
 					else
 						c = ui:button({
-							textSize = config.textSize,	
+							textSize = config.textSize,
 							content = choice,
 							borders = false,
 							shadow = false,
@@ -3916,14 +3923,14 @@ function createUI(system)
 			local firstCell = loadCell(1)
 			if firstCell ~= nil then
 				scroll.Height = math.min(
-					firstCell.Height * #choices, 
-					Screen.Height - Screen.SafeArea.Top - Screen.SafeArea.Bottom - theme.paddingBig * 2, 
+					firstCell.Height * #choices,
+					Screen.Height - Screen.SafeArea.Top - Screen.SafeArea.Bottom - theme.paddingBig * 2,
 					COMBO_BOX_MAX_HEIGHT
 				)
 				unloadCell(_, firstCell)
 			else
 				scroll.Height = math.min(
-					Screen.Height - Screen.SafeArea.Top - Screen.SafeArea.Bottom - theme.paddingBig * 2, 
+					Screen.Height - Screen.SafeArea.Top - Screen.SafeArea.Bottom - theme.paddingBig * 2,
 					COMBO_BOX_MAX_HEIGHT
 				)
 			end
@@ -3988,7 +3995,7 @@ function createUI(system)
 				if btn.enable then
 					btn:enable()
 				end
-				-- no need to remove individual cells, 
+				-- no need to remove individual cells,
 				-- they're removed when selector:remove is called
 				cells = {}
 			end

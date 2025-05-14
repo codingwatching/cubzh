@@ -950,7 +950,7 @@ profile.create = function(_, config)
 			content:refreshModal()
 		end
 
-		local req = api:getUserInfo(userID, fillUserInfo, {
+		local req = api:getUserInfo(userID, {
 			"created",
 			"nbFriends",
 			"bio",
@@ -960,7 +960,7 @@ profile.create = function(_, config)
 			"github",
 			"hasVerifiedPhoneNumber",
 			"hasEmail",
-		})
+		}, fillUserInfo)
 		table.insert(requests, req)
 
 		-- listen for avatar load

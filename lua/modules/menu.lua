@@ -346,8 +346,8 @@ end
 function showLoading(text)
 	-- do not show loading while in world editor
 	-- (tmp, we need to show something when publishing)
-	if IN_WORLD_EDITOR then 
-		return 
+	if IN_WORLD_EDITOR then
+		return
 	end
 
 	if loadingModal ~= nil then
@@ -469,7 +469,7 @@ function refreshDisplay()
 		end
 	else
 		showTopBar()
-		
+
 		if activeModal then
 			activeModal:show()
 		end
@@ -961,8 +961,8 @@ function hideNotification()
 			notificationTick:Remove()
 			notificationTick = nil
 		end,
-	}).X = -notificationFrame.Width
-		
+	}).X =
+		-notificationFrame.Width
 end
 
 notificationFrame.parentDidResize = function()
@@ -1516,29 +1516,37 @@ if DEV_MODE == true then
 							onDone = function()
 								aiInput:focus()
 							end,
-						}).Y = targetInputPosition[2]
+						}).Y =
+							targetInputPosition[2]
 						ease:outBack(aiCharacter.pos, 0.22, {
 							onDone = function() end,
-						}).Y = targetCharacterPosition[2]
+						}).Y =
+							targetCharacterPosition[2]
 						ease:outBack(aiCharacterBubble.pos, 0.24, {
 							onDone = function() end,
-						}).Y = targetBubblePosition[2]
+						}).Y =
+							targetBubblePosition[2]
 						ease:outBack(modelCombo.pos, 0.24, {
 							onDone = function() end,
-						}).Y = targetModelComboPosition[2]
+						}).Y =
+							targetModelComboPosition[2]
 					else
 						ease:inBack(aiInput.pos, 0.2, {
 							onDone = function() end,
-						}).Y = targetInputPosition[2]
+						}).Y =
+							targetInputPosition[2]
 						ease:inBack(aiCharacter.pos, 0.22, {
 							onDone = function() end,
-						}).Y = targetCharacterPosition[2]
+						}).Y =
+							targetCharacterPosition[2]
 						ease:inBack(aiCharacterBubble.pos, 0.24, {
 							onDone = function() end,
-						}).Y = targetBubblePosition[2]
+						}).Y =
+							targetBubblePosition[2]
 						ease:inBack(modelCombo.pos, 0.24, {
 							onDone = function() end,
-						}).Y = targetModelComboPosition[2]
+						}).Y =
+							targetModelComboPosition[2]
 					end
 				end
 			end
@@ -1587,14 +1595,14 @@ if DEV_MODE == true then
 			end
 			aiCharacterText.Text = displayedStr:sub(-10000)
 			charsPerSecond = math.max(1, math.ceil((#fullStr - #displayedStr) / textRevealMaxDuration))
-			
+
 			if revealTextTick ~= nil then
 				return
 			end
 
 			revealTextTick = LocalEvent:Listen(LocalEvent.Name.Tick, function(dt)
 				local charsToAdd = math.min(math.ceil(dt * charsPerSecond), #fullStr - #displayedStr)
-				displayedStr = displayedStr .. fullStr:sub(#displayedStr + 1, #displayedStr + charsToAdd) 
+				displayedStr = displayedStr .. fullStr:sub(#displayedStr + 1, #displayedStr + charsToAdd)
 				aiCharacterText.Text = displayedStr:sub(-10000)
 				if #displayedStr >= #fullStr then
 					revealTextTick:Remove()
@@ -1625,7 +1633,8 @@ if DEV_MODE == true then
 				alpha = true,
 			},
 		})
-		aiIcon.Width = 50 aiIcon.Height = 50
+		aiIcon.Width = 50
+		aiIcon.Height = 50
 
 		aiIcon.parentDidResize = function(self)
 			local parent = self.parent
@@ -1652,11 +1661,14 @@ if DEV_MODE == true then
 				aiUINeedsFirstLayout = true
 
 				local modelSelected = 3
-				local models = { "Claude 3.7", "Gemini 2.5", "Grok 3", "Grok 3 Mini"}
-				local modelNames = { "claude-3-7-sonnet-20250219", "gemini-2.5-pro-exp-03-25", "grok-3-beta", "grok-3-mini-beta" }
+				local models = { "Claude 3.7", "Gemini 2.5", "Grok 3", "Grok 3 Mini" }
+				local modelNames =
+					{ "claude-3-7-sonnet-20250219", "gemini-2.5-pro-exp-03-25", "grok-3-beta", "grok-3-mini-beta" }
 
-				local comboBtn = ui:buttonSecondary({ content = models[modelSelected], textSize = "small", unfocuses = false })
-				modelCombo = ui:comboBox({ choices = models, button = comboBtn, textSize = "small", optionsPosition = "top" })
+				local comboBtn =
+					ui:buttonSecondary({ content = models[modelSelected], textSize = "small", unfocuses = false })
+				modelCombo =
+					ui:comboBox({ choices = models, button = comboBtn, textSize = "small", optionsPosition = "top" })
 				modelCombo.onSelect = function(self, index)
 					self.Text = models[index]
 					modelSelected = index
@@ -1702,7 +1714,12 @@ if DEV_MODE == true then
 				})
 				aiInput:setParent(background)
 				-- background, text, placeholder, border
-				aiInput:setColor(Color(10, 10, 10, 0.9), Color.White, Color(255, 255, 255, 0.4), Color(255, 255, 255, 0.5))
+				aiInput:setColor(
+					Color(10, 10, 10, 0.9),
+					Color.White,
+					Color(255, 255, 255, 0.4),
+					Color(255, 255, 255, 0.5)
+				)
 				aiInput:setColorPressed(
 					Color(10, 10, 10, 0.9),
 					Color.White,
@@ -1888,7 +1905,8 @@ if DEV_MODE == true then
 				alpha = true,
 			},
 		})
-		historyIcon.Width = 50 historyIcon.Height = 50
+		historyIcon.Width = 50
+		historyIcon.Height = 50
 
 		historyIcon.parentDidResize = function(self)
 			local parent = self.parent
@@ -2393,12 +2411,11 @@ topBar.parentDidResize = function(self)
 		stopBtn.Height = height
 		stopBtn.Width = height
 		stopBtn.pos = { previousBtn.pos.X + previousBtn.Width, 0 }
-		previousBtn = stopBtn	
+		previousBtn = stopBtn
 		width += stopBtn.Width
 	end
 
 	self.Width = width
-
 end
 topBar:parentDidResize()
 
@@ -2407,10 +2424,11 @@ topBar:parentDidResize()
 bottomBar = ui:createFrame(Color(0, 0, 0, 0.6))
 bottomBar:setParent(background)
 
-appVersion = ui:createText("Blip " .. Client.AppVersion .. " (alpha) #" .. Client.BuildNumber, Color(100,100,100), "small")
+appVersion =
+	ui:createText("Blip " .. Client.AppVersion .. " (alpha) #" .. Client.BuildNumber, Color(100, 100, 100), "small")
 appVersion:setParent(bottomBar)
 
-copyright = ui:createText("© Voxowl, Inc.", Color(100,100,100), "small")
+copyright = ui:createText("© Voxowl, Inc.", Color(100, 100, 100), "small")
 copyright:setParent(bottomBar)
 
 bottomBar.parentDidResize = function(self)
@@ -3027,6 +3045,9 @@ elseif not Client.LoggedIn then
 		end,
 		dobStep = function()
 			LocalEvent:Send("signup_flow_dob")
+		end,
+		usernameStep = function()
+			-- LocalEvent:Send("signup_flow_username")
 		end,
 		pushNotificationsStep = function()
 			LocalEvent:Send("signup_push_notifications")
