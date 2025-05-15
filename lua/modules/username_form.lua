@@ -32,7 +32,7 @@ mod.createModalContent = function(_, config)
 
 	local defaultConfig = {
 		uikit = require("uikit"),
-		text = "Ready to pick a username?",
+		text = "Pick a Username!",
 	}
 
 	ok, err = pcall(function()
@@ -60,7 +60,7 @@ mod.createModalContent = function(_, config)
 	text:setParent(node)
 
 	local instructions =
-		ui:createText("It must start with a letter (a-z) and can include letters (a-z) and numbers (0-9).", {
+		ui:createText("Must start with a letter, followed by letters (a-z) and numbers (0-9) only.", {
 			color = Color(150, 150, 150),
 			size = "small",
 			alignment = "center",
@@ -100,7 +100,7 @@ mod.createModalContent = function(_, config)
 		statusMessage:setParent(nil)
 	end
 
-	local warning = ui:createText("⚠️ Choose carefully, this username can't be changed afterwards.", {
+	local warning = ui:createText("⚠️ Choose carefully, you can't change it later!", {
 		color = Color(251, 206, 0),
 		size = "small",
 		alignment = "center",
