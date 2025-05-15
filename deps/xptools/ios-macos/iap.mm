@@ -9,6 +9,8 @@
 #include "iap.hpp"
 #include "URL.hpp"
 #include "HttpRequest.hpp"
+#include "cJSON.h"
+
 
 #import <StoreKit/StoreKit.h>
 #include <map>
@@ -193,13 +195,6 @@ static IAPManager *iapManager = nil;
 
 bool vx::IAP::isAvailable() {
     return [SKPaymentQueue canMakePayments];
-}
-
-vx::IAP::Purchase_SharedPtr vx::IAP::Purchase::make(const std::string& productID,
-                                                    std::string verifyURL,
-                                                    const std::unordered_map<std::string, std::string>& verifyRequestHeaders) {
-    Purchase_SharedPtr p(new Purchase(productID, verifyURL, verifyRequestHeaders));
-    return p;
 }
 
 vx::IAP::Purchase_SharedPtr vx::IAP::purchase(std::string productID,

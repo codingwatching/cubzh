@@ -93,6 +93,11 @@
 		1033951D25626D130083F4C0 /* vxtime.h in Headers */ = {isa = PBXBuildFile; fileRef = 1033951C25626D130083F4C0 /* vxtime.h */; };
 		1033952325626D220083F4C0 /* vxtime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1033952225626D220083F4C0 /* vxtime.cpp */; };
 		1033952425626D220083F4C0 /* vxtime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1033952225626D220083F4C0 /* vxtime.cpp */; };
+		10373DE42DD5626F007952C3 /* iap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 10373DE32DD5626F007952C3 /* iap.cpp */; };
+		10373DE52DD5626F007952C3 /* iap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 10373DE32DD5626F007952C3 /* iap.cpp */; };
+		10373DE62DD5626F007952C3 /* iap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 10373DE32DD5626F007952C3 /* iap.cpp */; };
+		10373DE72DD5626F007952C3 /* iap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 10373DE32DD5626F007952C3 /* iap.cpp */; };
+		10373DE82DD5626F007952C3 /* iap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 10373DE32DD5626F007952C3 /* iap.cpp */; };
 		106ADEDF2C61701000964E91 /* textinput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 10FF177F2BC3F02000A8E2E7 /* textinput.cpp */; };
 		10847CB5270EE8C6006A5E91 /* strings.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 10C63D2B246C4F61003DEC3E /* strings.hpp */; };
 		10847CB8270EE8C6006A5E91 /* tracking.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 853C93A325A384070030C45D /* tracking.hpp */; };
@@ -342,6 +347,7 @@
 		102B2A1A2BD6A011006AF4F6 /* textinput.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = textinput.hpp; sourceTree = "<group>"; };
 		1033951C25626D130083F4C0 /* vxtime.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = vxtime.h; sourceTree = "<group>"; };
 		1033952225626D220083F4C0 /* vxtime.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = vxtime.cpp; sourceTree = "<group>"; };
+		10373DE32DD5626F007952C3 /* iap.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = iap.cpp; sourceTree = "<group>"; };
 		10847CD4270EE8C6006A5E91 /* libxptools-macos-gameserver.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libxptools-macos-gameserver.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		10974C88244D66B6008153FE /* device.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = device.hpp; sourceTree = "<group>"; };
 		10974C89244D690C008153FE /* filesystem.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = filesystem.mm; sourceTree = "<group>"; };
@@ -571,6 +577,7 @@
 				85BB018F279F3B56000F1B10 /* HttpRequest.cpp */,
 				85FED02B2B0B5C6A00C68F6D /* HttpRequestOpts.cpp */,
 				85BB0194279F3BAD000F1B10 /* HttpResponse.cpp */,
+				10373DE32DD5626F007952C3 /* iap.cpp */,
 				8518D09C27BA6DD900A438D6 /* json.cpp */,
 				85471B3C27E3E4A9000575D5 /* LocalConnection.cpp */,
 				101758B82C99C24E008318A8 /* notifications.cpp */,
@@ -911,6 +918,7 @@
 				102145192C75E0C000099E38 /* vxtime.cpp in Sources */,
 				1021451A2C75E0C000099E38 /* json.cpp in Sources */,
 				1021451B2C75E0C000099E38 /* filesystem.cpp in Sources */,
+				10373DE82DD5626F007952C3 /* iap.cpp in Sources */,
 				1021451C2C75E0C000099E38 /* notifications.mm in Sources */,
 				85FA71E02D9709D100CBD3F7 /* passkey.mm in Sources */,
 				1021451D2C75E0C000099E38 /* audio.cpp in Sources */,
@@ -981,6 +989,7 @@
 				101554E22C04D57E001E9057 /* BZMD5.cpp in Sources */,
 				10847CCC270EE8C6006A5E91 /* filesystem.mm in Sources */,
 				851F2A442B63C45E00E2863F /* HttpCookie.cpp in Sources */,
+				10373DE72DD5626F007952C3 /* iap.cpp in Sources */,
 				858ABB882A52F5CD007AE641 /* OperationQueue.cpp in Sources */,
 				855CB5E32873204100072D5F /* process-macos.cpp in Sources */,
 				1022D09828AFBC8E00C1F1E9 /* process.cpp in Sources */,
@@ -1003,6 +1012,7 @@
 				850BDE8F2D19EC0F00A85B76 /* vxtime.cpp in Sources */,
 				850BDE902D19EC0F00A85B76 /* json.cpp in Sources */,
 				850BDE912D19EC0F00A85B76 /* filesystem.cpp in Sources */,
+				10373DE52DD5626F007952C3 /* iap.cpp in Sources */,
 				850BDE922D19EC0F00A85B76 /* notifications.mm in Sources */,
 				850BDE932D19EC0F00A85B76 /* audio.cpp in Sources */,
 				850BDE942D19EC0F00A85B76 /* HttpCookie.cpp in Sources */,
@@ -1050,6 +1060,7 @@
 				1033952325626D220083F4C0 /* vxtime.cpp in Sources */,
 				8518D09D27BA6DD900A438D6 /* json.cpp in Sources */,
 				10E793652450137900B7E2E2 /* filesystem.cpp in Sources */,
+				10373DE42DD5626F007952C3 /* iap.cpp in Sources */,
 				85BD47D72A5DABAE00556C6E /* notifications.mm in Sources */,
 				8506231728770DB700B270A6 /* audio.cpp in Sources */,
 				851F2A422B63C45E00E2863F /* HttpCookie.cpp in Sources */,
@@ -1097,6 +1108,7 @@
 				1033952425626D220083F4C0 /* vxtime.cpp in Sources */,
 				8518D09E27BA6DD900A438D6 /* json.cpp in Sources */,
 				10E793662450137900B7E2E2 /* filesystem.cpp in Sources */,
+				10373DE62DD5626F007952C3 /* iap.cpp in Sources */,
 				85BD47D82A5DABAE00556C6E /* notifications.mm in Sources */,
 				8506231828770DB700B270A6 /* audio.cpp in Sources */,
 				851F2A432B63C45E00E2863F /* HttpCookie.cpp in Sources */,
