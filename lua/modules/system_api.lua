@@ -902,4 +902,33 @@ mod.readNotifications = function(self, config)
 	return req
 end
 
+-- getPasskeyChallenge ...
+-- callback(challenge, err)
+mod.getPasskeyChallenge = function(self, callback)
+	if self ~= mod then
+		error("api:getPasskeyChallenge(callback): use `:`", 2)
+	end
+	if type(callback) ~= "function" then
+		error("api:getPasskeyChallenge(callback) - callback must be a function", 2)
+	end
+
+	local u = url:parse(mod.kApiAddr .. "/users/self/passkey-challenge")
+
+	local req = HTTP:Get(u:toString(), function(resp)
+		if resp.StatusCode ~= 200 then
+			callback(nil, mod:error(resp.StatusCode, "could not get passkey challenge (" .. resp.StatusCode .. ")"))
+			return
+		end
+
+		local responseObject, err = JSON:Decode(resp.Body)
+		if err ~= nil then
+			callback(nil, mod:error(resp.StatusCode, "getPasskeyChallenge JSON decode error: " .. err))
+			return
+		end
+		callback(responseObject.challenge, nil) -- success
+	end)
+
+	return req
+end
+
 return mod

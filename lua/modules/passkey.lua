@@ -3,7 +3,7 @@
 mod = {}
 
 -- import modules
-api = require("api")
+api = require("system_api", System)
 
 mod.isSupported = function(self)
 	if self ~= mod then
