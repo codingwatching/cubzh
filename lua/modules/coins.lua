@@ -304,12 +304,27 @@ coins.createModalContent = function(_, config)
 						bottomBackground.Color = Color(100, 100, 100)
 						icon.Color = Color(100, 100, 100)
 					end
+					
+					c.onRelease = function()	
+						if c.loadingAnimation == nil then
+							c.loadingAnimation = require("ui_loading_animation"):create({ ui = ui })
+							c.loadingAnimation:setParent(topBackground)
+							c.loadingAnimation.pos = { 
+								topBackground.Width * 0.5 - c.loadingAnimation.Width * 0.5, 
+								coins.pos.Y + coins.Height + (topBackground.Height - coins.pos.Y - coins.Height) * 0.5 - c.loadingAnimation.Height * 0.5 
+							}
+						end
+						c.loadingAnimation:show()
 
-					c.onRelease = function()
 						topBackground.Color = Color(255, 255, 255)
 						bottomBackground.Color = Color(255, 255, 255)
 						icon.Color = Color(255, 255, 255)
-						System:IAPPurchase(packs[index].productID)
+						System:IAPPurchase(packs[index].productID, function(state)
+							print("💰 STATE:", state)
+							if c.loadingAnimation then
+								c.loadingAnimation:hide()
+							end
+						end)
 					end
 
 					c.onCancel = function()
