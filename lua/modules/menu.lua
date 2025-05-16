@@ -3029,7 +3029,7 @@ if Environment.USER_AUTH == "disabled" then
 	showTopBar()
 	topBar:parentDidResize()
 	hideBottomBar()
-elseif not Client.LoggedIn then // Client.LoggedIn is true when active user account has DoB and Username
+elseif not Client.LoggedIn then -- Client.LoggedIn is true when active user account has DoB and Username
 	local signupFlow = signup:startFlow({
 		ui = ui,
 		loginStep = function()

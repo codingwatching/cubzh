@@ -10,21 +10,29 @@ local api = require("api")
 local conf = require("config")
 local url = require("url")
 
+-- define the module table
 local mod = {
 	kApiAddr = api.kApiAddr,
 }
-
--- define the metatable of the module table
 local moduleMT = {}
-setmetatable(mod, moduleMT)
-
 moduleMT.__tostring = function(_)
 	return "system api module"
 end
-
 moduleMT.__index = function(_, key)
 	-- try to find the key in `api` module first, and then in `system_api`
 	return api[key] or moduleMT[key]
+end
+setmetatable(mod, moduleMT)
+
+-- define the error function
+mod.error = function(_, statusCode, message)
+	local err = { statusCode = statusCode, message = message }
+	setmetatable(err, {
+		__tostring = function(t)
+			return t.message or ""
+		end,
+	})
+	return err
 end
 
 mod.deleteUser = function(_, callback)
@@ -902,30 +910,36 @@ mod.readNotifications = function(self, config)
 	return req
 end
 
--- getPasskeyChallenge ...
--- callback(challenge, err)
+-- getPasskeyChallenge obtains a challenge from the API server.
+-- This is needed for Passkey creation and authentication.
+--
+-- Callback signature: request func(challenge, err)
+-- request: http request object
+-- challenge: string
+-- err: nil on success, error message (string) on failure
 mod.getPasskeyChallenge = function(self, callback)
 	if self ~= mod then
-		error("api:getPasskeyChallenge(callback): use `:`", 2)
+		error("system_api:getPasskeyChallenge(callback): use `:`", 2)
 	end
 	if type(callback) ~= "function" then
-		error("api:getPasskeyChallenge(callback) - callback must be a function", 2)
+		error("system_api:getPasskeyChallenge(callback) - callback must be a function", 2)
 	end
 
 	local u = url:parse(mod.kApiAddr .. "/users/self/passkey-challenge")
 
 	local req = HTTP:Get(u:toString(), function(resp)
 		if resp.StatusCode ~= 200 then
-			callback(nil, mod:error(resp.StatusCode, "could not get passkey challenge (" .. resp.StatusCode .. ")"))
+			callback(nil, "could not get passkey challenge (" .. resp.StatusCode .. ")")
 			return
 		end
 
 		local responseObject, err = JSON:Decode(resp.Body)
 		if err ~= nil then
-			callback(nil, mod:error(resp.StatusCode, "getPasskeyChallenge JSON decode error: " .. err))
+			callback(nil, "JSON decode error: " .. err)
 			return
 		end
-		callback(responseObject.challenge, nil) -- success
+		-- success
+		callback(responseObject.challenge, nil)
 	end)
 
 	return req

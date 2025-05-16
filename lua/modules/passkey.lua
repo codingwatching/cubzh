@@ -1,9 +1,10 @@
 --- This module helps creating and using passkeys.
 
 mod = {}
+-- TODO: gaetan: should we use a metatable for the module table?
 
 -- import modules
-api = require("system_api", System)
+system_api = require("system_api", System)
 
 mod.isSupported = function(self)
 	if self ~= mod then
@@ -15,9 +16,12 @@ end
 -- Gets a passkey challenge for the current user from the API server.
 -- Arguments:
 -- - callback(challenge, error): a function that will be called with the passkey challenge)
-mod.getPasskeyChallenge = function(self, callback)
+-- Callback signature: func(challenge, error)
+-- challenge: string
+-- error: nil on success, error message (string) on failure
+mod.getChallenge = function(self, callback)
 	if self ~= mod then
-		error("passkey.getPasskeyChallenge(): use `:`", 2)
+		error("passkey.getChallenge(): use `:`", 2)
 	end
 
 	if not self:isSupported() then
@@ -36,7 +40,7 @@ mod.getPasskeyChallenge = function(self, callback)
 	end
 
 	-- Get a passkey challenge from the server
-	api:getPasskeyChallenge(function(challenge, error)
+	system_api:getPasskeyChallenge(function(challenge, error)
 		if error ~= nil then
 			callback(nil, error)
 			return

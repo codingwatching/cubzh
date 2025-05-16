@@ -280,7 +280,6 @@ signup.startFlow = function(self, config)
 			username = "",
 			password = false,
 			magickey = false,
-			-- passkey = false,
 		}
 		config = conf:merge(defaultConfig, config)
 
@@ -625,13 +624,13 @@ signup.startFlow = function(self, config)
 							username = loginOptions.username,
 							password = loginOptions.password,
 							magickey = loginOptions.magickey,
-							-- passkey = loginOptions.passkey,
 						}))
 					end)
 					table.insert(requests, req)
 				end
 
-				-- If passkey is available on the device, start the passkey login process
+				-- If passkey is available on the device,
+				-- start the passkey login process without any user interaction
 				if System.PasskeySupported then
 					System:PasskeyLogin(
 						function(
@@ -643,12 +642,12 @@ signup.startFlow = function(self, config)
 							err
 						)
 							if err ~= nil and err ~= "" then
+								-- native Passkey login flow error
 								-- do nothing?
 								return
 							end
 
-							-- Try to login with passkey
-							-- TODO: gaetan: do something with "req"? (it is unused right now)
+							-- Try to login using the passkey
 							local req = api:login({
 								passkeyCredentialIDBase64 = credentialIDBase64,
 								passkeyAuthenticatorDataBase64 = authenticatorDataBase64,
@@ -656,23 +655,25 @@ signup.startFlow = function(self, config)
 								passkeySignatureBase64 = signatureBase64,
 								passkeyUserIDString = userIDString,
 							}, function(err, accountInfo)
-								if err == nil then
-									local userID = accountInfo.credentials["user-id"]
-									local token = accountInfo.credentials.token
-
-									System.AskedForMagicKey = false
-									System:StoreCredentials(userID, token)
-
-									-- flush signup flow and restart credential checks (should go through now)
-									signupFlow:flush()
-									signupFlow:push(
-										steps.createCheckAppVersionAndCredentialsStep({ onlyCheckUserInfo = true })
-									)
-								else
-									magicKeyLabel.Text = "❌ " .. err
-									hideLoading()
+								if err ~= nil then
+									-- login to Blip account failed
+									-- do nothing?
+									return
 								end
+
+								local userID = accountInfo.credentials["user-id"]
+								local token = accountInfo.credentials.token
+
+								System.AskedForMagicKey = false
+								System:StoreCredentials(userID, token)
+
+								-- flush signup flow and restart credential checks (should go through now)
+								signupFlow:flush()
+								signupFlow:push(
+									steps.createCheckAppVersionAndCredentialsStep({ onlyCheckUserInfo = true })
+								)
 							end)
+							table.insert(requests, req)
 						end
 					)
 				end
@@ -1397,20 +1398,21 @@ signup.startFlow = function(self, config)
 
 						-- User did choose a username successfully
 						if passkey:isSupported() then
-							print("[LUAU][PASSKEY] passkey is supported, getting challenge...")
-
-							passkey:getPasskeyChallenge(function(challenge, error)
+							passkey:getChallenge(function(challenge, error)
 								if error ~= nil then
-									print("[❌][LUAU][PASSKEY] getPasskeyChallenge error:", error)
+									-- For now, on passkey creation error, we just skip to the home screen.
+									signupFlow:push(steps.createPushNotificationsStep())
 									return
 								end
 
 								passkey:createPasskey(challenge, function(error)
-									if error ~= nil then
-										print("[❌][LUAU][PASSKEY] createPasskey error:", error)
-										-- ⚠️ TODO: gaetan: show passkey error screen (with retry button & password fallback)
-										return
-									end
+									-- For now, on passkey creation error, we just skip to the home screen.
+									-- if error ~= nil then
+									-- Passkey creation failed.
+									-- When user cancels passkey creation, we get an error here.
+									-- ⚠️ TODO: gaetan: show fallback screen (with passkey creation retry button & password form)
+									-- return
+									-- end
 									signupFlow:push(steps.createPushNotificationsStep())
 								end)
 							end)
