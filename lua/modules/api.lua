@@ -247,6 +247,11 @@ end
 -- TODO: caller should have a way to check error code -> 401 means bad credentials for signup.lua (removing installed credentials)
 -- TODO: if `id` is not provided, it could be `self`
 mod.getUserInfo = function(_, id, fields, callback)
+	-- For compatibility with old code, we accept fields and callback to be inverted
+	if type(fields) == "function" and type(callback) == "table" then
+		callback, fields = fields, callback
+	end
+
 	-- validate arguments
 	if type(id) ~= "string" then
 		error("api:getUserInfo(userID, fields, callback) - userID must be a string", 2)
