@@ -12,6 +12,7 @@
 #include <string>
 #include <functional>
 #include <memory>
+#include <unordered_map>
 
 namespace vx {
 namespace IAP {
