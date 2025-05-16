@@ -9,6 +9,7 @@ local storeItemCellQuadDataBottom = nil
 -- Creates modal content to present user coins.
 -- (should be used to create or pushed within modal)
 coins.createModalContent = function(_, config)
+	local refresh = nil
 	local requests = {}
 	local function cancelRequests()
 		for _, r in ipairs(requests) do
@@ -21,6 +22,7 @@ coins.createModalContent = function(_, config)
 	local modal = require("modal")
 	local bundle = require("bundle")
 	local api = require("api")
+	local sfx = require("sfx")
 
 	-- default config
 	local _config = {
@@ -316,13 +318,18 @@ coins.createModalContent = function(_, config)
 						end
 						c.loadingAnimation:show()
 
+						sfx("buttonpositive_3", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
+
 						topBackground.Color = Color(255, 255, 255)
 						bottomBackground.Color = Color(255, 255, 255)
 						icon.Color = Color(255, 255, 255)
 						System:IAPPurchase(packs[index].productID, function(state)
-							print("💰 STATE:", state)
 							if c.loadingAnimation then
 								c.loadingAnimation:hide()
+							end
+							if state == "success" then
+								sfx("coin_1", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
+								if refresh ~= nil then refresh() end
 							end
 						end)
 					end
@@ -430,6 +437,17 @@ coins.createModalContent = function(_, config)
 	end
 
 	content.didBecomeActive = function()
+		if refresh ~= nil then refresh() end
+		System:DebugEvent("User shows bank account", {
+			totalCoins = balance.totalCoins,
+			grantedCoins = balance.grantedCoins,
+			purchasedCoins = balance.purchasedCoins,
+			earnedCoins = balance.earnedCoins,
+		})
+	end
+
+	refresh = function()
+		cancelRequests()
 		local req = api:getBalance(function(err, balance)
 			if err then
 				amountText.Text = "-"
@@ -439,12 +457,6 @@ coins.createModalContent = function(_, config)
 				layoutBalanceFrameContent()
 				return
 			end
-			System:DebugEvent("User shows bank account", {
-				totalCoins = balance.totalCoins,
-				grantedCoins = balance.grantedCoins,
-				purchasedCoins = balance.purchasedCoins,
-				earnedCoins = balance.earnedCoins,
-			})
 			amountText.Text = string.format("%d", balance.totalCoins)
 			grantedText.Text = string.format("grants: %d", balance.grantedCoins)
 			purchasedText.Text = string.format("purchased: %d", balance.purchasedCoins)
