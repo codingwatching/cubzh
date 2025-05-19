@@ -21,7 +21,7 @@ namespace vx {
         AAssetManager *androidAssetManager = nullptr;
 
         /// android application storage path
-        /// example : "/data/user/0/com.voxowl.particubes.android/files"
+        /// example : "/data/user/0/com.voxowl.blip/files"
         std::string appStoragePath = "";
 
     }
