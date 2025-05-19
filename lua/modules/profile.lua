@@ -138,8 +138,15 @@ profile.create = function(_, config)
 		nbFriends = 0,
 		created = nil,
 		verified = false,
-		blocked = true,
+		blocked = false,
 	}
+
+	for _, uID in ipairs(System.BlockedUsers) do
+		if uID == userID then
+			userInfo.blocked = true
+			break
+		end
+	end
 
 	local blockBtn
 	if not isLocal then
@@ -162,6 +169,19 @@ profile.create = function(_, config)
 				message = msg,
 				positiveCallback = function() 
 					userInfo.blocked = not userInfo.blocked
+					if userInfo.blocked then
+						systemApi:blockUser(userID, function(success, blockedUsers)
+							if success and blockedUsers ~= nil then
+								System.BlockedUsers = blockedUsers
+							end
+						end)
+					else
+						systemApi:unblockUser(userID, function(success, blockedUsers)
+							if success and blockedUsers ~= nil then
+								System.BlockedUsers = blockedUsers
+							end
+						end)
+					end
 					infoNode:setUserInfo()
 				end,
 				negativeCallback = function() end,
@@ -245,7 +265,7 @@ profile.create = function(_, config)
 						userInfo.bio = text
 						local data = { bio = userInfo.bio }
 						-- TODO: we could use `api` instead of `require("system_api", System)`
-						require("system_api", System):patchUserInfo(data, function(err)
+						systemApi:patchUserInfo(data, function(err)
 							if err then
 								print("❌", err)
 							end
@@ -743,7 +763,7 @@ profile.create = function(_, config)
 
 				addFriendBtn.onRelease = function(btn)
 					btn:disable()
-					require("system_api", System):sendFriendRequest(userID, function(ok, err)
+					systemApi:sendFriendRequest(userID, function(ok, err)
 						if ok == true and err == nil then
 							functions.checkFriendRelationShip()
 						else

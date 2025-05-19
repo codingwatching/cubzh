@@ -1864,6 +1864,7 @@ signup.startFlow = function(self, config)
 							"hasUnverifiedPhoneNumber",
 							"isPhoneExempted",
 							"isChatEnabled",
+							"blockedUsers",
 						}, function(userInfo, err)
 							if err ~= nil then
 								System:DebugEvent(
@@ -1899,6 +1900,7 @@ signup.startFlow = function(self, config)
 							System.IsChatEnabled = userInfo.isChatEnabled
 							System.HasPasskey = userInfo.hasPasskey
 							System.HasPassword = userInfo.hasPassword
+							System.BlockedUsers = userInfo.blockedUsers or {}
 
 							-- print("user id:", System.UserID)
 							-- print("userInfo.username:", userInfo.username)

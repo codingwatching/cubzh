@@ -321,6 +321,70 @@ moduleMT.postSecret = function(_, secret, callback)
 	return req
 end
 
+moduleMT.blockUser = function(_, userID, callback)
+	if type(userID) ~= "string" then
+		callback(false, "systemApi:blockUser(userID, callback) - userID must be a string")
+		return
+	end
+	if callback ~= nil and type(callback) ~= "function" then
+		callback(false, "systemApi:blockUser(userID, callback) - callback must be a function")
+		return
+	end
+	local url = mod.kApiAddr .. "/users/self/block"
+	local body = {
+		id = userID,
+	}
+	local req = System:HttpPost(url, body, function(resp)
+		if resp.StatusCode ~= 200 then
+			if callback ~= nil then
+				callback(false)
+			end
+			return
+		end
+		if callback ~= nil then
+			local blockedUsers, err = JSON:Decode(resp.Body)
+			if err ~= nil then
+				callback(true, nil)
+				return
+			end
+			callback(true, blockedUsers)
+		end
+	end)
+	return req
+end
+
+moduleMT.unblockUser = function(_, userID, callback)
+	if type(userID) ~= "string" then
+		callback(false, "systemApi:unblockUser(userID, callback) - userID must be a string")
+		return
+	end
+	if callback ~= nil and type(callback) ~= "function" then
+		callback(false, "systemApi:unblockUser(userID, callback) - callback must be a function")
+		return
+	end
+	local url = mod.kApiAddr .. "/users/self/unblock"
+	local body = {
+		id = userID,
+	}
+	local req = System:HttpPost(url, body, function(resp)
+		if resp.StatusCode ~= 200 then
+			if callback ~= nil then
+				callback(false)
+			end
+			return
+		end
+		if callback ~= nil then
+			local blockedUsers, err = JSON:Decode(resp.Body)
+			if err ~= nil then
+				callback(true, nil)
+				return
+			end
+			callback(true, blockedUsers)
+		end
+	end)
+	return req
+end
+
 -- search Users by username substring
 -- callback(ok, users, errMsg)
 -- ok: boolean
