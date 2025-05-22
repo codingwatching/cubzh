@@ -45,7 +45,7 @@ CUBZH_MENU_SECONDARY_BUTTON_HEIGHT = 40
 
 DEV_MODE = System.LocalUserIsAuthor and System.ServerIsInDevMode
 IN_WORLD_EDITOR = Environment["worldId"] == "world_editor"
-AI_ASSISTANT_ENABLED = false -- not IN_WORLD_EDITOR
+AI_ASSISTANT_ENABLED = not IN_WORLD_EDITOR
 
 -- VARS
 
@@ -487,7 +487,7 @@ function refreshDisplay()
 		end
 
 		if not minified then
-			pezhBtn:show()
+			bluxBtn:show()
 		end
 	end
 end
@@ -989,7 +989,7 @@ function showNotification(_, text, category)
 	notificationFrame.onRelease = function()
 		hideNotification()
 		if category == "money" then
-			pezhBtn:onRelease()
+			bluxBtn:onRelease()
 		end
 	end
 
@@ -1023,6 +1023,103 @@ topBar = ui:frame({
 		alpha = true,
 	},
 })
+
+-- used for contextual details like coins + price for AI requests
+subTopBar = nil
+function showSubTopBar()
+	if subTopBar ~= nil then
+		subTopBar:layout()
+		subTopBar:show()
+		return
+	end
+
+	subTopBar = ui:frame({
+		-- color = Color(255, 0, 0),
+		image = {
+			data = Data:FromBundle("images/menu-background.png"),
+			slice9 = { 0.5, 0.5 },
+			slice9Scale = 1.0,
+			alpha = true,
+		},
+	})
+	
+	subTopBar:setParent(background)
+	subTopBar.Height = 30
+	subTopBar.Width = 80
+	subTopBar.pos = { 0, 0 }
+	
+	bluxBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
+	bluxBtn:setParent(topBar)
+	
+	local STBBluxIcon1 = ui:frame({ image = {
+		data = Data:FromBundle("images/icon-blux.png"),
+		alpha = true,
+	} })
+	STBBluxIcon1:setParent(subTopBar)
+	
+	local STBBluxIcon2 = ui:frame({ image = {
+		data = Data:FromBundle("images/icon-blux.png"),
+		alpha = true,
+	} })
+	STBBluxIcon2:setParent(subTopBar)
+	
+	STBLabel1 = ui:createText("-", { size = "small", color =Color(253, 222, 44) })
+	STBLabel1.object.Scale = 0.8
+	STBLabel1:setParent(subTopBar)
+	STBLabel1.pos = { theme.paddingTiny, theme.paddingTiny }
+	
+	STBLabel2 = ui:createText(" (1", { size = "small", color = Color(150, 150, 150) })
+	STBLabel2.object.Scale = 0.8
+	STBLabel2:setParent(subTopBar)
+	STBLabel2.pos = { theme.paddingTiny, theme.paddingTiny }
+	
+	STBLabel3 = ui:createText("/request)", { size = "small", color = Color(150, 150, 150) })
+	STBLabel3.object.Scale = 0.8
+	STBLabel3:setParent(subTopBar)
+	STBLabel3.pos = { theme.paddingTiny, theme.paddingTiny }
+	
+	subTopBar.layout = function()
+		subTopBar.Height = STBLabel1.Height + theme.paddingTiny * 2
+		STBBluxIcon1.Width = subTopBar.Height * 0.8 STBBluxIcon1.Height = STBBluxIcon1.Width
+		STBBluxIcon2.Width = STBBluxIcon1.Width
+		STBBluxIcon2.Height = STBBluxIcon1.Height
+	
+		subTopBar.Width = STBBluxIcon1.Width + STBLabel1.Width + STBBluxIcon2.Width + STBLabel2.Width + STBLabel3.Width + theme.paddingTiny * 2
+	
+		STBBluxIcon1.pos = { theme.paddingTiny, subTopBar.Height * 0.5 - STBBluxIcon1.Height * 0.5 }
+		STBLabel1.pos = { STBBluxIcon1.pos.X + STBBluxIcon1.Width, subTopBar.Height * 0.5 - STBLabel1.Height * 0.5 }
+		STBLabel2.pos = { STBLabel1.pos.X + STBLabel1.Width, subTopBar.Height * 0.5 - STBLabel2.Height * 0.5 }
+		STBBluxIcon2.pos = { STBLabel2.pos.X + STBLabel2.Width, subTopBar.Height * 0.5 - STBBluxIcon2.Height * 0.5 }
+		STBLabel3.pos = { STBBluxIcon2.pos.X + STBBluxIcon2.Width, subTopBar.Height * 0.5 - STBLabel3.Height * 0.5 }
+
+		subTopBar.pos = { topBar.pos.X, topBar.pos.Y - subTopBar.Height - theme.paddingTiny }
+	end
+	
+	local subTopBarReq = nil
+	subTopBar.refreshBalance = function(self)
+		if subTopBarReq ~= nil then
+			subTopBarReq:Cancel()
+		end
+		subTopBarReq = api:getBalance(function(err, balance)
+			if err then
+				STBLabel1.Text = "-"
+			else
+				STBLabel1.Text = string.format("%d", balance.totalCoins)
+			end
+			self:layout()
+		end)
+	end
+	
+	subTopBar:layout()
+	subTopBar:refreshBalance()
+end
+
+function hideSubTopBar()
+	if subTopBar ~= nil then
+		subTopBar:hide()
+	end
+end
+-- showSubTopBar()
 
 -- menu-background.png
 topBar:setParent(background)
@@ -1681,6 +1778,8 @@ if DEV_MODE == true then
 			topBarBtnRelease(self)
 
 			if aiInput == nil then
+				showSubTopBar()
+
 				sfx("waterdrop_2", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 				aiUINeedsFirstLayout = true
 
@@ -1923,6 +2022,7 @@ if DEV_MODE == true then
 					})
 				end
 			else
+				hideSubTopBar()
 				removeAIPrompt()
 			end
 		end
@@ -2015,8 +2115,8 @@ chatBtn:hide()
 
 -- PEZH
 
-pezhBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
-pezhBtn:setParent(topBar)
+bluxBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
+bluxBtn:setParent(topBar)
 
 local bluxIcon = ui:frame({ image = {
 	data = Data:FromBundle("images/icon-blux.png"),
@@ -2024,12 +2124,12 @@ local bluxIcon = ui:frame({ image = {
 } })
 bluxIcon.Width = 50
 bluxIcon.Height = 50
-bluxIcon:setParent(pezhBtn)
+bluxIcon:setParent(bluxBtn)
 bluxIcon.parentDidResize = btnContentParentDidResize
 
-pezhBtn.onPress = topBarBtnPress
-pezhBtn.onCancel = topBarBtnRelease
-pezhBtn.onRelease = function(self)
+bluxBtn.onPress = topBarBtnPress
+bluxBtn.onCancel = topBarBtnRelease
+bluxBtn.onRelease = function(self)
 	System:DebugEvent("User presses COINS button", { context = "top bar" })
 	topBarBtnRelease(self)
 	showModal(MODAL_KEYS.COINS)
@@ -2037,7 +2137,7 @@ pezhBtn.onRelease = function(self)
 end
 
 if minified then
-	pezhBtn:hide()
+	bluxBtn:hide()
 end
 
 -- CHAT
@@ -2329,6 +2429,10 @@ topBar.parentDidResize = function(self)
 		Screen.Height - System.SafeAreaTop - self.Height - PADDING,
 	}
 
+	if subTopBar ~= nil then
+		subTopBar.pos = { self.pos.X, self.pos.Y - subTopBar.Height - theme.paddingTiny }
+	end
+
 	local width = cubzhBtn.Width
 
 	cubzhBtn.pos = { 0, 0 }
@@ -2341,12 +2445,12 @@ topBar.parentDidResize = function(self)
 
 	-- PEZH BUTTON
 
-	if pezhBtn:isVisible() then
-		pezhBtn.Height = height
-		pezhBtn.Width = height
-		pezhBtn.pos = { previousBtn.pos.X + previousBtn.Width, 0 }
-		previousBtn = pezhBtn
-		width += pezhBtn.Width
+	if bluxBtn:isVisible() then
+		bluxBtn.Height = height
+		bluxBtn.Width = height
+		bluxBtn.pos = { previousBtn.pos.X + previousBtn.Width, 0 }
+		previousBtn = bluxBtn
+		width += bluxBtn.Width
 	end
 
 	-- NOTIFICATIONS BUTTON
