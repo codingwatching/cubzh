@@ -385,7 +385,7 @@ Client.OnStart = function()
 	-- camera
 
 	blockHighlightDirty = false
-	cameraRotationTargetObject = Object()
+	cameraTarget = Object()
 
 	cameraStates = {
 		item = {
@@ -400,21 +400,22 @@ Client.OnStart = function()
 		},
 	}
 
+	Camera.Behavior = {
+		positionTarget = cameraTarget,
+		positionTargetOffset = { 0, 0, 0 },
+		positionTargetBackoffDistance = cameraCurrentState.cameraDistance,
+		positionTargetMinBackoffDistance = settings.cameraMinDistanceFromTarget,
+		positionTargetMaxBackoffDistance = 100,
+		rotationTarget = cameraTarget,
+		rigidity = 0.5,
+		collidesWithGroups = nil,
+	}
+
 	cameraRefresh = function()
 		-- clamp rotation between 90° and -90° on X
 		cameraCurrentState.cameraRotation.X = clamp(cameraCurrentState.cameraRotation.X, -math.pi * 0.4999, math.pi * 0.4999)
-		cameraRotationTargetObject.Rotation = cameraCurrentState.cameraRotation
-
-		Camera.Behavior = {
-			positionTarget = cameraCurrentState.target,
-			positionTargetOffset = { 0, 0, 0 },
-			positionTargetBackoffDistance = cameraCurrentState.cameraDistance,
-			positionTargetMinBackoffDistance = settings.cameraMinDistanceFromTarget,
-			positionTargetMaxBackoffDistance = 100,
-			rotationTarget = cameraRotationTargetObject,
-			rigidity = 0.5,
-			collidesWithGroups = nil,
-		}
+		cameraTarget.Rotation = cameraCurrentState.cameraRotation
+		cameraTarget.Position:Set(cameraCurrentState.target)
 
 		if orientationCube ~= nil then
 			orientationCube:setRotation(Camera.Rotation)
@@ -518,7 +519,6 @@ Client.OnStart = function()
 
 		Menu:AddDidBecomeActiveCallback(menuDidBecomeActive)
 		Client.Tick = tick
-		Pointer.Zoom = zoom
 		Pointer.Up = up
 		Pointer.Click = click
 		Pointer.LongPress = longPress
@@ -643,18 +643,6 @@ tick = function(dt)
 		updateMirror()
 		blocksToRemove = {}
 	end
-end
-
-Pointer.Zoom = function() end
-zoom = function(zoomValue)
-	local factor = 0.5
-	-- print("ZOOM:", zoomValue)
-	
-	cameraCurrentState.cameraDistance = math.max(
-		settings.cameraMinDistanceFromTarget,
-		cameraCurrentState.cameraDistance + zoomValue * factor * getCameraDistanceFactor()
-	)
-	cameraRefresh()
 end
 
 Pointer.Click = function() end
@@ -857,8 +845,9 @@ drag2 = function(e)
 		local dx = e.DX * factor * getCameraDistanceFactor()
 		local dy = e.DY * factor * getCameraDistanceFactor()
 
+		local distanceFromTarget = (Camera.Position - cameraCurrentState.target).Length
 		Camera.Position = Camera.Position - Camera.Right * dx - Camera.Up * dy
-		cameraCurrentState.target = Camera.Position + Camera.Forward * cameraCurrentState.cameraDistance
+		cameraCurrentState.target = Camera.Position + Camera.Forward * distanceFromTarget
 		cameraRefresh()
 
 		refreshBlockHighlight()
