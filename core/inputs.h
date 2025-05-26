@@ -220,12 +220,8 @@ typedef enum {
     PointerIDTouchMax = 3,
     PointerIDMouseButtonLeft = 4,
     PointerIDMouseButtonRight = 5,
-    PointerIDMouseButtonMax = 5,
-    PointerIDWheel = 6,
     // Identifying mouse with no specific button
-    PointerIDMouse = 7,
-    // Identifying touch with no specific finger
-    PointerIDTouch = 8,
+    PointerIDMouse = 6,
 } PointerID;
 
 typedef enum {

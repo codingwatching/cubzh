@@ -423,7 +423,8 @@ mod.setBehavior = function(self, config)
 		rotationTargetOffset = nil, -- offset from the rotation target
 		rigidity = 0.5, -- rigidity of the camera
 		collidesWithGroups = nil, -- doesn't collide with anything by default
-		collisionBoxSize = Number3(2, 2, 2)
+		collisionBoxSize = Number3(2, 2, 2),
+		zoom = true, -- if true, camera zooms in/out with pinch gesture and mouse wheel automatically
 	}
 
 	config = conf:merge(defaultConfig, config, {
@@ -507,6 +508,53 @@ mod.setBehavior = function(self, config)
 		distance = math.max(minDistance, distance)
 	end)
 	table.insert(entry.listeners, listener)
+
+	if Client.HasTouchScreen and config.zoom then
+		local touch1 = nil
+		local touch2 = nil
+		local pinchInitialDistance = nil
+		local pinchInitialTan = nil
+
+		listener = LocalEvent:Listen(LocalEvent.Name.PointerDown, function(pe)
+			if pe.Index == 1 then
+				touch1 = pe
+			elseif pe.Index == 2 then
+				touch2 = pe
+			end
+			if touch1 ~= nil and touch2 ~= nil then
+				pinchInitialDistance = distance
+				pinchInitialTan = math.tan(touch1.Direction:Angle(touch2.Direction))
+			end
+		end)
+		table.insert(entry.listeners, listener)
+
+		listener = LocalEvent:Listen(LocalEvent.Name.PointerDrag, function(pe)
+			if pe.Index == 1 then
+				touch1 = pe
+			elseif pe.Index == 2 then
+				touch2 = pe
+			end
+			if pinchInitialTan ~= nil and pinchInitialDistance ~= nil then 
+				local angle = touch1.Direction:Angle(touch2.Direction)
+				local newDistance = pinchInitialDistance * pinchInitialTan / math.tan(angle)
+				distance = math.max(minDistance, math.min(maxDistance, newDistance))
+			end
+		end)
+		table.insert(entry.listeners, listener)
+
+		listener = LocalEvent:Listen(LocalEvent.Name.PointerUp, function(pe)
+			if pe.Index == 1 then
+				touch1 = nil
+			elseif pe.Index == 2 then
+				touch2 = nil
+			end
+			if touch1 == nil or touch2 == nil then
+				pinchInitialDistance = nil
+				pinchInitialTan = nil
+			end
+		end)
+		table.insert(entry.listeners, listener)
+	end
 
 	local boxHalfSize = collisionBoxSize * 0.5
 	local box = Box()

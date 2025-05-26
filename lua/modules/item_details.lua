@@ -112,6 +112,7 @@ mod.createModalContent = function(_, config)
 	local updateDate
 	local identifier
 	local btnCopyIdentifier
+	local reportBtn
 
 	local secondaryTextColor = Color(150, 150, 150)
 
@@ -145,6 +146,24 @@ mod.createModalContent = function(_, config)
 
 	likeBtn = ui:buttonNeutral({ content = "🤍 …", textSize = "small" })
 	likeBtn:setParent(cell)
+
+	reportBtn = ui:button({ 
+		content = "Report", 
+		textSize = "small",
+		borders = false,
+		padding = false,
+		textColor = theme.errorTextColor,
+		color = Color(0, 0, 0, 0),
+	})
+	reportBtn.onRelease = function(self)
+		local config = {
+			item = item,
+			uikit = ui,
+		}
+		local reportContent = require("report"):createModalContent(config)
+		content:push(reportContent)
+	end
+	reportBtn:setParent(cell)
 
 	if createMode then
 		editDescriptionBtn = ui:buttonSecondary({ content = "✏️ Edit description", textSize = "small" })
@@ -426,7 +445,7 @@ mod.createModalContent = function(_, config)
 		end
 
 		local viewAndLikesWidth = likeBtn.Width
-		likeBtn.pos.X = parent.Width * 0.5 - viewAndLikesWidth * 0.5
+		likeBtn.pos.X = parent.Width - viewAndLikesWidth - theme.padding
 	end
 
 	itemDetails._width = function(_)
@@ -490,9 +509,15 @@ mod.createModalContent = function(_, config)
 		itemArea.pos.X = width * 0.5 - itemArea.Width * 0.5
 		itemArea.pos.Y = y
 
-		-- view and likes
+		-- view and likes and report
 		y = y - padding - likeBtn.Height
 		likeBtn.pos.Y = y
+
+		reportBtn.pos = {
+			padding,
+			likeBtn.pos.Y + likeBtn.Height * 0.5 - reportBtn.Height * 0.5,
+		}
+
 		privateFields.alignViewsAndLikes()
 
 		-- author
@@ -555,8 +580,6 @@ mod.createModal = function(_, config)
 	-- TODO: handle this correctly
 	local topBarHeight = 50
 
-	local content = modal:createContent()
-
 	local itemDetailsContent = mod:createModalContent({ uikit = ui })
 	itemDetailsContent:loadCell(cell)
 
@@ -595,10 +618,7 @@ mod.createModal = function(_, config)
 		end
 	end
 
-	local currentModal = modal:create(content, maxModalWidth, maxModalHeight, updateModalPosition, ui)
-
-	content:pushAndRemoveSelf(itemDetailsContent)
-
+	local currentModal = modal:create(itemDetailsContent, maxModalWidth, maxModalHeight, updateModalPosition, ui)
 	return currentModal
 end
 

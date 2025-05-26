@@ -89,3 +89,14 @@ properties:
     type: "boolean"
     description: |
         Indicates whether the [This] represents a touch/click "down" event. If false, it represents a "up" event.
+
+  - name: "Index"
+    type: "integer"
+    description: |
+        The index of the pointer that triggered the event.
+        `1`: first finger (touch screen)
+        `2`: second finger (touch screen)
+        `3`: third finger (touch screen)
+        `4`: left mouse button (mouse)
+        `5`: right mouse button (mouse)
+        `6`: mouse (no specific button, when mouse moves for example)

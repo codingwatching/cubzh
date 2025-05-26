@@ -17,7 +17,7 @@ extern "C" {
  * @param thiz
  * @param bundleClassLoader
  */
-JNIEXPORT void JNICALL Java_com_voxowl_particubes_android_MainActivity_sendAppClassLoaderToC(JNIEnv *jni, jobject thiz, jobject bundleClassLoader) {
+JNIEXPORT void JNICALL Java_com_voxowl_blip_MainActivity_sendAppClassLoaderToC(JNIEnv *jni, jobject thiz, jobject bundleClassLoader) {
     vx::tools::JNIUtils::getInstance()->setBundleClassLoader(jni->NewGlobalRef(bundleClassLoader));
 }
 

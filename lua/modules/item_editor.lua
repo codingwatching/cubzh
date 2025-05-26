@@ -1,40 +1,9 @@
--- TODO:
--- [ ] fix wearable edition
--- [ ] fix palette display
--- [ ] fix orientation cube display
-
 Config = {
 	Items = { "%item_name%" },
 	ChatAvailable = false,
 }
 
--- --------------------------------------------------
 -- Utilities for Player avatar
--- --------------------------------------------------
-
-local debug = {}
-debug.logSubshapes = function(_, shape, level)
-	if level == nil then
-		level = 0
-	end
-	local logIndent = ""
-	for i = 1, level do
-		logIndent = logIndent .. " |"
-	end
-
-	if shape == nil then
-		print("[debug.logSubshapes]", "shape is nil")
-		return
-	end
-
-	print("[debug.logSubshapes]", logIndent, shape)
-
-	local count = shape.ChildrenCount
-	for i = 1, count do
-		local subshape = shape:GetChild(i)
-		debug:logSubshapes(subshape, level + 1)
-	end
-end
 
 blocksToRemove = {}
 
@@ -339,27 +308,17 @@ Client.OnStart = function()
 		cameraStartPreviewRotationBackpack = Number3(0, 0, 0),
 		cameraStartPreviewDistance = 15,
 		cameraThumbnailRotation = Number3(0.32, 3.9, 0.0), --- other option for Y: 2.33
-		zoomMin = 5, -- unit, minimum zoom distance allowed
+		cameraMinDistanceFromTarget = 5, -- unit, minimum zoom distance allowed
 	}
 	settingsMT = {
 		__index = function(_, k)
 			local v = _settings[k]
-			if v == nil then
-				return nil
+			if typeof(v) == "Number3" then
+				v = v:Copy()
 			end
-			local ret
-			pcall(function()
-				ret = v:Copy()
-			end)
-			if ret ~= nil then
-				return ret
-			else
-				return v
-			end
+			return v
 		end,
-		__newindex = function()
-			error("settings are read-only")
-		end,
+		__newindex = function() error("settings are read-only") end,
 	}
 	settings = {}
 	setmetatable(settings, settingsMT)
@@ -400,7 +359,6 @@ Client.OnStart = function()
 
 	-- item editor modes
 
-	cameraModes = { FREE = 1, SATELLITE = 2 }
 	mode = { edit = 1, points = 2, max = 2 }
 
 	editSubmode = { add = 1, remove = 2, paint = 3, pick = 4, mirror = 5, select = 6, max = 6 }
@@ -427,39 +385,37 @@ Client.OnStart = function()
 	-- camera
 
 	blockHighlightDirty = false
+	cameraTarget = Object()
 
 	cameraStates = {
 		item = {
-			target = nil,
-			cameraDistance = 0,
-			cameraMode = cameraModes.SATELLITE,
+			target = Number3(0, 0, 0),
+			cameraDistance = settings.cameraMinDistanceFromTarget,
 			cameraRotation = settings.cameraStartRotation,
-			cameraPosition = Number3(0, 0, 0),
 		},
 		preview = {
-			target = nil,
-			cameraDistance = 0,
-			cameraMode = cameraModes.SATELLITE,
+			target = Number3(0, 0, 0),
+			cameraDistance = settings.cameraMinDistanceFromTarget,
 			cameraRotation = settings.cameraStartPreviewRotationHand,
-			cameraPosition = Number3(0, 0, 0),
 		},
+	}
+
+	Camera.Behavior = {
+		positionTarget = cameraTarget,
+		positionTargetOffset = { 0, 0, 0 },
+		positionTargetBackoffDistance = cameraCurrentState.cameraDistance,
+		positionTargetMinBackoffDistance = settings.cameraMinDistanceFromTarget,
+		positionTargetMaxBackoffDistance = 100,
+		rotationTarget = cameraTarget,
+		rigidity = 0.5,
+		collidesWithGroups = nil,
 	}
 
 	cameraRefresh = function()
 		-- clamp rotation between 90° and -90° on X
-		cameraCurrentState.cameraRotation.X =
-			clamp(cameraCurrentState.cameraRotation.X, -math.pi * 0.4999, math.pi * 0.4999)
-
-		Camera.Rotation = cameraCurrentState.cameraRotation
-
-		if cameraCurrentState.cameraMode == cameraModes.FREE then
-			Camera.Position = cameraCurrentState.cameraPosition
-		elseif cameraCurrentState.cameraMode == cameraModes.SATELLITE then
-			if cameraCurrentState.target == nil then
-				return
-			end
-			Camera:SetModeSatellite(cameraCurrentState.target, cameraCurrentState.cameraDistance)
-		end
+		cameraCurrentState.cameraRotation.X = clamp(cameraCurrentState.cameraRotation.X, -math.pi * 0.4999, math.pi * 0.4999)
+		cameraTarget.Rotation = cameraCurrentState.cameraRotation
+		cameraTarget.Position:Set(cameraCurrentState.target)
 
 		if orientationCube ~= nil then
 			orientationCube:setRotation(Camera.Rotation)
@@ -563,7 +519,6 @@ Client.OnStart = function()
 
 		Menu:AddDidBecomeActiveCallback(menuDidBecomeActive)
 		Client.Tick = tick
-		Pointer.Zoom = zoom
 		Pointer.Up = up
 		Pointer.Click = click
 		Pointer.LongPress = longPress
@@ -687,22 +642,6 @@ tick = function(dt)
 		end
 		updateMirror()
 		blocksToRemove = {}
-	end
-end
-
-Pointer.Zoom = function() end
-zoom = function(zoomValue)
-	local factor = 0.5
-
-	if cameraCurrentState.cameraMode == cameraModes.FREE then
-		cameraCurrentState.cameraPosition = cameraCurrentState.cameraPosition + (zoomValue * Camera.Backward * factor)
-		cameraRefresh()
-	elseif cameraCurrentState.cameraMode == cameraModes.SATELLITE then
-		cameraCurrentState.cameraDistance = math.max(
-			settings.zoomMin,
-			cameraCurrentState.cameraDistance + zoomValue * factor * getCameraDistanceFactor()
-		)
-		cameraRefresh()
 	end
 end
 
@@ -893,7 +832,6 @@ Pointer.Drag2Begin = function() end
 drag2Begin = function()
 	if currentMode == mode.edit then
 		dragging2 = true
-		setFreeCamera()
 		require("crosshair"):show()
 		refreshDrawMode()
 	end
@@ -907,7 +845,9 @@ drag2 = function(e)
 		local dx = e.DX * factor * getCameraDistanceFactor()
 		local dy = e.DY * factor * getCameraDistanceFactor()
 
-		cameraCurrentState.cameraPosition = cameraCurrentState.cameraPosition - Camera.Right * dx - Camera.Up * dy
+		local distanceFromTarget = (Camera.Position - cameraCurrentState.target).Length
+		Camera.Position = Camera.Position - Camera.Right * dx - Camera.Up * dy
+		cameraCurrentState.target = Camera.Position + Camera.Forward * distanceFromTarget
 		cameraRefresh()
 
 		refreshBlockHighlight()
@@ -921,14 +861,11 @@ drag2End = function()
 		local impact = Camera:CastRay()
 		if impact.Block ~= nil then
 			local target = impact.Block.Position + halfVoxel
-			cameraCurrentState.cameraMode = cameraModes.SATELLITE
 			cameraCurrentState.target = target
-			cameraCurrentState.cameraDistance = (target - Camera.Position).Length
+			cameraCurrentState.cameraDistance = math.max(settings.cameraMinDistanceFromTarget, (target - Camera.Position).Length)
 			cameraRefresh()
 		else
-			cameraCurrentState.cameraMode = cameraModes.FREE
-			cameraCurrentState.cameraPosition = Camera.Position
-			-- cameraCurrentState.cameraRotation = Camera.Rotation
+			cameraCurrentState.target = Camera.Position + Camera.Forward * cameraCurrentState.cameraDistance
 			cameraRefresh()
 		end
 
@@ -1592,14 +1529,6 @@ initClientFunctions = function()
 		end
 	end
 
-	setFreeCamera = function()
-		blockHighlight.IsHidden = true
-		cameraCurrentState.cameraMode = cameraModes.FREE
-		cameraCurrentState.cameraPosition = Camera.Position
-		Camera:SetModeFree()
-		cameraRefresh()
-	end
-
 	fitObjectToScreen = function(object, rotation)
 		-- set camera positioning using FitToScreen
 		local targetPoint = object:BlockToWorld(object.Center)
@@ -1616,9 +1545,8 @@ initClientFunctions = function()
 		-- maintain camera satellite mode
 		local distance = (Camera.Position - targetPoint).Length
 
-		cameraCurrentState.cameraMode = cameraModes.SATELLITE
 		cameraCurrentState.target = targetPoint
-		cameraCurrentState.cameraDistance = math.max(distance, settings.zoomMin)
+		cameraCurrentState.cameraDistance = math.max(distance, settings.cameraMinDistanceFromTarget)
 		if rotation ~= nil then
 			cameraCurrentState.rotation = rotation
 		end
@@ -1635,10 +1563,12 @@ initClientFunctions = function()
 			local halfVoxelVec = Number3(0.5, 0.5, 0.5)
 			halfVoxelVec:Rotate(impact.Shape.Rotation)
 			blockHighlight.Position = impact.Block.Position + halfVoxelVec
-			blockHighlight.IsHidden = false
 			blockHighlight.Rotation = impact.Shape.Rotation
+			blockHighlight.IsHidden = false
 		else
-			blockHighlight.IsHidden = true
+			blockHighlight.Position = Camera.Position + Camera.Forward * cameraCurrentState.cameraDistance
+			blockHighlight.Rotation = Camera.Rotation
+			blockHighlight.IsHidden = false
 		end
 		blockHighlightDirty = false
 	end
@@ -2035,11 +1965,7 @@ function ui_init()
 	recenterBtn.onRelease = function()
 		if currentMode == mode.edit then
 			fitObjectToScreen(item, nil)
-			-- if cameraFree == false then
 			blockHighlightDirty = true
-			-- end
-			-- else
-			-- setSatelliteCamera(settings.cameraStartPreviewRotation, nil, settings.cameraStartPreviewDistance, false)
 		end
 	end
 

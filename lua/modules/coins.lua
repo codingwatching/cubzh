@@ -9,6 +9,7 @@ local storeItemCellQuadDataBottom = nil
 -- Creates modal content to present user coins.
 -- (should be used to create or pushed within modal)
 coins.createModalContent = function(_, config)
+	local refresh = nil
 	local requests = {}
 	local function cancelRequests()
 		for _, r in ipairs(requests) do
@@ -21,6 +22,7 @@ coins.createModalContent = function(_, config)
 	local modal = require("modal")
 	local bundle = require("bundle")
 	local api = require("api")
+	local sfx = require("sfx")
 
 	-- default config
 	local _config = {
@@ -156,126 +158,204 @@ coins.createModalContent = function(_, config)
 	local packs = {
 		{
 			price = 0.99,
-			coins = 80,
+			coins = 160,
+			icon = "images/coins-pack-1.png",
+            productID = "blip.coins.1",
 		},
 		{
 			price = 4.99,
-			coins = 400,
-		},
-		{
-			price = 9.99,
 			coins = 800,
+			icon = "images/coins-pack-2.png",
+			productID = "blip.coins.2",
 		},
 		{
-			subscription = true,	
 			price = 9.99,
-			coins = 1000,
+			coins = 1600,
+			icon = "images/coins-pack-3.png",
+			productID = "blip.coins.3",
 		},
+		-- {
+		-- 	subscription = true,	
+		-- 	price = 9.99,
+		-- 	coins = 2000,
+		-- 	icon = "images/coins-pack-premium.png",
+		-- },
 		{
 			price = 19.99,
-			coins = 1700,
+			coins = 3200,
+			icon = "images/coins-pack-4.png",
+			productID = "blip.coins.4",
 		},
 		{
 			price = 49.99,
-			coins = 4500,
+			coins = 8000,
+			icon = "images/coins-pack-5.png",
+			productID = "blip.coins.5",
 		},
 		{
 			price = 99.99,
-			coins = 10000,
+			coins = 16000,
+			icon = "images/coins-pack-6.png",
+			productID = "blip.coins.6",	
 		},
 		{
 			price = 199.99,
-			coins = 22500,
+			coins = 32000,
+			icon = "images/coins-pack-7.png",
+			productID = "blip.coins.7",
 		}
 	}
 	local packCells = {}
 
-	local packsScroll = ui:scroll({
-		padding = {
-			top = 0,
-			bottom = 0,
-			left = 0,
-			right = 0,
-		},
-		direction = "right",
-		-- backgroundColor = Color(200, 200, 200),
-		cellPadding = theme.padding,
-		loadCell = function(index)
-			if index <= #packs then
-				local c = packCells[index]
-				if c == nil then
-					-- c = ui:frameScrollCell()
+	local packsScroll = nil
 
-					c = ui:frame()
+	if System.IAPIsAvailable then
 
-					if storeItemCellQuadDataTop == nil then
-						storeItemCellQuadDataTop = Data:FromBundle("images/store-item-top.png")
+		packsScroll = ui:scroll({
+			padding = {
+				top = 0,
+				bottom = 0,
+				left = 0,
+				right = 0,
+			},
+			direction = "right",
+			-- backgroundColor = Color(200, 200, 200),
+			cellPadding = theme.padding,
+			loadCell = function(index)
+				if index <= #packs then
+					local c = packCells[index]
+					if c == nil then
+						-- c = ui:frameScrollCell()
+
+						c = ui:frame()
+
+						if storeItemCellQuadDataTop == nil then
+							storeItemCellQuadDataTop = Data:FromBundle("images/store-item-top.png")
+						end
+						if storeItemCellQuadDataBottom == nil then
+							storeItemCellQuadDataBottom = Data:FromBundle("images/store-item-bottom.png")
+						end
+						local topBackground = ui:frame({
+							image = {
+								data = storeItemCellQuadDataTop,
+								slice9 = { 0.5, 0.5 },
+								slice9Scale = 1.0,
+								slice9Width = 20,
+								alpha = true,
+								-- cutout = true,
+							},
+							-- mask = true,
+						})
+						topBackground:setParent(c)
+
+						local bottomBackground = ui:frame({
+							image = {
+								data = storeItemCellQuadDataBottom,
+								slice9 = { 0.5, 0.5 },
+								slice9Scale = 1.0,
+								slice9Width = 20,
+								alpha = true,
+								-- cutout = true,
+							},
+							-- mask = true,
+						})
+						bottomBackground:setParent(c)
+
+						c.Width = STORE_ITEM_WIDTH
+						c.Height = STORE_ITEM_HEIGHT
+
+						topBackground.Width = STORE_ITEM_WIDTH
+						topBackground.Height = STORE_ITEM_HEIGHT - 40
+						topBackground.pos = { 0, c.Height - topBackground.Height }
+
+						bottomBackground.Width = STORE_ITEM_WIDTH
+						bottomBackground.Height = 40
+						bottomBackground.pos = { 0, 0 }
+
+						local icon = ui:frame({
+							image = {
+								data = Data:FromBundle(packs[index].icon),
+								alpha = true,
+							},
+						})
+						icon.Width = topBackground.Height
+						icon.Height = topBackground.Height
+						icon.pos = { topBackground.Width * 0.5 - icon.Width * 0.5, topBackground.Height * 0.5 - icon.Height * 0.5 }
+						icon:setParent(topBackground)
+
+						local txt = string.format("$%.2f", packs[index].price)
+						if packs[index].subscription then
+							txt = string.format("$%.2f/mo", packs[index].price)
+						end
+						local price = ui:createText(txt, { color = Color.White, size = "small" })
+						price:setParent(bottomBackground)
+						price.pos = { bottomBackground.Width * 0.5 - price.Width * 0.5, bottomBackground.Height * 0.5 - price.Height * 0.5 }
+
+						local txt = string.format("%d", packs[index].coins)
+						if packs[index].subscription then
+							txt = string.format("%d/mo", packs[index].coins)
+						end
+						local coins = ui:createText(txt, { 
+							color = Color(253, 222, 44), 
+							size = "default",
+							outline = 0.4,
+							outlineColor = Color.Black,
+							bold = true,
+						})
+						coins:setParent(topBackground)
+						coins.pos = { topBackground.Width * 0.5 - coins.Width * 0.5, theme.padding }
+
+						c.onPress = function()
+							topBackground.Color = Color(100, 100, 100)
+							bottomBackground.Color = Color(100, 100, 100)
+							icon.Color = Color(100, 100, 100)
+						end
+						
+						c.onRelease = function()	
+							if c.loadingAnimation == nil then
+								c.loadingAnimation = require("ui_loading_animation"):create({ ui = ui })
+								c.loadingAnimation:setParent(topBackground)
+								c.loadingAnimation.pos = { 
+									topBackground.Width * 0.5 - c.loadingAnimation.Width * 0.5, 
+									coins.pos.Y + coins.Height + (topBackground.Height - coins.pos.Y - coins.Height) * 0.5 - c.loadingAnimation.Height * 0.5 
+								}
+							end
+							c.loadingAnimation:show()
+
+							sfx("buttonpositive_3", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
+
+							topBackground.Color = Color(255, 255, 255)
+							bottomBackground.Color = Color(255, 255, 255)
+							icon.Color = Color(255, 255, 255)
+							System:IAPPurchase(packs[index].productID, function(state)
+								if c.loadingAnimation then
+									c.loadingAnimation:hide()
+								end
+								if state == "success" then
+									sfx("coin_1", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
+									if refresh ~= nil then refresh() end
+								end
+							end)
+						end
+
+						c.onCancel = function()
+							topBackground.Color = Color(255, 255, 255)
+							bottomBackground.Color = Color(255, 255, 255)
+							icon.Color = Color(255, 255, 255)
+						end
+
+						packCells[index] = c
 					end
-					if storeItemCellQuadDataBottom == nil then
-						storeItemCellQuadDataBottom = Data:FromBundle("images/store-item-bottom.png")
-					end
-					local topBackground = ui:frame({
-						image = {
-							data = storeItemCellQuadDataTop,
-							slice9 = { 0.5, 0.5 },
-							slice9Scale = 1.0,
-							slice9Width = 20,
-							alpha = true,
-							-- cutout = true,
-						},
-						-- mask = true,
-					})
-					topBackground:setParent(c)
-
-					local bottomBackground = ui:frame({
-						image = {
-							data = storeItemCellQuadDataBottom,
-							slice9 = { 0.5, 0.5 },
-							slice9Scale = 1.0,
-							slice9Width = 20,
-							alpha = true,
-							-- cutout = true,
-						},
-						-- mask = true,
-					})
-					bottomBackground:setParent(c)
-
-					c.Width = STORE_ITEM_WIDTH
-					c.Height = STORE_ITEM_HEIGHT
-
-					topBackground.Width = STORE_ITEM_WIDTH
-					topBackground.Height = STORE_ITEM_HEIGHT - 40
-					topBackground.pos = { 0, c.Height - topBackground.Height }
-
-					bottomBackground.Width = STORE_ITEM_WIDTH
-					bottomBackground.Height = 40
-					bottomBackground.pos = { 0, 0 }
-
-					local price = ui:createText(string.format("$%.2f", packs[index].price), { color = Color.White, size = "small" })
-					price:setParent(bottomBackground)
-					price.pos = { bottomBackground.Width * 0.5 - price.Width * 0.5, bottomBackground.Height * 0.5 - price.Height * 0.5 }
-
-					local coins = ui:createText(string.format("%d", packs[index].coins), { 
-						color = Color(253, 222, 44), 
-						size = "default",
-						outline = 0.4,
-						outlineColor = Color.Black,
-						bold = true,
-					})
-					coins:setParent(topBackground)
-					coins.pos = { topBackground.Width * 0.5 - coins.Width * 0.5, theme.padding }
-
-					packCells[index] = c
+					c:show()
+					return c
 				end
-				c:show()
-				return c
-			end
-		end,
-		unloadCell = function(_, cell)
-			cell:hide()
-		end,
-	})
-	packsScroll:setParent(node)
+			end,
+			unloadCell = function(_, cell)
+				cell:hide()
+			end,
+		})
+		packsScroll:setParent(node)
+	end -- if iap is available
 
 	local function layoutBalanceFrameContent()
 		local height = balanceFrame.Height
@@ -336,18 +416,28 @@ coins.createModalContent = function(_, config)
 
 		layoutBalanceFrameContent()
 
-		packsScroll.Width = width
-		packsScroll.Height = STORE_ITEM_HEIGHT
+		if packsScroll then
+			packsScroll.Width = width
+			packsScroll.Height = STORE_ITEM_HEIGHT
+		end
 
 		historyFrame.Width = width
-		historyFrame.Height = height - balanceFrame.Height - packsScroll.Height - theme.padding * 2
+		if packsScroll then
+			historyFrame.Height = height - balanceFrame.Height - packsScroll.Height - theme.padding * 2
+		else
+			historyFrame.Height = height - balanceFrame.Height - theme.padding
+		end
 
 		-- detailText.pos = { theme.padding, theme.padding }
 
 		historyText.pos = { theme.padding, historyFrame.Height - theme.padding - historyText.Height }
 
 		balanceFrame.pos = { 0, height - balanceFrame.Height }
-		packsScroll.pos = { 0, balanceFrame.pos.Y - packsScroll.Height - theme.padding }
+
+		if packsScroll then
+			packsScroll.pos = { 0, balanceFrame.pos.Y - packsScroll.Height - theme.padding }
+		end
+		
 		historyFrame.pos = { 0, 0 }
 
 		scroll.Height = historyFrame.Height - historyText.Height - theme.padding * 2
@@ -362,6 +452,17 @@ coins.createModalContent = function(_, config)
 	end
 
 	content.didBecomeActive = function()
+		if refresh ~= nil then refresh() end
+		System:DebugEvent("User shows bank account", {
+			totalCoins = balance.totalCoins,
+			grantedCoins = balance.grantedCoins,
+			purchasedCoins = balance.purchasedCoins,
+			earnedCoins = balance.earnedCoins,
+		})
+	end
+
+	refresh = function()
+		cancelRequests()
 		local req = api:getBalance(function(err, balance)
 			if err then
 				amountText.Text = "-"
@@ -371,12 +472,6 @@ coins.createModalContent = function(_, config)
 				layoutBalanceFrameContent()
 				return
 			end
-			System:DebugEvent("User shows bank account", {
-				totalCoins = balance.totalCoins,
-				grantedCoins = balance.grantedCoins,
-				purchasedCoins = balance.purchasedCoins,
-				earnedCoins = balance.earnedCoins,
-			})
 			amountText.Text = string.format("%d", balance.totalCoins)
 			grantedText.Text = string.format("grants: %d", balance.grantedCoins)
 			purchasedText.Text = string.format("purchased: %d", balance.purchasedCoins)

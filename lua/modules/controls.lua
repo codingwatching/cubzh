@@ -34,6 +34,10 @@
 --	- Pointer.Zoom
 --  - Pointer.Cancel
 
+if IsServer == true then
+	return require("empty_table"):create("controls is not supposed to be used by Server")
+end
+
 -- TODO: release all actions when HomeMenu is shown
 
 local ACTION_BTN_SCREEN_PADDING = 8

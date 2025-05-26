@@ -138,7 +138,57 @@ profile.create = function(_, config)
 		nbFriends = 0,
 		created = nil,
 		verified = false,
+		blocked = false,
 	}
+
+	for _, uID in ipairs(System.BlockedUsers) do
+		if uID == userID then
+			userInfo.blocked = true
+			break
+		end
+	end
+
+	local blockBtn
+	if not isLocal then
+		blockBtn = ui:button({ 
+			content = "",
+			textSize = "small",
+			borders = false,
+			padding = false,
+			textColor = userInfo.blocked and Color(150, 150, 150) or theme.errorTextColor,
+			color = Color(0, 0, 0, 0),
+		})
+		blockBtn.onRelease = function(self)
+			local msg
+			if userInfo.blocked then
+				msg = "Are you sure you want to unblock " .. username .. "?"
+			else
+				msg = "Are you sure you want to block " .. username .. "?"
+			end
+			Menu:ShowAlert({
+				message = msg,
+				positiveCallback = function() 
+					userInfo.blocked = not userInfo.blocked
+					if userInfo.blocked then
+						systemApi:blockUser(userID, function(success, blockedUsers)
+							if success and blockedUsers ~= nil then
+								System.BlockedUsers = blockedUsers
+							end
+						end)
+					else
+						systemApi:unblockUser(userID, function(success, blockedUsers)
+							if success and blockedUsers ~= nil then
+								System.BlockedUsers = blockedUsers
+							end
+						end)
+					end
+					infoNode:setUserInfo()
+				end,
+				negativeCallback = function() end,
+			}, System)
+		end
+		blockBtn:setParent(cell)
+	end
 
 	-- functions to create each node
 
@@ -215,7 +265,7 @@ profile.create = function(_, config)
 						userInfo.bio = text
 						local data = { bio = userInfo.bio }
 						-- TODO: we could use `api` instead of `require("system_api", System)`
-						require("system_api", System):patchUserInfo(data, function(err)
+						systemApi:patchUserInfo(data, function(err)
 							if err then
 								print("❌", err)
 							end
@@ -379,6 +429,11 @@ profile.create = function(_, config)
 				created.Text = "📰 " .. createdStr
 			else
 				created.Text = "📰"
+			end
+
+			if blockBtn ~= nil then
+				blockBtn.textColor = userInfo.blocked and Color(150, 150, 150) or theme.errorTextColor
+				blockBtn.Text = userInfo.blocked and "Unblock" or "Block"
 			end
 
 			bioText.Text = str:trimSpaces(userInfo.bio or "")
@@ -708,7 +763,7 @@ profile.create = function(_, config)
 
 				addFriendBtn.onRelease = function(btn)
 					btn:disable()
-					require("system_api", System):sendFriendRequest(userID, function(ok, err)
+					systemApi:sendFriendRequest(userID, function(ok, err)
 						if ok == true and err == nil then
 							functions.checkFriendRelationShip()
 						else
@@ -876,14 +931,26 @@ profile.create = function(_, config)
 		avatarNode.Height = avatarNodeHeight
 
 		local cellContentHeight = avatarNodeHeight
+		local availableHeight = self.Height
 
 		if activeNode.parent ~= nil then
 			cellContentHeight = cellContentHeight + activeNode.Height + padding
 		end
 
-		cell.Height = cellContentHeight
+		cell.Height = math.max(availableHeight, cellContentHeight)
 
-		local y = cellContentHeight
+		local y = cell.Height
+		if blockBtn ~= nil then
+			blockBtn.pos = { 
+				0, 
+				y - blockBtn.Height,
+			}
+		end
+
+		y = cellContentHeight
+		if availableHeight > cellContentHeight then
+			y += (availableHeight - cellContentHeight) * 0.7
+		end
 
 		y = y - avatarNode.Height
 		avatarNode.pos = {

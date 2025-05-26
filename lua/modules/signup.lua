@@ -1248,7 +1248,7 @@ signup.startFlow = function(self, config)
 
 				-- UI
 
-				local text = ui:createText("Pick a username!", {
+				local text = ui:createText("Pick a Username!", {
 					color = Color.White,
 					size = "default",
 					alignment = "center",
@@ -1256,7 +1256,7 @@ signup.startFlow = function(self, config)
 				text:setParent(drawer)
 
 				local instructions = ui:createText(
-					"It must start with a letter (a-z) and can include letters (a-z) and numbers (0-9).",
+					"Must start with a letter, followed by letters (a-z) and numbers (0-9) only.",
 					{
 						color = Color(150, 150, 150),
 						size = "small",
@@ -1299,7 +1299,7 @@ signup.startFlow = function(self, config)
 				end
 
 				-- Warning message
-				local warning = ui:createText("⚠️ Choose carefully, this username can't be changed afterwards.", {
+				local warning = ui:createText("⚠️ Choose carefully, you can't change it later!", {
 					color = Color(251, 206, 0),
 					size = "small",
 					alignment = "center",
@@ -1864,6 +1864,7 @@ signup.startFlow = function(self, config)
 							"hasUnverifiedPhoneNumber",
 							"isPhoneExempted",
 							"isChatEnabled",
+							"blockedUsers",
 						}, function(userInfo, err)
 							if err ~= nil then
 								System:DebugEvent(
@@ -1899,6 +1900,7 @@ signup.startFlow = function(self, config)
 							System.IsChatEnabled = userInfo.isChatEnabled
 							System.HasPasskey = userInfo.hasPasskey
 							System.HasPassword = userInfo.hasPassword
+							System.BlockedUsers = userInfo.blockedUsers or {}
 
 							-- print("user id:", System.UserID)
 							-- print("userInfo.username:", userInfo.username)

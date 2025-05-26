@@ -124,6 +124,7 @@ mod.createModalContent = function(_, config)
 	local authorBtn
 	local author
 	local likeBtn
+	local reportBtn
 	local editDescriptionBtn
 	local editIconBtn
 	local nameArea
@@ -290,6 +291,24 @@ mod.createModalContent = function(_, config)
 
 	likeBtn = ui:buttonNeutral({ content = "🤍 …", textSize = "small" })
 	likeBtn:setParent(cell)
+
+	reportBtn = ui:button({ 
+		content = "Report", 
+		textSize = "small",
+		borders = false,
+		padding = false,
+		textColor = theme.errorTextColor,
+		color = Color(0, 0, 0, 0),
+	})
+	reportBtn.onRelease = function(self)
+		local config = {
+			world = world,
+			uikit = ui,
+		}
+		local reportContent = require("report"):createModalContent(config)
+		content:push(reportContent)
+	end
+	reportBtn:setParent(cell)
 
 	if createMode then
 		editDescriptionBtn = ui:buttonSecondary({ content = "✏️ Edit description", textSize = "small" })
@@ -541,7 +560,7 @@ mod.createModalContent = function(_, config)
 			return
 		end
 		local viewAndLikesWidth = views.Width + theme.padding + likeBtn.Width
-		views.pos.X = parent.Width * 0.5 - viewAndLikesWidth * 0.5
+		views.pos.X = parent.Width - viewAndLikesWidth - theme.padding
 		likeBtn.pos.X = views.pos.X + views.Width + theme.padding
 	end
 
@@ -674,6 +693,12 @@ mod.createModalContent = function(_, config)
 		y = y - padding - viewAndLikesHeight * 0.5
 		views.pos.Y = y - views.Height * 0.5
 		likeBtn.pos.Y = y - likeBtn.Height * 0.5
+
+		reportBtn.pos = {
+			padding,
+			likeBtn.pos.Y + likeBtn.Height * 0.5 - reportBtn.Height * 0.5,
+		}
+
 		privateFields.alignViewsAndLikes()
 		y = y - viewAndLikesHeight * 0.5
 

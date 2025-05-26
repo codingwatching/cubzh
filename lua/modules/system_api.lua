@@ -321,6 +321,70 @@ moduleMT.postSecret = function(_, secret, callback)
 	return req
 end
 
+moduleMT.blockUser = function(_, userID, callback)
+	if type(userID) ~= "string" then
+		callback(false, "systemApi:blockUser(userID, callback) - userID must be a string")
+		return
+	end
+	if callback ~= nil and type(callback) ~= "function" then
+		callback(false, "systemApi:blockUser(userID, callback) - callback must be a function")
+		return
+	end
+	local url = mod.kApiAddr .. "/users/self/block"
+	local body = {
+		id = userID,
+	}
+	local req = System:HttpPost(url, body, function(resp)
+		if resp.StatusCode ~= 200 then
+			if callback ~= nil then
+				callback(false)
+			end
+			return
+		end
+		if callback ~= nil then
+			local blockedUsers, err = JSON:Decode(resp.Body)
+			if err ~= nil then
+				callback(true, nil)
+				return
+			end
+			callback(true, blockedUsers)
+		end
+	end)
+	return req
+end
+
+moduleMT.unblockUser = function(_, userID, callback)
+	if type(userID) ~= "string" then
+		callback(false, "systemApi:unblockUser(userID, callback) - userID must be a string")
+		return
+	end
+	if callback ~= nil and type(callback) ~= "function" then
+		callback(false, "systemApi:unblockUser(userID, callback) - callback must be a function")
+		return
+	end
+	local url = mod.kApiAddr .. "/users/self/unblock"
+	local body = {
+		id = userID,
+	}
+	local req = System:HttpPost(url, body, function(resp)
+		if resp.StatusCode ~= 200 then
+			if callback ~= nil then
+				callback(false)
+			end
+			return
+		end
+		if callback ~= nil then
+			local blockedUsers, err = JSON:Decode(resp.Body)
+			if err ~= nil then
+				callback(true, nil)
+				return
+			end
+			callback(true, blockedUsers)
+		end
+	end)
+	return req
+end
+
 -- search Users by username substring
 -- callback(ok, users, errMsg)
 -- ok: boolean
@@ -785,13 +849,13 @@ mod.getNotifications = function(self, config, callback)
 
 	local req = System:HttpGet(u:toString(), function(res)
 		if res.StatusCode ~= 200 then
-			callback(nil, mod:error(res.StatusCode, "status code: " .. res.StatusCode))
+			callback(nil, api:error(res.StatusCode, "status code: " .. res.StatusCode))
 			return
 		end
 
 		local data, err = JSON:Decode(res.Body)
 		if err ~= nil then
-			callback(nil, mod:error(res.StatusCode, "getNotifications JSON decode error: " .. err))
+			callback(nil, api:error(res.StatusCode, "getNotifications JSON decode error: " .. err))
 			return
 		end
 
@@ -799,7 +863,7 @@ mod.getNotifications = function(self, config, callback)
 			if data.count ~= nil then
 				callback(math.floor(data.count))
 			else
-				callback(nil, mod:error(res.StatusCode, "returned count is nil"))
+				callback(nil, api:error(res.StatusCode, "returned count is nil"))
 			end
 			return
 		end
@@ -842,13 +906,13 @@ mod.getWorldHistory = function(self, config, callback)
 
 	local req = System:HttpGet(u:toString(), function(res)
 		if res.StatusCode ~= 200 then
-			callback(nil, mod:error(res.StatusCode, "status code: " .. res.StatusCode))
+			callback(nil, api:error(res.StatusCode, "status code: " .. res.StatusCode))
 			return
 		end
 
 		local data, err = JSON:Decode(res.Body)
 		if err ~= nil then
-			callback(nil, mod:error(res.StatusCode, "getWorldHistory JSON decode error: " .. err))
+			callback(nil, api:error(res.StatusCode, "getWorldHistory JSON decode error: " .. err))
 			return
 		end
 
@@ -941,7 +1005,57 @@ mod.getPasskeyChallenge = function(self, callback)
 		-- success
 		callback(responseObject.challenge, nil)
 	end)
+end
 
+mod.report = function(self, config)
+	if self ~= mod then
+		error("api:report(config): use `:`", 2)
+	end
+
+	local defaultConfig = {
+		worldID = nil,
+		itemID = nil,
+		message = nil,
+		callback = nil,
+	}
+
+	local ok, err = pcall(function()
+		config = require("config"):merge(defaultConfig, config, {
+			acceptTypes = {
+				worldID = { "string" },
+				itemID = { "string" },
+				message = { "string" },
+				callback = { "function" },
+			},
+		})
+	end)
+
+	if not ok then
+		error("api:report(config): config error (" .. err .. ")", 2)
+	end
+
+	local u = url:parse(mod.kApiAddr .. "/reports")
+
+	local body = {
+		worldID = config.worldID,
+		itemID = config.itemID,
+		message = config.message,
+	}
+
+	print("worldID:", config.worldID)
+	print("itemID:", config.itemID)
+
+	local req = System:HttpPost(u:toString(), body, function(res)
+		if res.StatusCode ~= 200 then
+			if config.callback ~= nil then
+				config.callback(api:error(res.StatusCode, "status code: " .. res.StatusCode))
+			end
+			return
+		end
+		if config.callback ~= nil then
+			config.callback(nil)
+		end
+	end)
 	return req
 end
 
