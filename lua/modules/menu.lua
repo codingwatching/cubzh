@@ -1895,7 +1895,6 @@ if DEV_MODE == true then
 						scene = sceneDescriptionJSON,
 						model = modelNames[modelSelected],
 					}
-					print("model:", body.model)
 					local headers = {}
 					headers["Content-Type"] = "application/json"
 					self.Text = ""
@@ -1919,7 +1918,6 @@ if DEV_MODE == true then
 					local function callback(res)
 						aiCharacter.background.Image = idleBuddy
 						if res.StatusCode ~= 200 then
-							-- print("error: " .. res.StatusCode)
 							setAIText("❌ ERROR: " .. res.StatusCode)
 							return
 						end
@@ -2002,6 +2000,7 @@ if DEV_MODE == true then
 											removeAIPrompt()
 											System:PublishScript(currentMessage.content)
 										end
+										subTopBar.refreshBalance()
 									end
 									break
 								end
