@@ -2113,7 +2113,7 @@ end
 -- display when authenticated if System.IsChatEnabled
 chatBtn:hide()
 
--- PEZH
+-- BLUX
 
 bluxBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
 bluxBtn:setParent(topBar)
@@ -2443,7 +2443,7 @@ topBar.parentDidResize = function(self)
 	cubzhBtn.Width = height
 	local previousBtn = cubzhBtn
 
-	-- PEZH BUTTON
+	-- BLUX BUTTON
 
 	if bluxBtn:isVisible() then
 		bluxBtn.Height = height
