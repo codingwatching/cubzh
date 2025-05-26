@@ -352,13 +352,15 @@ coins.createModalContent = function(_, config)
 							topBackground.Color = Color(255, 255, 255)
 							bottomBackground.Color = Color(255, 255, 255)
 							icon.Color = Color(255, 255, 255)
-							System:IAPPurchase(packs[index].productID, function(state)
+							System:IAPPurchase(packs[index].productID, function(state, sandbox)
 								if c.loadingAnimation then
 									c.loadingAnimation:hide()
 								end
 								if state == "success" then
 									sfx("coin_1", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 									if refresh ~= nil then refresh() end
+								elseif sandbox == true then
+									Menu:ShowAlert({ message = "Blux can't be credited with a test version of the app. This transaction hasn't been charged." }, System)
 								end
 							end)
 						end
