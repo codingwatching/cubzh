@@ -436,6 +436,7 @@ mod.setBehavior = function(self, config)
 			rotationTargetOffset = { "Rotation", "Number3", "table" },
 			collidesWithGroups = { "CollisionGroups", "table" },
 		},
+		modifyOverrides = true,
 	})
 
 	config.version = 2
@@ -458,9 +459,6 @@ mod.setBehavior = function(self, config)
 		end
 	end
 	local positionTargetOffset = config.positionTargetOffset or Number3.Zero
-	local distance = config.positionTargetBackoffDistance
-	local minDistance = config.positionTargetMinBackoffDistance
-	local maxDistance = config.positionTargetMaxBackoffDistance
 	
 	-- rotation
 	local rotationTarget
@@ -495,17 +493,15 @@ mod.setBehavior = function(self, config)
 
 	camera:SetParent(World)
 
-	if distance < minDistance then
-		minDistance = distance
-	elseif distance > maxDistance then
-		maxDistance = distance
+	local function clampDistance()
+		config.positionTargetBackoffDistance = math.max(config.positionTargetMinBackoffDistance, math.min(config.positionTargetMaxBackoffDistance, config.positionTargetBackoffDistance))
 	end
-
+	clampDistance()
+	
 	local listener
 	listener = LocalEvent:Listen(LocalEvent.Name.PointerWheel, function(delta)
-		distance = distance + delta * 0.1
-		distance = math.min(maxDistance, distance)
-		distance = math.max(minDistance, distance)
+		config.positionTargetBackoffDistance += delta * 0.1
+		clampDistance()
 	end)
 	table.insert(entry.listeners, listener)
 
@@ -522,7 +518,7 @@ mod.setBehavior = function(self, config)
 				touch2 = pe
 			end
 			if touch1 ~= nil and touch2 ~= nil then
-				pinchInitialDistance = distance
+				pinchInitialDistance = config.positionTargetBackoffDistance
 				pinchInitialTan = math.tan(touch1.Direction:Angle(touch2.Direction))
 			end
 		end)
@@ -536,8 +532,8 @@ mod.setBehavior = function(self, config)
 			end
 			if pinchInitialTan ~= nil and pinchInitialDistance ~= nil then 
 				local angle = touch1.Direction:Angle(touch2.Direction)
-				local newDistance = pinchInitialDistance * pinchInitialTan / math.tan(angle)
-				distance = math.max(minDistance, math.min(maxDistance, newDistance))
+				config.positionTargetBackoffDistance = pinchInitialDistance * pinchInitialTan / math.tan(angle)
+				clampDistance()
 			end
 		end)
 		table.insert(entry.listeners, listener)
@@ -579,7 +575,7 @@ mod.setBehavior = function(self, config)
 			
 			impact = box:Cast(worldObject.Backward, distance, collidesWithGroups)
 			
-			backoffDistance = distance
+			backoffDistance = config.positionTargetBackoffDistance
 			if impact and impact.Distance < backoffDistance then
 				backoffDistance = impact.Distance
 			end
@@ -591,6 +587,8 @@ mod.setBehavior = function(self, config)
 		end
 	end)
 	table.insert(entry.listeners, listener)
+
+	return entry
 end
 -- legacy funtion name
 mod.setConfig = mod.setBehavior
