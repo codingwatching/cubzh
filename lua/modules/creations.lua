@@ -451,18 +451,35 @@ creations.createModalContent = function(_, config)
 		})
 		grid:setParent(node)
 
-		local btnNew
+		local newLabel
+		local btnNewItem
+		local btnNewWearable
+		local btnNewWorld
+
 		if config.authorId == Player.UserID then
-			btnNew = ui:buttonPositive({ content = "✨ Create item ⚔️", padding = theme.padding })
-			btnNew:setParent(node)
+			newLabel = ui:createText("Create:", {size = "small", color = Color.White})
+			newLabel:setParent(node)
+
+			btnNewItem = ui:buttonNeutral({ content = "Item", textSize = "small", padding = theme.padding })
+			btnNewItem:setParent(node)
+
+			btnNewWearable = ui:buttonNeutral({ content = "Wearable", textSize = "small", padding = theme.padding })
+			btnNewWearable:setParent(node)
+
+			btnNewWorld = ui:buttonNeutral({ content = "World", textSize = "small", padding = theme.padding })
+			btnNewWorld:setParent(node)
 		end
 
 		node.parentDidResize = function(self)
-			if btnNew then
+			if btnNewItem then
 				grid.Width = self.Width
-				grid.Height = self.Height - btnNew.Height - theme.padding
-				grid.pos.Y = btnNew.Height + theme.padding
-				btnNew.pos = { self.Width * 0.5 - btnNew.Width * 0.5, 0 }
+				grid.Height = self.Height - btnNewItem.Height - theme.padding
+				grid.pos.Y = btnNewItem.Height + theme.padding
+				local w = newLabel.Width + btnNewItem.Width + btnNewWearable.Width + btnNewWorld.Width + theme.padding * 3
+				newLabel.pos = { self.Width * 0.5 - w * 0.5, btnNewItem.Height * 0.5 - newLabel.Height * 0.5 }
+				btnNewItem.pos = { newLabel.pos.X + newLabel.Width + theme.padding, 0 }
+				btnNewWearable.pos = { btnNewItem.pos.X + btnNewItem.Width + theme.padding, 0 }
+				btnNewWorld.pos = { btnNewWearable.pos.X + btnNewWearable.Width + theme.padding, 0 }
 			else
 				grid.Width = self.Width
 				grid.Height = self.Height
@@ -510,54 +527,54 @@ creations.createModalContent = function(_, config)
 			end
 		end
 
-		if btnNew then
-			btnNew.onRelease = newItem
-		end
+		if btnNewItem then btnNewItem.onRelease = newItem end
+		if btnNewWearable then btnNewWearable.onRelease = newWearable end
+		if btnNewWorld then btnNewWorld.onRelease = newWorld end
 
 		creationsContent.tabs = {}
 
-		for _, category in ipairs(config.categories) do
-			if category == "items" then
-				table.insert(creationsContent.tabs, {
-					label = "⚔️ Items",
-					short = "⚔️",
-					action = function()
-						grid:setCategories({ "null" }, "items")
-						if btnNew then
-							btnNew.Text = "✨ Create item ⚔️"
-							btnNew.pos.X = btnNew.parent.Width * 0.5 - btnNew.Width * 0.5
-							btnNew.onRelease = newItem
-						end
-					end,
-				})
-			elseif category == "wearables" then
-				table.insert(creationsContent.tabs, {
-					label = "👕 Wearables",
-					short = "👕",
-					action = function()
-						grid:setCategories({ "hair", "jacket", "pants", "boots" }, "items")
-						if btnNew then
-							btnNew.Text = "✨ Create wearable 👕"
-							btnNew.pos.X = btnNew.parent.Width * 0.5 - btnNew.Width * 0.5
-							btnNew.onRelease = newWearable
-						end
-					end,
-				})
-			elseif category == "worlds" then
-				table.insert(creationsContent.tabs, {
-					label = "🌎 Worlds",
-					short = "🌎",
-					action = function()
-						grid:setCategories({ "null" }, "worlds")
-						if btnNew then
-							btnNew.Text = "✨ Create world 🌎"
-							btnNew.pos.X = btnNew.parent.Width * 0.5 - btnNew.Width * 0.5
-							btnNew.onRelease = newWorld
-						end
-					end,
-				})
-			end
-		end
+		-- for _, category in ipairs(config.categories) do
+		-- 	if category == "items" then
+		-- 		table.insert(creationsContent.tabs, {
+		-- 			label = "⚔️ Items",
+		-- 			short = "⚔️",
+		-- 			action = function()
+		-- 				grid:setCategories({ "null" }, "items")
+		-- 				if btnNew then
+		-- 					btnNew.Text = "✨ Create item ⚔️"
+		-- 					btnNew.pos.X = btnNew.parent.Width * 0.5 - btnNew.Width * 0.5
+		-- 					btnNew.onRelease = newItem
+		-- 				end
+		-- 			end,
+		-- 		})
+		-- 	elseif category == "wearables" then
+		-- 		table.insert(creationsContent.tabs, {
+		-- 			label = "👕 Wearables",
+		-- 			short = "👕",
+		-- 			action = function()
+		-- 				grid:setCategories({ "hair", "jacket", "pants", "boots" }, "items")
+		-- 				if btnNew then
+		-- 					btnNew.Text = "✨ Create wearable 👕"
+		-- 					btnNew.pos.X = btnNew.parent.Width * 0.5 - btnNew.Width * 0.5
+		-- 					btnNew.onRelease = newWearable
+		-- 				end
+		-- 			end,
+		-- 		})
+		-- 	elseif category == "worlds" then
+		-- 		table.insert(creationsContent.tabs, {
+		-- 			label = "🌎 Worlds",
+		-- 			short = "🌎",
+		-- 			action = function()
+		-- 				grid:setCategories({ "null" }, "worlds")
+		-- 				if btnNew then
+		-- 					btnNew.Text = "✨ Create world 🌎"
+		-- 					btnNew.pos.X = btnNew.parent.Width * 0.5 - btnNew.Width * 0.5
+		-- 					btnNew.onRelease = newWorld
+		-- 				end
+		-- 			end,
+		-- 		})
+		-- 	end
+		-- end
 
 		if #creationsContent.tabs > 0 then
 			creationsContent.tabs[1].action()
