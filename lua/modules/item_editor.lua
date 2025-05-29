@@ -3,6 +3,10 @@ Config = {
 	ChatAvailable = false,
 }
 
+local BUTTON_ICON_SIZE = 30
+local BUTTON_ICON_SIZE_SECONDARY = 24
+local BUTTON_PADDING = 6 -- (includes border)
+
 -- Utilities for Player avatar
 
 blocksToRemove = {}
@@ -140,6 +144,40 @@ local playerUpdateVisibility = function(p_isWearable, p_wearablePreviewMode)
 	end
 end
 
+local btnIconCache = {}
+local getIconData = function(iconName)
+	local iconData = btnIconCache[iconName]
+	if iconData == nil then
+		iconData = Data:FromBundle("images/item-editor/" .. iconName .. ".png")
+		btnIconCache[iconName] = iconData
+	end
+	return iconData
+end
+local function createBtn(iconName, config)
+	local btnIcon = ui:frame(
+		{
+			image = {
+				data = getIconData(iconName),
+				alpha = true,
+			},
+		}
+	)
+	local btn
+	if config.secondary == true then
+		btnIcon.Width = BUTTON_ICON_SIZE_SECONDARY 
+		btnIcon.Height = BUTTON_ICON_SIZE_SECONDARY
+		btn = ui:buttonSecondary({ content = btnIcon })
+	else
+		btnIcon.Width = BUTTON_ICON_SIZE 
+		btnIcon.Height = BUTTON_ICON_SIZE
+		btn = ui:buttonNeutral({ content = btnIcon })
+	end
+	btn.setIcon = function(self, iconName)
+		btnIcon:setImage(getIconData(iconName))
+	end
+	return btn
+end
+
 Client.OnStart = function()
 	gizmo = require("gizmo")
 	gizmo:setLayer(4)
@@ -149,6 +187,12 @@ Client.OnStart = function()
 
 	box_outline = require("box_outline")
 	ui = require("uikit")
+	
+	refText = ui:createText("🙂")
+	refText:setParent(nil)
+	BUTTON_ICON_SIZE = refText.Height
+	BUTTON_ICON_SIZE_SECONDARY = refText.Height
+
 	theme = require("uitheme").current
 
 	max_total_nb_shapes = 32
@@ -201,6 +245,17 @@ Client.OnStart = function()
 				or currentEditSubmode == editSubmode.remove
 				or currentEditSubmode == editSubmode.paint
 			)
+
+		if currentEditSubmode == editSubmode.add then
+			oneBlockBtn:setIcon("btn-add-one-block")
+			faceModeBtn:setIcon("btn-add-face-mode")
+		elseif currentEditSubmode == editSubmode.remove then
+			oneBlockBtn:setIcon("btn-remove-one-block")
+			faceModeBtn:setIcon("btn-remove-face-mode")
+		elseif currentEditSubmode == editSubmode.paint then
+			oneBlockBtn:setIcon("btn-replace-one-block")
+			faceModeBtn:setIcon("btn-replace-face-mode")
+		end
 
 		local showColorPicker = showPalette and colorPickerDisplayed
 		local showMirrorControls = currentMode == mode.edit and currentEditSubmode == editSubmode.mirror
@@ -400,23 +455,24 @@ Client.OnStart = function()
 		},
 	}
 
-	Camera.Behavior = {
+	cameraBehavior = {
 		positionTarget = cameraTarget,
 		positionTargetOffset = { 0, 0, 0 },
 		positionTargetBackoffDistance = cameraCurrentState.cameraDistance,
 		positionTargetMinBackoffDistance = settings.cameraMinDistanceFromTarget,
 		positionTargetMaxBackoffDistance = 100,
 		rotationTarget = cameraTarget,
-		rigidity = 0.5,
+		rigidity = 0.3,
 		collidesWithGroups = nil,
 	}
+	Camera.Behavior = cameraBehavior
 
 	cameraRefresh = function()
 		-- clamp rotation between 90° and -90° on X
 		cameraCurrentState.cameraRotation.X = clamp(cameraCurrentState.cameraRotation.X, -math.pi * 0.4999, math.pi * 0.4999)
 		cameraTarget.Rotation = cameraCurrentState.cameraRotation
 		cameraTarget.Position:Set(cameraCurrentState.target)
-
+		
 		if orientationCube ~= nil then
 			orientationCube:setRotation(Camera.Rotation)
 		end
@@ -844,12 +900,8 @@ drag2 = function(e)
 		local factor = 0.1
 		local dx = e.DX * factor * getCameraDistanceFactor()
 		local dy = e.DY * factor * getCameraDistanceFactor()
-
-		local distanceFromTarget = (Camera.Position - cameraCurrentState.target).Length
-		Camera.Position = Camera.Position - Camera.Right * dx - Camera.Up * dy
-		cameraCurrentState.target = Camera.Position + Camera.Forward * distanceFromTarget
+		cameraCurrentState.target -= Camera.Right * dx + Camera.Up * dy
 		cameraRefresh()
-
 		refreshBlockHighlight()
 	end
 end
@@ -863,9 +915,10 @@ drag2End = function()
 			local target = impact.Block.Position + halfVoxel
 			cameraCurrentState.target = target
 			cameraCurrentState.cameraDistance = math.max(settings.cameraMinDistanceFromTarget, (target - Camera.Position).Length)
+			cameraBehavior.positionTargetBackoffDistance = cameraCurrentState.cameraDistance
 			cameraRefresh()
 		else
-			cameraCurrentState.target = Camera.Position + Camera.Forward * cameraCurrentState.cameraDistance
+			cameraCurrentState.target = Camera.Position + Camera.Forward * cameraBehavior.positionTargetBackoffDistance
 			cameraRefresh()
 		end
 
@@ -963,16 +1016,19 @@ initClientFunctions = function()
 					cameraCurrentState.target = getEquipmentAttachPointWorldPosition("handheld")
 					cameraCurrentState.cameraRotation = settings.cameraStartPreviewRotationHand
 					cameraCurrentState.cameraDistance = 20
+					cameraBehavior.positionTargetBackoffDistance = cameraCurrentState.cameraDistance
 				elseif poiActiveName == poiNameHat then
 					Player:EquipHat(item)
 					cameraCurrentState.target = getEquipmentAttachPointWorldPosition("hat")
 					cameraCurrentState.cameraRotation = settings.cameraStartPreviewRotationHat
 					cameraCurrentState.cameraDistance = 20
+					cameraBehavior.positionTargetBackoffDistance = cameraCurrentState.cameraDistance
 				elseif poiActiveName == poiNameBackpack then
 					Player:EquipBackpack(item)
 					cameraCurrentState.target = getEquipmentAttachPointWorldPosition("backpack")
 					cameraCurrentState.cameraRotation = settings.cameraStartPreviewRotationBackpack
 					cameraCurrentState.cameraDistance = 20
+					cameraBehavior.positionTargetBackoffDistance = cameraCurrentState.cameraDistance
 				end
 
 				Client.DirectionalPad = nil
@@ -982,6 +1038,7 @@ initClientFunctions = function()
 			end
 
 			refreshUndoRedoButtons()
+			cameraBehavior.positionTargetBackoffDistance = cameraCurrentState.cameraDistance
 			cameraRefresh()
 		end -- end updating node
 
@@ -1550,11 +1607,13 @@ initClientFunctions = function()
 		if rotation ~= nil then
 			cameraCurrentState.rotation = rotation
 		end
+		cameraBehavior.positionTargetBackoffDistance = cameraCurrentState.cameraDistance
 		cameraRefresh()
 	end
 
 	getCameraDistanceFactor = function()
-		return 1 + math.max(0, cameraDistFactor * (cameraCurrentState.cameraDistance - cameraDistThreshold))
+		local d = cameraBehavior.positionTargetBackoffDistance
+		return 1 + math.max(0, cameraDistFactor * (d - cameraDistThreshold))
 	end
 
 	refreshBlockHighlight = function()
@@ -1566,7 +1625,8 @@ initClientFunctions = function()
 			blockHighlight.Rotation = impact.Shape.Rotation
 			blockHighlight.IsHidden = false
 		else
-			blockHighlight.Position = Camera.Position + Camera.Forward * cameraCurrentState.cameraDistance
+			local d = (Camera.Position - cameraTarget.Position).Length
+			blockHighlight.Position = Camera.Position + Camera.Forward * d
 			blockHighlight.Rotation = Camera.Rotation
 			blockHighlight.IsHidden = false
 		end
@@ -1733,6 +1793,7 @@ function ui_init()
 	modeMenu = ui:frameTextBackground()
 
 	editModeBtn = ui:buttonNeutral({ content = "✏️" })
+	editModeBtn.Width = BUTTON_ICON_SIZE + BUTTON_PADDING * 2 editModeBtn.Height = editModeBtn.Width
 	editModeBtn:setParent(modeMenu)
 	editModeBtn.onRelease = function()
 		setMode(mode.edit, nil)
@@ -1740,12 +1801,14 @@ function ui_init()
 	editModeBtn:select()
 
 	placeModeBtn = ui:buttonNeutral({ content = "👤" })
+	placeModeBtn.Width = BUTTON_ICON_SIZE + BUTTON_PADDING * 2 placeModeBtn.Height = placeModeBtn.Width
 	placeModeBtn:setParent(modeMenu)
 	placeModeBtn.onRelease = function()
 		setMode(mode.points, nil)
 	end
 
 	importBtn = ui:buttonSecondary({ content = "📥" })
+	importBtn.Width = BUTTON_ICON_SIZE + BUTTON_PADDING * 2 importBtn.Height = importBtn.Width
 	importBtn:setParent(modeMenu)
 
 	local confirmImportAlert
@@ -1820,7 +1883,7 @@ function ui_init()
 		end)
 	end
 
-	screenshotBtn = ui:buttonSecondary({ content = "📷" })
+	screenshotBtn = createBtn("btn-capture", { secondary = true })
 	screenshotBtn:setParent(modeMenu)
 	screenshotBtn.onRelease = function()
 		if waitForScreenshot == true then
@@ -1923,6 +1986,7 @@ function ui_init()
 	end
 
 	saveBtn = ui:buttonSecondary({ content = "💾" })
+	saveBtn.Width = BUTTON_ICON_SIZE + BUTTON_PADDING * 2 saveBtn.Height = saveBtn.Width
 	saveBtn:setParent(modeMenu)
 	saveBtn.label = ui:createText("✅", Color.Black, "small")
 	saveBtn.label:setParent(saveBtn)
@@ -1962,6 +2026,7 @@ function ui_init()
 	-- CAMERA CONTROLS
 
 	recenterBtn = ui:buttonSecondary({ content = "🎯" })
+	recenterBtn.Width = BUTTON_ICON_SIZE + BUTTON_PADDING * 2 recenterBtn.Height = recenterBtn.Width
 	recenterBtn.onRelease = function()
 		if currentMode == mode.edit then
 			fitObjectToScreen(item, nil)
@@ -1990,7 +2055,8 @@ function ui_init()
 		editMenuToggleSelected = target
 	end
 
-	addBlockBtn = ui:buttonNeutral({ content = "➕" })
+
+	addBlockBtn = createBtn("btn-add-one-block")
 	table.insert(editMenuToggleBtns, addBlockBtn)
 	addBlockBtn:setParent(editMenu)
 	addBlockBtn.onRelease = function()
@@ -1999,7 +2065,7 @@ function ui_init()
 	end
 	editMenuToggleSelect(addBlockBtn)
 
-	removeBlockBtn = ui:buttonNeutral({ content = "➖" })
+	removeBlockBtn = createBtn("btn-remove-one-block")
 	table.insert(editMenuToggleBtns, removeBlockBtn)
 	removeBlockBtn:setParent(editMenu)
 	removeBlockBtn.onRelease = function()
@@ -2007,7 +2073,7 @@ function ui_init()
 		setMode(nil, editSubmode.remove)
 	end
 
-	replaceBlockBtn = ui:buttonNeutral({ content = "🖌️" })
+	replaceBlockBtn = createBtn("btn-replace-one-block")
 	table.insert(editMenuToggleBtns, replaceBlockBtn)
 	replaceBlockBtn:setParent(editMenu)
 	replaceBlockBtn.onRelease = function()
@@ -2023,7 +2089,7 @@ function ui_init()
 		setMode(nil, editSubmode.select)
 	end
 
-	mirrorBtn = ui:buttonNeutral({ content = "🪞" })
+	mirrorBtn = createBtn("btn-mirror")
 	table.insert(editMenuToggleBtns, mirrorBtn)
 	mirrorBtn:setParent(editMenu)
 	mirrorBtn.onRelease = function()
@@ -2035,7 +2101,7 @@ function ui_init()
 		selectShapeBtn:disable()
 	end
 
-	pickColorBtn = ui:buttonNeutral({ content = "🧪" })
+	pickColorBtn = createBtn("btn-color-picker")
 	table.insert(editMenuToggleBtns, pickColorBtn)
 	pickColorBtn:setParent(editMenu)
 	pickColorBtn.onRelease = function()
@@ -2048,7 +2114,7 @@ function ui_init()
 		setMode(nil, editSubmode.pick)
 	end
 
-	paletteBtn = ui:buttonNeutral({ content = "🎨" })
+	paletteBtn = createBtn("btn-palette")
 	paletteBtn:setParent(editMenu)
 	paletteBtn.onRelease = function()
 		paletteDisplayed = not paletteDisplayed
@@ -2082,24 +2148,32 @@ function ui_init()
 
 	editSubMenu = ui:frameTextBackground()
 
-	oneBlockBtn = ui:buttonNeutral({ content = "⚀" })
+	oneBlockBtn = createBtn("btn-add-one-block")
 	oneBlockBtn:setParent(editSubMenu)
 	oneBlockBtn.onRelease = function()
+		addBlockBtn:setIcon("btn-add-one-block")
+		removeBlockBtn:setIcon("btn-remove-one-block")
+		replaceBlockBtn:setIcon("btn-replace-one-block")
+
 		oneBlockBtn:select()
 		faceModeBtn:unselect()
 		setFacemode(false)
 	end
 	oneBlockBtn:select()
 
-	faceModeBtn = ui:buttonNeutral({ content = "⚅" })
+	faceModeBtn = createBtn("btn-add-face-mode")
 	faceModeBtn:setParent(editSubMenu)
 	faceModeBtn.onRelease = function()
+		addBlockBtn:setIcon("btn-add-face-mode")
+		removeBlockBtn:setIcon("btn-remove-face-mode")
+		replaceBlockBtn:setIcon("btn-replace-face-mode")
+
 		oneBlockBtn:unselect()
 		faceModeBtn:select()
 		setFacemode(true)
 	end
 
-	redoBtn = ui:buttonNeutral({ content = "↩️" })
+	redoBtn = createBtn("btn-redo")
 	redoBtn:setParent(editSubMenu)
 	redoBtn.onRelease = function()
 		local lastRedoableShape = redoShapesStack[#redoShapesStack]
@@ -2113,7 +2187,7 @@ function ui_init()
 		end
 	end
 
-	undoBtn = ui:buttonNeutral({ content = "↪️" })
+	undoBtn = createBtn("btn-undo")
 	undoBtn:setParent(editSubMenu)
 	undoBtn.onRelease = function()
 		local lastUndoableShape = undoShapesStack[#undoShapesStack]
@@ -2128,7 +2202,7 @@ function ui_init()
 	end
 
 	gridEnabled = false
-	gridBtn = ui:buttonNeutral({ content = "𐄳" })
+	gridBtn = createBtn("btn-grid")
 	gridBtn:setParent(editSubMenu)
 	gridBtn.onRelease = function()
 		gridEnabled = not gridEnabled
@@ -2189,6 +2263,7 @@ function ui_init()
 		cameraCurrentState.target = getEquipmentAttachPointWorldPosition("handheld")
 		cameraCurrentState.cameraRotation = settings.cameraStartPreviewRotationHand
 		cameraCurrentState.cameraDistance = 20
+		cameraBehavior.positionTargetBackoffDistance = cameraCurrentState.cameraDistance
 		cameraRefresh()
 	end
 	placeInHandBtn:select()
@@ -2206,6 +2281,7 @@ function ui_init()
 		cameraCurrentState.target = getEquipmentAttachPointWorldPosition("hat")
 		cameraCurrentState.cameraRotation = settings.cameraStartPreviewRotationHat
 		cameraCurrentState.cameraDistance = 20
+		cameraBehavior.positionTargetBackoffDistance = cameraCurrentState.cameraDistance
 		cameraRefresh()
 	end
 
@@ -2222,6 +2298,7 @@ function ui_init()
 		cameraCurrentState.target = getEquipmentAttachPointWorldPosition("backpack")
 		cameraCurrentState.cameraRotation = settings.cameraStartPreviewRotationBackpack
 		cameraCurrentState.cameraDistance = 20
+		cameraBehavior.positionTargetBackoffDistance = cameraCurrentState.cameraDistance
 		cameraRefresh()
 	end
 

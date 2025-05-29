@@ -52,14 +52,24 @@ coins.createModalContent = function(_, config)
 	local balanceText = ui:createText("Balance", { color = Color.White, size = "small" })
 	balanceText:setParent(balanceFrame)
 
-	local shape = bundle:Shape("shapes/pezh_coin_2")
-	shape.Pivot = shape.Size * 0.5
-	shape.Tick = function(o, dt)
-		o.LocalRotation.Y = o.LocalRotation.Y + dt * 2
-	end
-
-	local coinShape = ui:createShape(shape, { spherized = false })
+	local coinShape = ui:frame()
 	coinShape:setParent(balanceFrame)
+
+	Object:Load(Data:FromBundle("shapes/blux.glb"), function(o)
+		o.IsUnlit = true
+		local s = ui:createShape(o, { spherized = false })
+		local coinSize = 60
+		s.Width = coinSize
+		s.Height = coinSize
+		s:setParent(balanceFrame)
+		o.Scale.X = -o.Scale.X
+		o.Tick = function(o, dt)
+			o.LocalRotation.Y += dt * 2
+		end
+		s.pos = coinShape.pos
+		coinShape:remove()
+		coinShape = s
+	end)
 
 	local amountText = ui:createText("-", { 
 		color = Color(253, 222, 44), 
@@ -95,13 +105,21 @@ coins.createModalContent = function(_, config)
 
 	local function transactionCellParentDidResize(self)
 		self.Width = self.parent.Width
-		self.description.object.MaxWidth = self.parent.Width - self.op.Width - theme.paddingBig * 3
-		-- self.Height = math.max(self.description.Height, self.op.Height) + theme.padding * 2
+		self.icon.Height = self.op.Height * 1.2
+		self.icon.Width = self.icon.Height
+		
+		self.description.object.MaxWidth = self.parent.Width - self.op.Width - self.icon.Width - theme.padding - theme.paddingBig * 3
+
+		self.icon.pos = {
+			theme.paddingBig,
+			self.Height * 0.5 - self.icon.Height * 0.5,
+		}
 
 		self.op.pos = {
-			theme.paddingBig,
+			self.icon.pos.X + self.icon.Width + theme.padding,
 			self.Height * 0.5 - self.op.Height * 0.5,
 		}
+
 		self.description.pos = {
 			self.Width - self.description.Width - theme.paddingBig,
 			self.Height * 0.5 - self.description.Height * 0.5,
@@ -112,6 +130,13 @@ coins.createModalContent = function(_, config)
 		local c = table.remove(recycledCells)
 		if c == nil then
 			c = ui:frameScrollCell()
+			c.icon = ui:frame({
+				image = {
+					data = Data:FromBundle("images/icon-blux.png"),
+					alpha = true,
+				},
+			})
+			c.icon:setParent(c)
 			c.op = ui:createText("", { color = Color.White, size = "small" })
 			c.op:setParent(c)
 			c.description = ui:createText("", { color = Color(150, 150, 150), size = "small" })
@@ -120,10 +145,10 @@ coins.createModalContent = function(_, config)
 		end
 		if transaction.amount > 0 then
 			c.op.Color = theme.colorPositive
-			c.op.Text = string.format("🇵 ⬅️ %d", transaction.amount)
+			c.op.Text = string.format("⬅️ %d", transaction.amount)
 		else
 			c.op.Color = theme.colorNegative
-			c.op.Text = string.format("🇵 ➡️ %d", -transaction.amount)
+			c.op.Text = string.format("➡️ %d", -transaction.amount)
 		end
 		c.description.Text = transaction.info.description or transaction.info.reason or ""
 		c.Height = 45
@@ -327,13 +352,15 @@ coins.createModalContent = function(_, config)
 							topBackground.Color = Color(255, 255, 255)
 							bottomBackground.Color = Color(255, 255, 255)
 							icon.Color = Color(255, 255, 255)
-							System:IAPPurchase(packs[index].productID, function(state)
+							System:IAPPurchase(packs[index].productID, function(state, sandbox)
 								if c.loadingAnimation then
 									c.loadingAnimation:hide()
 								end
 								if state == "success" then
 									sfx("coin_1", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 									if refresh ~= nil then refresh() end
+								elseif sandbox == true then
+									Menu:ShowAlert({ message = "Blux can't be credited with a test version of the app. This transaction hasn't been charged." }, System)
 								end
 							end)
 						end

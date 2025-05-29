@@ -192,7 +192,6 @@ profile.create = function(_, config)
 
 	-- functions to create each node
 
-	local coinsBtn
 	local creationsBtn
 	local addFriendBtn
 	local acceptFriendBtn
@@ -243,7 +242,7 @@ profile.create = function(_, config)
 
 		if isLocal then
 			if config.editAvatar ~= nil then
-				editAvatarBtn = ui:buttonNeutral({ content = "✏️ Edit avatar", textSize = "small" })
+				editAvatarBtn = ui:buttonSecondary({ content = "✏️ Edit avatar", textSize = "small" })
 				editAvatarBtn:setParent(node)
 
 				editAvatarBtn.onRelease = function()
@@ -251,7 +250,7 @@ profile.create = function(_, config)
 				end
 			end
 
-			editBioBtn = ui:buttonNeutral({ content = "✏️ Edit bio", textSize = "small" })
+			editBioBtn = ui:buttonSecondary({ content = "✏️ Edit bio", textSize = "small" })
 			editBioBtn:setParent(node)
 
 			editBioBtn.onRelease = function()
@@ -280,7 +279,7 @@ profile.create = function(_, config)
 				ui:turnOff()
 			end
 
-			editLinksBtn = ui:buttonNeutral({ content = "✏️ Edit links", textSize = "small" })
+			editLinksBtn = ui:buttonSecondary({ content = "✏️ Edit links", textSize = "small" })
 			editLinksBtn:setParent(node)
 
 			editLinksBtn.onRelease = function()
@@ -682,85 +681,69 @@ profile.create = function(_, config)
 
 	local avatarLoadedListener = nil
 
-	if isLocal then
-		coinsBtn = ui:buttonNeutral({ content = "🇵 …", sound = "coin_1" })
-		coinsBtn.onRelease = function(_)
-			content:getModalIfContentIsActive():push(require("coins"):createModalContent({ uikit = ui }))
+	-- isLocal
+	creationsBtn = ui:buttonSecondary({ content = "🛠️ Creations", textSize = "small" })
+	creationsBtn.onRelease = function()
+		Menu:ShowCreations()
+
+		local creationsContent = require("creations"):createModalContent({
+			uikit = ui,
+			authorId = userID,
+			authorName = username,
+		})
+		content:push(creationsContent)
+
+		-- Menu:ShowAlert({ message = "Coming soon!" }, System)
+	end
+
+	local alreadyFriends = nil
+	local requestSent = nil
+	local requestReceived = nil
+
+	functions.updateFriendInfo = function()
+		-- wait for both responses
+		if alreadyFriends == nil or requestSent == nil or requestReceived == nil then
+			return
 		end
 
-		api:getBalance(function(err, balance)
-			if not coinsBtn.Text then
-				return
-			end
-			if err then
-				coinsBtn.Text = "🇵 0"
-				return
-			end
-			coinsBtn.Text = "🇵 " .. math.floor(balance.totalCoins)
-		end)
-	else
-		creationsBtn = ui:buttonSecondary({ content = "🛠️ Creations", textSize = "small" })
-		creationsBtn.onRelease = function()
-			Menu:ShowCreations()
-
-			local creationsContent = require("creations"):createModalContent({
-				uikit = ui,
-				authorId = userID,
-				authorName = username,
-			})
-			content:push(creationsContent)
-
-			-- Menu:ShowAlert({ message = "Coming soon!" }, System)
+		friendText:hide()
+		if addFriendBtn then
+			addFriendBtn:hide()
+		end
+		if acceptFriendBtn then
+			acceptFriendBtn:hide()
 		end
 
-		local alreadyFriends = nil
-		local requestSent = nil
-		local requestReceived = nil
-
-		functions.updateFriendInfo = function()
-			-- wait for both responses
-			if alreadyFriends == nil or requestSent == nil or requestReceived == nil then
-				return
+		if alreadyFriends then
+			friendText.Text = "Friends ❤️"
+			friendText:show()
+		elseif requestSent then
+			friendText.Text = "Friend request sent! ✉️"
+			friendText:show()
+		elseif requestReceived then
+			if not acceptFriendBtn then
+				acceptFriendBtn = ui:buttonNeutral({ content = "Accept Friend! ✅", textSize = "small" })
+				acceptFriendBtn:setParent(nil)
 			end
+			acceptFriendBtn:show()
 
-			friendText:hide()
+			acceptFriendBtn.onRelease = function(btn)
+				btn:disable()
+				systemApi:replyToFriendRequest(userID, true, function(ok, err)
+					if ok == true and err == nil then
+						functions.checkFriendRelationShip()
+					else
+						btn:enable()
+					end
+				end)
+			end
+		else
+			if not addFriendBtn and not isLocal then
+				addFriendBtn = ui:buttonNeutral({ content = "Add Friend 👥", textSize = "small" })
+				addFriendBtn:setParent(nil)
+			end
 			if addFriendBtn then
-				addFriendBtn:hide()
-			end
-			if acceptFriendBtn then
-				acceptFriendBtn:hide()
-			end
-
-			if alreadyFriends then
-				friendText.Text = "Friends ❤️"
-				friendText:show()
-			elseif requestSent then
-				friendText.Text = "Friend request sent! ✉️"
-				friendText:show()
-			elseif requestReceived then
-				if not acceptFriendBtn then
-					acceptFriendBtn = ui:buttonNeutral({ content = "Accept Friend! ✅", textSize = "small" })
-					acceptFriendBtn:setParent(nil)
-				end
-				acceptFriendBtn:show()
-
-				acceptFriendBtn.onRelease = function(btn)
-					btn:disable()
-					systemApi:replyToFriendRequest(userID, true, function(ok, err)
-						if ok == true and err == nil then
-							functions.checkFriendRelationShip()
-						else
-							btn:enable()
-						end
-					end)
-				end
-			else
-				if not addFriendBtn then
-					addFriendBtn = ui:buttonNeutral({ content = "Add Friend 👥", textSize = "small" })
-					addFriendBtn:setParent(nil)
-				end
 				addFriendBtn:show()
-
 				addFriendBtn.onRelease = function(btn)
 					btn:disable()
 					systemApi:sendFriendRequest(userID, function(ok, err)
@@ -771,66 +754,67 @@ profile.create = function(_, config)
 						end
 					end)
 				end
+			end			
+		end
+
+		functions.refreshBottomButtons()
+	end
+
+	functions.checkFriendRelationShip = function()
+		-- check if the User is already a friend
+		local req = api:getFriends({ fields = { "id" } }, function(friends, err)
+			if err ~= nil then
+				return
 			end
 
-			functions.refreshBottomButtons()
-		end
-
-		functions.checkFriendRelationShip = function()
-			-- check if the User is already a friend
-			local req = api:getFriends({ fields = { "id" } }, function(friends, err)
-				if err ~= nil then
-					return
+			alreadyFriends = false
+			for _, friend in pairs(friends) do
+				if friend.id == userID then
+					alreadyFriends = true
+					break
 				end
+			end
+			functions.updateFriendInfo()
+		end)
+		table.insert(requests, req)
 
-				alreadyFriends = false
-				for _, friend in pairs(friends) do
-					if friend.id == userID then
-						alreadyFriends = true
-						break
-					end
+		-- check if a request was already sent
+		req = api:getSentFriendRequests({ fields = { "id" } }, function(requests, err)
+			if err ~= nil then
+				return
+			end
+
+			requestSent = false
+			for _, req in pairs(requests) do
+				if req.id == userID then
+					requestSent = true
+					break
 				end
-				functions.updateFriendInfo()
-			end)
-			table.insert(requests, req)
+			end
+			functions.updateFriendInfo()
+		end)
+		table.insert(requests, req)
 
-			-- check if a request was already sent
-			req = api:getSentFriendRequests({ fields = { "id" } }, function(requests, err)
-				if err ~= nil then
-					return
+		-- check if a request has been received
+		req = api:getReceivedFriendRequests({ fields = { "id" } }, function(requests, err)
+			if err ~= nil then
+				return
+			end
+
+			requestReceived = false
+			for _, req in pairs(requests) do
+				if req.id == userID then
+					requestReceived = true
+					break
 				end
-
-				requestSent = false
-				for _, req in pairs(requests) do
-					if req.id == userID then
-						requestSent = true
-						break
-					end
-				end
-				functions.updateFriendInfo()
-			end)
-			table.insert(requests, req)
-
-			-- check if a request has been received
-			req = api:getReceivedFriendRequests({ fields = { "id" } }, function(requests, err)
-				if err ~= nil then
-					return
-				end
-
-				requestReceived = false
-				for _, req in pairs(requests) do
-					if req.id == userID then
-						requestReceived = true
-						break
-					end
-				end
-				functions.updateFriendInfo()
-			end)
-			table.insert(requests, req)
-		end
-
-		functions.checkFriendRelationShip()
+			end
+			functions.updateFriendInfo()
+		end)
+		table.insert(requests, req)
 	end
+
+	functions.checkFriendRelationShip()
+	
 
 	functions.refresh = function()
 		if activeNode == nil then
@@ -883,19 +867,12 @@ profile.create = function(_, config)
 		local h = 0
 
 		if activeNode == infoNode then
-			if isLocal then
-				coinsBtn:setParent(profileNode)
-				h = coinsBtn.Height + padding * 2
-				local w = coinsBtn.Width
-				coinsBtn.pos = { profileNode.Width * 0.5 - w * 0.5, h * 0.5 - coinsBtn.Height * 0.5 }
-			else
-				creationsBtn:setParent(profileNode)
-				friend:setParent(profileNode)
-				h = math.max(friend.Height, creationsBtn.Height) + padding * 2
-				local w = friend.Width + padding + creationsBtn.Width
-				friend.pos = { profileNode.Width * 0.5 - w * 0.5, h * 0.5 - friend.Height * 0.5 }
-				creationsBtn.pos = { friend.pos.X + friend.Width + padding, h * 0.5 - creationsBtn.Height * 0.5 }
-			end
+			creationsBtn:setParent(profileNode)
+			friend:setParent(profileNode)
+			h = math.max(friend.Height, creationsBtn.Height) + padding * 2
+			local w = friend.Width + padding + creationsBtn.Width
+			friend.pos = { profileNode.Width * 0.5 - w * 0.5, h * 0.5 - friend.Height * 0.5 }
+			creationsBtn.pos = { friend.pos.X + friend.Width + padding, h * 0.5 - creationsBtn.Height * 0.5 }
 		else -- edit node
 			if isLocal then
 				doneBtn:setParent(profileNode)

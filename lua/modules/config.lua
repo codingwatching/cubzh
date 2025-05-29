@@ -2,6 +2,7 @@ config = {}
 
 defaultOptions = {
 	acceptTypes = {}, -- { fieldName : { "Number3", "Object" }}
+	modifyOverrides = false, -- if true, modifies overrides instead of returning a new table
 }
 
 config.merge = function(self, defaults, overrides, options)
@@ -67,6 +68,13 @@ config.merge = function(self, defaults, overrides, options)
 				print("⚠️ config:merge - overrides key ignored: " .. k)
 			end
 		end
+	end
+
+	if options.modifyOverrides == true then
+		for k, v in conf do
+			overrides[k] = v
+		end
+		return overrides
 	end
 
 	return conf

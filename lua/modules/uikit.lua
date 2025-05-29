@@ -1474,7 +1474,7 @@ function createUI(system)
 	]]
 	ui.createShape = function(_, shape, config)
 		if
-			shape == nil or (typeof(shape) ~= "Object" and typeof(shape) ~= "Shape" and typeof(shape) ~= "MutableShape")
+			shape == nil or (typeof(shape) ~= "Object" and typeof(shape) ~= "Shape" and typeof(shape) ~= "MutableShape" and typeof(shape) ~= "Mesh")
 		then
 			error("ui:createShape(shape) expects a non-nil Shape or MutableShape", 2)
 		end

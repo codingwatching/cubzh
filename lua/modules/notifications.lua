@@ -157,7 +157,7 @@ mod.createModalContent = function(_, config)
 
 		local img
 		if notification.category == "money" then
-			img = "images/icon-pezh.png"
+			img = "images/icon-blux.png"
 		elseif notification.category == "social" then
 			img = "images/icon-friends.png"
 		elseif notification.category == "like" then
