@@ -202,7 +202,7 @@ profile.create = function(_, config)
 		local socialBtnsConfig = {
 			{
 				key = "discord",
-				icon = "👾",
+				icon = "images/icon-discord.png",
 				action = function(str)
 					Dev:CopyToClipboard(str)
 				end,
@@ -210,7 +210,7 @@ profile.create = function(_, config)
 			},
 			{
 				key = "tiktok",
-				icon = "🇹",
+				icon = "images/icon-tiktok.png",
 				action = function(str)
 					URL:Open("https://www.tiktok.com/@" .. str)
 				end,
@@ -218,7 +218,7 @@ profile.create = function(_, config)
 			},
 			{
 				key = "x",
-				icon = "🇽",
+				icon = "images/icon-x.png",
 				action = function(str)
 					URL:Open("https://x.com/" .. str)
 				end,
@@ -226,7 +226,7 @@ profile.create = function(_, config)
 			},
 			{
 				key = "github",
-				icon = "🇬",
+				icon = "images/icon-github.png",
 				action = function(str)
 					URL:Open("https://github.com/" .. str)
 				end,
@@ -313,7 +313,25 @@ profile.create = function(_, config)
 
 		local socialBtns = {}
 		for _, config in ipairs(socialBtnsConfig) do
-			local btn = ui:buttonSecondary({ content = "", textSize = "small", textColor = theme.urlColor })
+			local btn = ui:frame()
+			local label = ui:createText("", { color = theme.urlColor, size = "small" })
+			label:setParent(btn)
+			local icon = ui:frame({
+				image = {
+					data = Data:FromBundle(config.icon),
+					alpha = true,
+				},
+			})
+			icon.Width = label.Height
+			icon.Height = icon.Width
+			icon:setParent(btn)
+			icon.pos = { theme.paddingTiny, theme.paddingTiny + label.Height * 0.5 - icon.Height * 0.5 }
+			label.pos = { icon.pos.X + icon.Width + theme.padding, theme.paddingTiny }
+			btn.Height = label.Height + theme.paddingTiny * 2
+
+			btn.label = label
+			btn.icon = icon
+			
 			btn:setParent(node)
 			btn:hide()
 			socialBtns[config.key] = btn
@@ -464,21 +482,22 @@ profile.create = function(_, config)
 				btn = socialBtns[config.key]
 				if value ~= nil and value ~= "" then
 					if string.len(value) > nbMaxChars then
-						displayStr = config.icon
-							.. " "
-							.. config.prefix
+						-- config.icon
+						displayStr = config.prefix
 							.. string.sub(value, 1, nbMaxChars - 1)
 							.. "…"
 					else
-						displayStr = config.icon .. " " .. config.prefix .. value
+						displayStr = config.prefix .. value
 					end
-					btn.Text = displayStr
+					btn.label.Text = displayStr
+					btn.Width = btn.label.Width + btn.icon.Width + theme.paddingTiny * 2 + theme.padding * 2
+					btn.Height = btn.label.Height + theme.paddingTiny * 2
 					btn:show()
 					btn.onRelease = function()
 						config.action(value)
 					end
 				else
-					btn.Text = config.icon
+					btn.Text = "" -- config.icon
 					btn:hide()
 				end
 			end
@@ -517,14 +536,14 @@ profile.create = function(_, config)
 			return str -- return the string, unchanged
 		end
 
-		local socialLinksTitle = ui:createText("✏️ Social links", theme.textColor)
-		socialLinksTitle:setParent(node)
-
-		local discordLogo = ui:createFrame()
+		local discordLogo = ui:frame({
+			image = {
+				data = Data:FromBundle("images/icon-discord.png"),
+				alpha = true,
+			},
+		})
 		discordLogo:setParent(node)
-		local discordEmoji = ui:createText("👾")
-		discordEmoji:setParent(discordLogo)
-		local discordLink = ui:createTextInput(userInfo.discord or "", "Discord username")
+		local discordLink = ui:createTextInput(userInfo.discord or "", "Discord username", { textSize = "small" })
 		discordLink:setParent(node)
 		discordLink.onFocusLost = function(self)
 			local previous = userInfo.discord
@@ -540,11 +559,14 @@ profile.create = function(_, config)
 			-- table.insert(requests, req)
 		end
 
-		local tiktokLogo = ui:createFrame()
+		local tiktokLogo = ui:frame({
+			image = {
+				data = Data:FromBundle("images/icon-tiktok.png"),
+				alpha = true,
+			},
+		})
 		tiktokLogo:setParent(node)
-		local tiktokEmoji = ui:createText("🇹")
-		tiktokEmoji:setParent(tiktokLogo)
-		local tiktokLink = ui:createTextInput(userInfo.tiktok or "", "TikTok username")
+		local tiktokLink = ui:createTextInput(userInfo.tiktok or "", "TikTok username", { textSize = "small" })
 		tiktokLink:setParent(node)
 		tiktokLink.onFocusLost = function(self)
 			local previous = userInfo.tiktok
@@ -562,11 +584,14 @@ profile.create = function(_, config)
 			-- table.insert(requests, req)
 		end
 
-		local xLogo = ui:createFrame()
+		local xLogo = ui:frame({
+			image = {
+				data = Data:FromBundle("images/icon-x.png"),
+				alpha = true,
+			},
+		})
 		xLogo:setParent(node)
-		local xEmoji = ui:createText("🇽")
-		xEmoji:setParent(xLogo)
-		local xLink = ui:createTextInput(userInfo.x or "", "X username")
+		local xLink = ui:createTextInput(userInfo.x or "", "X username", { textSize = "small" })
 		xLink.onTextChange = function()
 			if xLink.Text ~= "" then
 				if xLink.Text == "@" then
@@ -598,11 +623,14 @@ profile.create = function(_, config)
 			-- table.insert(requests, req)
 		end
 
-		local githubLogo = ui:createFrame()
+		local githubLogo = ui:frame({
+			image = {
+				data = Data:FromBundle("images/icon-github.png"),
+				alpha = true,
+			},
+		})
 		githubLogo:setParent(node)
-		local githubEmoji = ui:createText("🇬")
-		githubEmoji:setParent(githubLogo)
-		local githubUsername = ui:createTextInput(userInfo.github or "", "GitHub username")
+		local githubUsername = ui:createTextInput(userInfo.github or "", "GitHub username", { textSize = "small" })
 		githubUsername:setParent(node)
 		githubUsername.onFocusLost = function(self)
 			local previous = userInfo.github
@@ -623,54 +651,55 @@ profile.create = function(_, config)
 			local padding = theme.padding
 			local textInputHeight = discordLink.Height
 
-			self.Height = socialLinksTitle.Height
-				+ padding
-				+ textInputHeight
+			self.Height = textInputHeight
 				+ padding -- discord
 				+ textInputHeight
 				+ padding -- tiktok
 				+ textInputHeight
 				+ padding -- X
 				+ textInputHeight -- Github
+				+ padding
 
-			socialLinksTitle.pos.X = 0
-			socialLinksTitle.pos.Y = self.Height - socialLinksTitle.Height
+			local y = self.Height
 
-			discordLogo.pos.X = 0
-			discordLogo.pos.Y = socialLinksTitle.pos.Y - textInputHeight - padding
-			discordLogo.Width = discordEmoji.Width
-			discordLogo.Height = textInputHeight
-			discordLink.pos.X = discordLogo.Width + padding
-			discordLink.pos.Y = discordLogo.pos.Y
-			discordLink.Width = self.Width - discordLogo.Width - padding
-			discordEmoji.pos = { 0, (discordLogo.Height - discordEmoji.Height) * 0.5 }
+			local logoSize = textInputHeight * 0.6
+			local inputWidth = self.Width - logoSize - padding * 3
 
-			tiktokLogo.pos.X = 0
-			tiktokLogo.pos.Y = discordLogo.pos.Y - textInputHeight - padding
-			tiktokLogo.Width = tiktokEmoji.Width
-			tiktokLogo.Height = textInputHeight
-			tiktokLink.pos.X = tiktokLogo.Width + padding
-			tiktokLink.pos.Y = tiktokLogo.pos.Y
-			tiktokLink.Width = self.Width - tiktokLogo.Width - padding
-			tiktokEmoji.pos = { 0, (tiktokLogo.Height - tiktokEmoji.Height) * 0.5 }
+			y -= padding + textInputHeight
+			discordLogo.Width = logoSize
+			discordLogo.Height = logoSize
+			discordLogo.pos.X = padding
+			discordLogo.pos.Y = y + textInputHeight * 0.5 - discordLogo.Height * 0.5
+			discordLink.pos.X = discordLogo.pos.X + discordLogo.Width + padding
+			discordLink.pos.Y = y
+			discordLink.Width = inputWidth
 
-			xLogo.pos.X = 0
-			xLogo.pos.Y = tiktokLogo.pos.Y - textInputHeight - padding
-			xLogo.Width = xEmoji.Width
-			xLogo.Height = textInputHeight
-			xLink.pos.X = xLogo.Width + padding
-			xLink.pos.Y = xLogo.pos.Y
-			xLink.Width = self.Width - xLogo.Width - padding
-			xEmoji.pos = { 0, (xLogo.Height - xEmoji.Height) * 0.5 }
+			y -= padding + textInputHeight
+			tiktokLogo.Width = logoSize
+			tiktokLogo.Height = logoSize
+			tiktokLogo.pos.X = padding
+			tiktokLogo.pos.Y = y + textInputHeight * 0.5 - tiktokLogo.Height * 0.5
+			tiktokLink.pos.X = tiktokLogo.pos.X + tiktokLogo.Width + padding
+			tiktokLink.pos.Y = y
+			tiktokLink.Width = inputWidth
 
-			githubLogo.pos.X = 0
-			githubLogo.pos.Y = xLogo.pos.Y - textInputHeight - theme.padding
-			githubLogo.Width = githubEmoji.Width
-			githubLogo.Height = textInputHeight
-			githubUsername.pos.X = githubLogo.Width + padding
-			githubUsername.pos.Y = githubLogo.pos.Y
-			githubUsername.Width = self.Width - githubLogo.Width - padding
-			githubEmoji.pos = { 0, (githubLogo.Height - githubEmoji.Height) * 0.5 }
+			y -= padding + textInputHeight
+			xLogo.Width = logoSize
+			xLogo.Height = logoSize
+			xLogo.pos.X = padding
+			xLogo.pos.Y = y + textInputHeight * 0.5 - xLogo.Height * 0.5
+			xLink.pos.X = xLogo.pos.X + xLogo.Width + padding
+			xLink.pos.Y = y
+			xLink.Width = inputWidth
+
+			y -= padding + textInputHeight
+			githubLogo.Width = logoSize
+			githubLogo.Height = logoSize
+			githubLogo.pos.X = padding
+			githubLogo.pos.Y = y + textInputHeight * 0.5 - githubLogo.Height * 0.5
+			githubUsername.pos.X = githubLogo.pos.X + githubLogo.Width + padding
+			githubUsername.pos.Y = y
+			githubUsername.Width = inputWidth
 		end
 
 		return node
