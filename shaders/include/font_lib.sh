@@ -13,12 +13,11 @@ vec3 unpackFontUniformMetadata(float f) {
 	return vec3(weight, softness, outlineWeight) / 255.0;
 }
 
-vec2 unpackFontAttributesMetadata(float f) {
+float unpackFontAttributesMetadata(float f) {
 	float unpack = f * 32767.0;
-	float filtering = floor((unpack + UNPACK_FUDGE) / 2.0);
-	float colored = unpack - filtering * 2.0;
+	float colored = unpack;
 
-	return vec2(colored, filtering);
+	return colored;
 }
 
 #endif // __FONT_LIB_SH__
