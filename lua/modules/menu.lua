@@ -456,7 +456,9 @@ end
 
 function refreshDisplay()
 	if cppMenuIsActive then
-		hideTopBar()
+		if hideTopBar ~= nil then hideTopBar() end
+		if hideSubTopBar ~= nil then hideSubTopBar() end
+		if removeAIPrompt ~= nil then removeAIPrompt() end
 
 		if activeModal then
 			activeModal:hide()
@@ -1106,7 +1108,7 @@ function showSubTopBar()
 			else
 				STBLabel1.Text = string.format("%d", balance.totalCoins)
 			end
-			self:layout()
+			subTopBar:layout()
 		end)
 	end
 	
@@ -1673,7 +1675,7 @@ if DEV_MODE == true then
 			end
 		end
 
-		local function removeAIPrompt()
+		function removeAIPrompt()
 			if aiInput ~= nil then
 				ease:cancel(aiInput.pos)
 				aiInput:remove()
@@ -2240,8 +2242,8 @@ function getCubzhMenuModalContent()
 
 	local content = modal:createContent()
 	content.closeButton = true
-	content.title = "Cubzh"
-	content.icon = "⎔"
+	content.title = "Blip"
+	content.icon = Data:FromBundle("images/icon-blip.png")
 
 	local node = ui:createFrame()
 	content.node = node
@@ -2305,9 +2307,25 @@ function getCubzhMenuModalContent()
 		closeModal()
 	end
 
+	local label = ui:createText(" Help!", { size = "small", color = Color.White })
+	local icon = ui:frame({
+		image = {
+			data = Data:FromBundle("images/icon-discord.png"),
+			alpha = true,
+		}
+	})
+
+	local c = ui:frame()
+	label:setParent(c)
+	icon:setParent(c)
+	icon.Height = label.Height
+	icon.Width = icon.Height
+	label.pos = { icon.Width, 0 }
+	c.Width = icon.Width + label.Width
+	c.Height = icon.Height
+
 	local btnHelp = ui:buttonSecondary({
-		content = "👾 Help!",
-		textSize = "small",
+		content = c,
 	})
 	btnHelp:setParent(node)
 

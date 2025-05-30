@@ -101,7 +101,7 @@ mod.createModalContent = function(_, config)
 	local content = modal:createContent()
 	content.closeButton = true
 	content.title = "Notifications"
-	content.icon = "❗"
+	content.icon = Data:FromBundle("images/icon-bell.png")
 
 	local node = ui:createFrame()
 	content.node = node
