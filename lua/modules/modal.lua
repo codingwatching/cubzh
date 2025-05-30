@@ -53,6 +53,7 @@ local modalContentMT = {
 
 				self.title = nil
 				self.icon = nil
+				self.verified = false
 				self.idealReducedContentSize = nil
 				self.tabs = {}
 			end
@@ -129,6 +130,9 @@ modal.createContent = function(_)
 		-- title can be a string, it's automatically centered
 		-- considered as first topCenter element
 		title = nil,
+
+		-- displays "verified" badge next to the title if true
+		verified = false,
 
 		-- closeButton is displayed by default, set to false to hide it
 		closeButton = true,
@@ -276,6 +280,7 @@ modal.create = function(_, content, maxWidth, maxHeight, position, uikit)
 
 	node._icon = nil
 	node._title = nil
+	node._verifiedBadge = nil
 	node._backButton = nil
 	node._topLeft = {}
 	node._topCenter = {}
@@ -578,6 +583,10 @@ modal.create = function(_, content, maxWidth, maxHeight, position, uikit)
 				self._title:remove()
 				self._title = nil
 			end
+			if self._verifiedBadge ~= nil then
+				self._verifiedBadge:remove()
+				self._verifiedBadge = nil
+			end
 			if self._backButton ~= nil then
 				self._backButton:remove()
 				self._backButton = nil
@@ -670,6 +679,20 @@ modal.create = function(_, content, maxWidth, maxHeight, position, uikit)
 				title:setParent(self.topBar)
 				table.insert(self._topCenter, title)
 				self._title = title
+			end
+
+			if modalContent.verified == true and self._title ~= nil then
+				local verifiedBadge =  ui:frame({
+					image = {
+						data = Data:FromBundle("images/icon-verified.png"),
+						alpha = true,
+					},
+				})
+				verifiedBadge.Height = self._title.Height
+				verifiedBadge.Width = verifiedBadge.Height
+				verifiedBadge:setParent(self.topBar)
+				table.insert(self._topCenter, verifiedBadge)
+				self._verifiedBadge = verifiedBadge
 			end
 
 			for _, element in ipairs(modalContent.topCenter) do

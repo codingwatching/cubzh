@@ -1013,10 +1013,10 @@ profile.create = function(_, config)
 			userInfo.created = usr.created
 			userInfo.verified = usr.HasVerifiedPhoneNumber == true or usr.hasEmail == true
 
+			content.title = username
+
 			if userInfo.verified then
-				content.title = username .. " 🇻"
-			else
-				content.title = username
+				content.verified = true
 			end
 
 			infoNode:setUserInfo()
