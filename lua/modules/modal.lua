@@ -6,6 +6,9 @@ local modal = {}
 local ANIMATION_OFFSET = 50
 local ANIMATION_TIME = 0.22
 
+local refText = require("uikit"):createText("X", { size = "default" })
+refText:hide()
+
 local modalContentMT = {
 	__index = function(t, k)
 		if k == "cleanup" then
@@ -606,7 +609,15 @@ modal.create = function(_, content, maxWidth, maxHeight, position, uikit)
 			self._bottomRight = {}
 
 			if stackIndex > 1 then
-				local backBtn = ui:buttonSecondary({ content = "⬅️", textColor = Color.White })
+				local icon = ui:frame({
+					image = {
+						data = Data:FromBundle("images/icon-back.png"),
+						alpha = true,
+					},
+				})
+				icon.Width = refText.Height
+				icon.Height = icon.Width
+				local backBtn = ui:buttonSecondary({ content = icon })
 				backBtn:setColor(theme.colorNegative)
 				backBtn.onRelease = function()
 					self:pop()
@@ -1104,7 +1115,15 @@ modal.create = function(_, content, maxWidth, maxHeight, position, uikit)
 	node.bottomBar = bottomBar
 
 	-- close button
-	node.closeBtn = ui:buttonSecondary({ content = "❌" })
+	local icon = ui:frame({
+		image = {
+			data = Data:FromBundle("images/icon-close.png"),
+			alpha = true,
+		},
+	})
+	icon.Width = refText.Height
+	icon.Height = icon.Width
+	node.closeBtn = ui:buttonSecondary({ content = icon })
 	node.closeBtn:setParent(topBar)
 	node.closeBtn.onRelease = function(_)
 		node:close()
