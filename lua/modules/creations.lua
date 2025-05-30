@@ -435,7 +435,7 @@ creations.createModalContent = function(_, config)
 		else
 			creationsContent.title = config.authorName .. "'s Creations"
 		end
-		creationsContent.icon = "🏗️"
+		creationsContent.icon = "🛠️"
 
 		local node = ui:frame()
 

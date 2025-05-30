@@ -71,7 +71,7 @@ profile.create = function(_, config)
 
 	local title = username
 	content.title = title
-	content.icon = "😛"
+	content.icon = "🙂"
 	content.node = profileNode
 
 	local cell = ui:frame() -- { color = Color(100, 100, 100) }

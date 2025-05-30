@@ -46,7 +46,7 @@ mt.__index.create = function(_, maxWidth, maxHeight, position, uikit)
 	local ui = uikit or require("uikit")
 	local content = modal:createContent()
 	content.title = "Friends"
-	content.icon = "😛"
+	content.icon = "👥"
 
 	content.didBecomeActive = function()
 		systemApi:readNotifications({
