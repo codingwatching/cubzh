@@ -60,6 +60,7 @@ _DebugColor = function()
 	return Color(math.random(150, 255), math.random(150, 255), math.random(150, 255))
 end
 pointer = nil
+modelSelected = 4
 
 -- MODALS
 
@@ -1785,7 +1786,6 @@ if DEV_MODE == true then
 				sfx("waterdrop_2", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 				aiUINeedsFirstLayout = true
 
-				local modelSelected = 4
 				local models = { "Claude 3.7", "Gemini 2.5", "Grok 3", "Grok 3 Mini" }
 				local modelNames = {
 					"claude-3-7-sonnet-20250219",
@@ -1794,15 +1794,18 @@ if DEV_MODE == true then
 					"grok-3-mini-beta",
 				}
 
-				local comboBtn =
-					ui:buttonSecondary({ content = models[modelSelected], textSize = "small", unfocuses = false })
-				modelCombo =
-					ui:comboBox({ choices = models, button = comboBtn, textSize = "small", optionsPosition = "top" })
+				modelCombo = ui:comboBox({
+					choices = models,
+					button = comboBtn,
+					textSize = "small",
+					optionsPosition = "top",
+				})
 				modelCombo.onSelect = function(self, index)
 					self.Text = models[index]
 					modelSelected = index
 				end
-
+				modelCombo.Width = 150
+				modelCombo:select(modelSelected)
 				modelCombo:setParent(background)
 
 				aiCharacter = ui:frame({ image = {

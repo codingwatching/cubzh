@@ -10,6 +10,7 @@ BUTTON_BORDER = 3
 BUTTON_PADDING = 3
 BUTTON_UNDERLINE = 1
 COMBO_BOX_MAX_HEIGHT = 300
+COMBO_BOX_DEFAULT_WIDTH = 100
 DEFAULT_SLICE_9_SCALE = 1.0
 LAYER_STEP = -0.1 -- children offset
 SCROLL_DAMPENING_FACTOR = 0.2
@@ -3849,10 +3850,65 @@ function createUI(system)
 
 		local btn = config.button
 		if btn == nil then
-			btn = ui:buttonNeutral({ content = "combo box" })
+			local btnContent = ui:frame()
+			local selectorIcon = ui:frame({ image = {
+				data = Data:FromBundle("images/icon-selector.png"),
+				alpha = true,
+			} })
+			local selectorLabel = ui:createText("combo box", { size = config.textSize, color = Color.White })
+			selectorIcon:setParent(btnContent)
+			selectorLabel:setParent(btnContent)
+			btnContent.Width = COMBO_BOX_DEFAULT_WIDTH - (BUTTON_PADDING * 2 + BUTTON_BORDER * 2)
+			btn = ui:buttonSecondary({ content = btnContent })
+
+			local function layout()
+				selectorLabel.object.Scale = 1
+				selectorIcon.Width = selectorLabel.Height
+				selectorIcon.Height = selectorIcon.Width
+
+				btnContent.Height = selectorIcon.Height
+
+				local w = btnContent.Width - selectorIcon.Width - theme.padding
+				if selectorLabel.Width > w then
+					selectorLabel.object.Scale = w / selectorLabel.Width
+				end
+
+				selectorLabel.pos = { 0, btnContent.Height * 0.5 - selectorLabel.Height * 0.5 }
+				selectorIcon.pos = { btnContent.Width - selectorIcon.Width, 0 }
+			end
+
+			layout()
+
+			btn._setText = function(self, text)
+				selectorLabel.Text = text
+				layout()
+			end
+
+			local setWidth = btn._setWidth
+			btn._setWidth = function(self, width)
+				setWidth(self, width)
+				btnContent.Width = width - (BUTTON_PADDING * 2 + BUTTON_BORDER * 2)
+				layout()
+			end
+
+			local setHeight = btn._setHeight
+			btn._setHeight = function(self, height)
+				setHeight(self, height)
+				layout()
+			end
 		end
 
 		btn.onSelect = config.onSelect
+
+		btn.select = function(self, index)
+			if index < 1 then return end
+			if index > #choices then return end
+
+			btn.selectedRow = index
+			if btn.onSelect ~= nil then
+				btn:onSelect(index)
+			end
+		end
 
 		btn.onRelease = function(_)
 			btn:disable()
@@ -3863,10 +3919,11 @@ function createUI(system)
 				if self._choiceIndex == nil then
 					return
 				end
-				btn.selectedRow = self._choiceIndex
-				if btn.onSelect ~= nil then
-					btn:onSelect(self._choiceIndex)
-				end
+				btn:select(self._choiceIndex)
+				-- btn.selectedRow = self._choiceIndex
+				-- if btn.onSelect ~= nil then
+				-- 	btn:onSelect(self._choiceIndex)
+				-- end
 				if selector.close then
 					selector:close()
 				end
