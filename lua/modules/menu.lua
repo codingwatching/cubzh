@@ -1051,9 +1051,6 @@ function showSubTopBar()
 	subTopBar.Width = 80
 	subTopBar.pos = { 0, 0 }
 	
-	bluxBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
-	bluxBtn:setParent(topBar)
-	
 	local STBBluxIcon1 = ui:frame({ image = {
 		data = Data:FromBundle("images/icon-blux.png"),
 		alpha = true,
