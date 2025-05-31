@@ -4033,7 +4033,11 @@ function createUI(system)
 			p.Y = p.Y + offset
 
 			selector.pos.X = p.X
-			selector.pos.Y = p.Y - 50
+			if config.optionsPosition == "bottom" then
+				selector.pos.Y = p.Y + 20
+			else
+				selector.pos.Y = p.Y - 20
+			end
 
 			ease:outBack(selector, 0.22).pos = p
 

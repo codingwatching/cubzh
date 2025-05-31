@@ -289,13 +289,13 @@ function showModal(key, config)
 	end
 
 	if activeModal ~= nil then
+		-- hide AI assistant if shown
+		if hideSubTopBar ~= nil then hideSubTopBar() end
+		if removeAIPrompt ~= nil then removeAIPrompt() end
+
 		menu:RemoveHighlight()
 
 		ui.unfocus() -- unfocuses node currently focused
-
-		-- if key ~= MODAL_KEYS.WORLDS then
-		-- 	activeModal:setParent(background)
-		-- end
 
 		activeModalKey = key
 
@@ -1579,15 +1579,16 @@ if DEV_MODE == true then
 				targetInputPosition[1],
 				targetInputPosition[2] + aiInput.Height + PADDING,
 			}
-			local targetModelComboPosition = {
-				targetCharacterPosition[1],
-				targetCharacterPosition[2] + aiCharacter.Height + PADDING,
-			}
+			-- local targetModelComboPosition = {
+			-- 	subTopBar.pos.X,
+			-- 	subTopBar.pos.Y - ,
+			-- 	-- targetCharacterPosition[1],
+			-- 	-- targetCharacterPosition[2] + aiCharacter.Height + PADDING,
+			-- }
 
 			if promptEnabled == false then
 				-- move character and bubble just above safe area
 				targetCharacterPosition[2] = Screen.SafeArea.Bottom + PADDING
-				targetModelComboPosition[2] = targetCharacterPosition[2] + aiCharacter.Height + PADDING
 				-- move input below viewport
 				targetInputPosition[2] = -aiInput.Height - PADDING
 			end
@@ -1604,8 +1605,12 @@ if DEV_MODE == true then
 				aiInput.pos = targetInputPosition
 				aiCharacter.pos = targetCharacterPosition
 				aiCharacterBubble.pos = targetBubblePosition
-				modelCombo.pos = targetModelComboPosition
 			end
+
+			modelCombo.pos = {
+				subTopBar.pos.X,
+				subTopBar.pos.Y - modelCombo.Height - PADDING,
+			}
 
 			if animate then
 				if updatePosition then
@@ -1641,33 +1646,20 @@ if DEV_MODE == true then
 							targetInputPosition[2]
 						ease:outBack(aiCharacter.pos, 0.22, {
 							onDone = function() end,
-						}).Y =
-							targetCharacterPosition[2]
+						}).Y = targetCharacterPosition[2]
 						ease:outBack(aiCharacterBubble.pos, 0.24, {
 							onDone = function() end,
-						}).Y =
-							targetBubblePosition[2]
-						ease:outBack(modelCombo.pos, 0.24, {
-							onDone = function() end,
-						}).Y =
-							targetModelComboPosition[2]
+						}).Y = targetBubblePosition[2]
 					else
 						ease:inBack(aiInput.pos, 0.2, {
 							onDone = function() end,
-						}).Y =
-							targetInputPosition[2]
+						}).Y = targetInputPosition[2]
 						ease:inBack(aiCharacter.pos, 0.22, {
 							onDone = function() end,
-						}).Y =
-							targetCharacterPosition[2]
+						}).Y = targetCharacterPosition[2]
 						ease:inBack(aiCharacterBubble.pos, 0.24, {
 							onDone = function() end,
-						}).Y =
-							targetBubblePosition[2]
-						ease:inBack(modelCombo.pos, 0.24, {
-							onDone = function() end,
-						}).Y =
-							targetModelComboPosition[2]
+						}).Y = targetBubblePosition[2]
 					end
 				end
 			end
@@ -1778,6 +1770,7 @@ if DEV_MODE == true then
 			topBarBtnRelease(self)
 
 			if aiInput == nil then
+				closeModal()
 				showSubTopBar()
 
 				sfx("waterdrop_2", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
@@ -1795,7 +1788,7 @@ if DEV_MODE == true then
 					choices = models,
 					button = comboBtn,
 					textSize = "small",
-					optionsPosition = "top",
+					optionsPosition = "bottom",
 				})
 				modelCombo.onSelect = function(self, index)
 					self.Text = models[index]
