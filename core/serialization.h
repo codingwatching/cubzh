@@ -50,7 +50,7 @@ DataFormat serialization_load_data(const void *buffer, const size_t size, const 
 #define MAGIC_BYTES "CUBZH!"
 #define MAGIC_BYTES_SIZE 6
 
-// Cubzh used to be called "Particubes", and these used to be the magic bytes.
+// Blip used to be called "Particubes", and these used to be the magic bytes.
 // We need to keep this temporarily, to read legacy files.
 // The app then always saves with the most recent format, thus new magic bytes.
 #define MAGIC_BYTES_LEGACY "PARTICUBES!"
