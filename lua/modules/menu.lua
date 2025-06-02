@@ -345,12 +345,6 @@ function showAlert(config)
 end
 
 function showLoading(text)
-	-- do not show loading while in world editor
-	-- (tmp, we need to show something when publishing)
-	if IN_WORLD_EDITOR then
-		return
-	end
-
 	if loadingModal ~= nil then
 		loadingModal:setText(text)
 		return
@@ -2908,6 +2902,13 @@ menu.loading = function(_, message, system)
 		error("menu:loading(message, system) expects message to be a string")
 	end
 	showLoading(message)
+end
+
+menu.hideLoading = function(_, system)
+	if system ~= System then
+		error("menu:hideLoading requires System privileges")
+	end
+	hideLoading()
 end
 
 menu.ShowAlert = function(_, config, system)
