@@ -1714,21 +1714,18 @@ end
 
 ui_config = {
 	padding = 6,
-	btnColor = Color(120, 120, 120),
-	btnColorSelected = Color(97, 71, 206),
-	btnColorDisabled = Color(120, 120, 120, 0.2),
-	btnTextColorDisabled = Color(255, 255, 255, 0.2),
-	btnColorMode = Color(38, 85, 128),
-	btnColorModeSelected = Color(75, 128, 192),
 }
 
 function ui_init()
 	local padding = ui_config.padding
-	local btnColor = ui_config.btnColor
-	local btnColorSelected = ui_config.btnColorSelected
 
-	function createButton(text)
-		local btn = ui:buttonNeutral({ content = text })
+	function createButton(text, config)
+		local btn
+		if config.secondary == true then
+			btn = ui:buttonSecondary({ content = text })
+		else
+			btn = ui:buttonNeutral({ content = text, icon = config.icon })
+		end
 		return btn
 	end
 
@@ -1988,7 +1985,8 @@ function ui_init()
 	saveBtn = ui:buttonSecondary({ content = "💾" })
 	saveBtn.Width = BUTTON_ICON_SIZE + BUTTON_PADDING * 2 saveBtn.Height = saveBtn.Width
 	saveBtn:setParent(modeMenu)
-	saveBtn.label = ui:createText("✅", Color.Black, "small")
+	saveBtn.label = ui:createText("✅", { color = Color.White, size = "small", outline = 0.3 })
+	saveBtn.label.object.Scale = 0.8
 	saveBtn.label:setParent(saveBtn)
 
 	saveBtn.onRelease = function()
@@ -2250,7 +2248,7 @@ function ui_init()
 		target:select()
 	end
 
-	placeInHandBtn = createButton("✋", btnColor, btnColorSelected)
+	placeInHandBtn = createButton("✋")
 	table.insert(placeMenuToggleBtns, placeInHandBtn)
 	placeInHandBtn:setParent(placeMenu)
 	placeInHandBtn.onRelease = function()
@@ -2268,7 +2266,7 @@ function ui_init()
 	end
 	placeInHandBtn:select()
 
-	placeAsHat = createButton("🤠", btnColor, btnColorSelected)
+	placeAsHat = createButton("🤠")
 	table.insert(placeMenuToggleBtns, placeAsHat)
 	placeAsHat:setParent(placeMenu)
 	placeAsHat.onRelease = function()
@@ -2285,7 +2283,7 @@ function ui_init()
 		cameraRefresh()
 	end
 
-	placeAsBackpack = createButton("🎒", btnColor, btnColorSelected)
+	placeAsBackpack = createButton("🎒")
 	table.insert(placeMenuToggleBtns, placeAsBackpack)
 	placeAsBackpack:setParent(placeMenu)
 	placeAsBackpack.onRelease = function()
@@ -2336,7 +2334,7 @@ function ui_init()
 		end,
 	})
 
-	rotateMirrorBtn = createButton("↻", ui_config.btnColor, ui_config.btnColorSelected)
+	rotateMirrorBtn = createButton("↻")
 	rotateMirrorBtn:setParent(mirrorControls)
 	rotateMirrorBtn.onRelease = function()
 		currentMirrorAxis = currentMirrorAxis + 1
@@ -2346,7 +2344,7 @@ function ui_init()
 		updateMirror()
 	end
 
-	removeMirrorBtn = createButton("❌", ui_config.btnColor, ui_config.btnColorSelected)
+	removeMirrorBtn = createButton("❌")
 	removeMirrorBtn:setParent(mirrorControls)
 	removeMirrorBtn.onRelease = function()
 		removeMirror()
@@ -2400,7 +2398,7 @@ function ui_init()
 	addChild = ui:createText("Add shape", Color.White)
 	addChild:setParent(selectControls)
 
-	addBlockChildBtn = createButton("⚀", ui_config.btnColor, ui_config.btnColorSelected)
+	addBlockChildBtn = createButton("⚀")
 	addBlockChildBtn:setParent(selectControls)
 	addBlockChildBtn.onRelease = function()
 		if countTotalNbShapes() >= max_total_nb_shapes then
@@ -2424,7 +2422,7 @@ function ui_init()
 		checkAutoSave()
 	end
 
-	importChildBtn = createButton("📥 Import", ui_config.btnColor, ui_config.btnColorSelected)
+	importChildBtn = createButton("📥 Import")
 	importChildBtn:setParent(selectControls)
 	importChildBtn.onRelease = function()
 		if countTotalNbShapes() >= max_total_nb_shapes then
@@ -2470,7 +2468,7 @@ function ui_init()
 		end)
 	end
 
-	removeShapeBtn = createButton("➖ Remove Shape", ui_config.btnColor, ui_config.btnColorSelected)
+	removeShapeBtn = createButton("➖ Remove Shape")
 	removeShapeBtn:setParent(selectControls)
 	removeShapeBtn.onRelease = function()
 		if not focusShape then
@@ -2494,7 +2492,7 @@ function ui_init()
 		focusShape.Name = o.Text
 	end
 
-	changePivotBtn = createButton("Change Pivot", ui_config.btnColor, ui_config.btnColorSelected)
+	changePivotBtn = createButton("Change Pivot")
 	changePivotBtn:setParent(selectControls)
 
 	local pivotObject = Object()
@@ -2574,7 +2572,7 @@ function ui_init()
 		isModeChangePivot = not isModeChangePivot
 	end
 
-	moveShapeBtn = createButton("⇢", ui_config.btnColor, ui_config.btnColorSelected)
+	moveShapeBtn = createButton("⇢")
 	moveShapeBtn:setParent(selectControls)
 	table.insert(selectToggleBtns, moveShapeBtn)
 	moveShapeBtn.onRelease = function()
@@ -2588,7 +2586,7 @@ function ui_init()
 		end
 	end
 
-	rotateShapeBtn = createButton("↻", ui_config.btnColor, ui_config.btnColorSelected)
+	rotateShapeBtn = createButton("↻")
 	rotateShapeBtn:setParent(selectControls)
 	table.insert(selectToggleBtns, rotateShapeBtn)
 	rotateShapeBtn.onRelease = function()
@@ -2615,7 +2613,7 @@ function ui_init()
 		checkAutoSave()
 	end
 
-	setColliderBtn = createButton("Set Collision Box", ui_config.btnColor, ui_config.btnColorSelected)
+	setColliderBtn = createButton("Set Collision Box")
 	setColliderBtn:setParent(selectControls)
 	setColliderBtn.onRelease = function()
 		selectControls:hide()
@@ -2651,7 +2649,7 @@ function ui_init()
 	editingCollisionBoxText = ui:createText("Editing Collision Box...", Color.White)
 	editingCollisionBoxText:setParent(collisionBoxMenu)
 
-	confirmColliderBtn = createButton("✅", ui_config.btnColor, ui_config.btnColorSelected)
+	confirmColliderBtn = createButton("✅")
 	confirmColliderBtn:setParent(collisionBoxMenu)
 	confirmColliderBtn.onRelease = function()
 		if not collider then
@@ -2791,7 +2789,7 @@ function ui_init()
 		end,
 	})
 
-	moveBtn = createButton("⇢", btnColor, btnColorSelected)
+	moveBtn = createBtn("icon-translate-3d", { secondary = true })
 	table.insert(placeSubMenuToggleBtns, moveBtn)
 	moveBtn:setParent(placeSubMenu)
 	moveBtn.onRelease = function()
@@ -2809,7 +2807,7 @@ function ui_init()
 	moveBtn:select()
 	placeGizmo:setMode(gizmo.Mode.Move)
 
-	rotateBtn = createButton("↻", btnColor, btnColorSelected)
+	rotateBtn = createBtn("icon-rotate-3d", { secondary = true })
 	table.insert(placeSubMenuToggleBtns, rotateBtn)
 	rotateBtn:setParent(placeSubMenu)
 	rotateBtn.onRelease = function()
@@ -2825,7 +2823,7 @@ function ui_init()
 		end
 	end
 
-	resetBtn = createButton("Reset", btnColor, btnColorSelected)
+	resetBtn = createButton("Reset", { secondary = true })
 	resetBtn:setParent(placeSubMenu)
 	resetBtn.onRelease = function()
 		item:AddPoint(poiActiveName)
@@ -3000,13 +2998,12 @@ function post_item_load()
 	end
 
 	local colorPickerConfig = {
-		closeBtnColor = ui_config.btnColor,
 		extraPadding = true,
 	}
 	colorPicker = colorPickerModule:create(colorPickerConfig)
 	colorPicker:hide()
 
-	palette = require("palette"):create(ui, ui_config.btnColor)
+	palette = require("palette"):create(ui)
 	palette:setColors(item)
 
 	colorPicker.didPickColor = function(_, color)

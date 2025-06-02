@@ -25,7 +25,7 @@
 #include "HttpRequest.hpp"
 #include "WSConnection.hpp"
 
-// Websocket protocols for Particubes
+// Websocket protocols for Blip
 #define P3S_LWS_PROTOCOL_HTTP "http"
 #define P3S_LWS_PROTOCOL_WS_JOIN "join"
 #define P3S_LWS_PROTOCOL_COUNT 2

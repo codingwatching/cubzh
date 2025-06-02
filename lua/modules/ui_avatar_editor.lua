@@ -193,7 +193,7 @@ mod.create = function(self, config)
 		padding = SCROLL_PADDING,
 		loadCell = function(index)
 			if index == 1 then
-				local btn = ui:buttonNeutral({ content = "🙂 Skin" })
+				local btn = ui:buttonNeutral({ content = "👤 Skin" })
 				btn.index = index
 				btns[btn.index] = btn
 				btn.onRelease = function()
@@ -207,7 +207,7 @@ mod.create = function(self, config)
 				end
 				return btn
 			elseif index == 2 then
-				local btn = ui:buttonNeutral({ content = "✨ Hair" })
+				local btn = ui:buttonNeutral({ content = "💇 Hair" })
 				btn.index = index
 				btns[btn.index] = btn
 				btn.onRelease = function()
@@ -244,7 +244,7 @@ mod.create = function(self, config)
 				end
 				return btn
 			elseif index == 3 then
-				local btn = ui:buttonNeutral({ content = "🙂 Eyes" })
+				local btn = ui:buttonNeutral({ content = "👀 Eyes" })
 				btn.index = index
 				btns[btn.index] = btn
 				btn.onRelease = function()
@@ -441,7 +441,7 @@ mod.create = function(self, config)
 			-- 	btn:disable()
 			-- 	return btn
 			elseif index == 4 then
-				local btn = ui:buttonNeutral({ content = "👃 Nose" })
+				local btn = ui:buttonNeutral({ content = "🐽 Nose" })
 				btn.index = index
 				btns[btn.index] = btn
 				btn.onRelease = function()
@@ -556,7 +556,7 @@ mod.create = function(self, config)
 			-- 	btn:disable()
 			-- 	return btn
 			elseif index == 5 then
-				local btn = ui:buttonNeutral({ content = "👕 Jacket" })
+				local btn = ui:buttonNeutral({ content = "🧥 Jacket" })
 				btn.index = index
 				btns[btn.index] = btn
 				btn.onRelease = function()

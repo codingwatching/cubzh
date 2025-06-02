@@ -2290,14 +2290,15 @@ function home()
 				Client:HapticFeedback()
 			end
 
-			local content = ui:frame()
+			local content = ui:frame({ color = Color(0, 0, 0) })
 
+			local iconSize = 36
 			icon = ui:frame({ image = {
 				data = Data:FromBundle(icon or "images/logo.png"),
-				cutout = true,
+				alpha = true,
 			} })
-			icon.Width = 20
-			icon.Height = 20
+			icon.Width = iconSize
+			icon.Height = iconSize
 			icon:setParent(content)
 			btn.icon = icon
 
@@ -2305,16 +2306,16 @@ function home()
 			title:setParent(content)
 
 			content.Width = 50
-			content.Height = title.Height + icon.Height + padding * 2.2
+			content.Height = title.Height + iconSize + padding - iconSize * 0.3
 
 			content.parentDidResize = function(self)
 				self.Width = self.parent.Width
-				self.pos = { 0, self.parent.Height - self.Height }
+				self.pos = { 0, Screen.SafeArea.Bottom }
 
-				local y = self.Height - padding - icon.Height
-				icon.pos = { self.Width * 0.5 - icon.Width * 0.5, y }
-				y = y - padding * 0.2 - title.Height
+				local y = padding
 				title.pos = { self.Width * 0.5 - title.Width * 0.5, y }
+				y += title.Height
+				icon.pos = { self.Width * 0.5 - icon.Width * 0.5, y }
 			end
 
 			content:setParent(btn)
@@ -2325,10 +2326,10 @@ function home()
 		end
 
 		-- local btnHome = createBottomBarButton("Home", "images/logo.png")
-		local btnExplore = createBottomBarButton("Explore", "images/icon-explore.png")
-		local btnProfile = createBottomBarButton("Profile", "images/icon-profile.png")
-		local btnFriends = createBottomBarButton("Friends", "images/icon-friends.png")
-		local btnCreate = createBottomBarButton("Create", "images/icon-create.png")
+		local btnExplore = createBottomBarButton("Worlds", "images/bottom-bar/worlds.png")
+		local btnProfile = createBottomBarButton("Profile", "images/bottom-bar/profile.png")
+		local btnFriends = createBottomBarButton("Friends", "images/bottom-bar/friends.png")
+		local btnCreate = createBottomBarButton("Creations", "images/bottom-bar/creations.png")
 
 		btnExplore.onRelease = function()
 			Menu:sendHomeDebugEvent("User presses EXPLORE button")
@@ -2407,6 +2408,7 @@ function home()
 			scroll.Height = Screen.Height - self.Height --  - Screen.SafeArea.Top
 		end
 		bottomBar:setParent(root)
+		bottomBar.LocalPosition.Z = -600
 
 		home():resume()
 	end

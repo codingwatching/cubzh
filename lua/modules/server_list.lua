@@ -178,11 +178,11 @@ serverList.create = function(_, config)
 			.. " "
 		if type(server.address) == "string" then
 			if string.find(server.address, "us") ~= nil then
-				str = str .. "🇺" -- USA
+				str = str .. "🇺🇸" -- USA
 			elseif string.find(server.address, "sg") ~= nil then
-				str = str .. "🇸" -- Singapore
+				str = str .. "🇸🇬" -- Singapore
 			else
-				str = str .. "🇪" -- default to Europe
+				str = str .. "🇪🇺" -- default to Europe
 			end
 		end
 
@@ -195,8 +195,7 @@ serverList.create = function(_, config)
 		cellText.pos.X = theme.padding * 2
 		cellText.pos.Y = vPos - cellText.Height * 0.5
 
-		local btn = ui:button({ content="Join" })
-		btn:setColor(theme.colorPositive, Color.White)
+		local btn = ui:buttonPositive({ content="Join" })
 		btn:setParent(cell)
 		btn.pos.Y = vPos - btn.Height * 0.5
 		btn.pos.X = cell.Width - btn.Width - theme.padding * 2

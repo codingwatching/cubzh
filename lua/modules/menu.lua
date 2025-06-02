@@ -60,6 +60,7 @@ _DebugColor = function()
 	return Color(math.random(150, 255), math.random(150, 255), math.random(150, 255))
 end
 pointer = nil
+modelSelected = 4
 
 -- MODALS
 
@@ -288,13 +289,13 @@ function showModal(key, config)
 	end
 
 	if activeModal ~= nil then
+		-- hide AI assistant if shown
+		if hideSubTopBar ~= nil then hideSubTopBar() end
+		if removeAIPrompt ~= nil then removeAIPrompt() end
+
 		menu:RemoveHighlight()
 
 		ui.unfocus() -- unfocuses node currently focused
-
-		-- if key ~= MODAL_KEYS.WORLDS then
-		-- 	activeModal:setParent(background)
-		-- end
 
 		activeModalKey = key
 
@@ -344,12 +345,6 @@ function showAlert(config)
 end
 
 function showLoading(text)
-	-- do not show loading while in world editor
-	-- (tmp, we need to show something when publishing)
-	if IN_WORLD_EDITOR then
-		return
-	end
-
 	if loadingModal ~= nil then
 		loadingModal:setText(text)
 		return
@@ -456,7 +451,9 @@ end
 
 function refreshDisplay()
 	if cppMenuIsActive then
-		hideTopBar()
+		if hideTopBar ~= nil then hideTopBar() end
+		if hideSubTopBar ~= nil then hideSubTopBar() end
+		if removeAIPrompt ~= nil then removeAIPrompt() end
 
 		if activeModal then
 			activeModal:hide()
@@ -1048,9 +1045,6 @@ function showSubTopBar()
 	subTopBar.Width = 80
 	subTopBar.pos = { 0, 0 }
 	
-	bluxBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
-	bluxBtn:setParent(topBar)
-	
 	local STBBluxIcon1 = ui:frame({ image = {
 		data = Data:FromBundle("images/icon-blux.png"),
 		alpha = true,
@@ -1106,7 +1100,7 @@ function showSubTopBar()
 			else
 				STBLabel1.Text = string.format("%d", balance.totalCoins)
 			end
-			self:layout()
+			subTopBar:layout()
 		end)
 	end
 	
@@ -1579,15 +1573,16 @@ if DEV_MODE == true then
 				targetInputPosition[1],
 				targetInputPosition[2] + aiInput.Height + PADDING,
 			}
-			local targetModelComboPosition = {
-				targetCharacterPosition[1],
-				targetCharacterPosition[2] + aiCharacter.Height + PADDING,
-			}
+			-- local targetModelComboPosition = {
+			-- 	subTopBar.pos.X,
+			-- 	subTopBar.pos.Y - ,
+			-- 	-- targetCharacterPosition[1],
+			-- 	-- targetCharacterPosition[2] + aiCharacter.Height + PADDING,
+			-- }
 
 			if promptEnabled == false then
 				-- move character and bubble just above safe area
 				targetCharacterPosition[2] = Screen.SafeArea.Bottom + PADDING
-				targetModelComboPosition[2] = targetCharacterPosition[2] + aiCharacter.Height + PADDING
 				-- move input below viewport
 				targetInputPosition[2] = -aiInput.Height - PADDING
 			end
@@ -1604,8 +1599,12 @@ if DEV_MODE == true then
 				aiInput.pos = targetInputPosition
 				aiCharacter.pos = targetCharacterPosition
 				aiCharacterBubble.pos = targetBubblePosition
-				modelCombo.pos = targetModelComboPosition
 			end
+
+			modelCombo.pos = {
+				subTopBar.pos.X,
+				subTopBar.pos.Y - modelCombo.Height - PADDING,
+			}
 
 			if animate then
 				if updatePosition then
@@ -1641,39 +1640,26 @@ if DEV_MODE == true then
 							targetInputPosition[2]
 						ease:outBack(aiCharacter.pos, 0.22, {
 							onDone = function() end,
-						}).Y =
-							targetCharacterPosition[2]
+						}).Y = targetCharacterPosition[2]
 						ease:outBack(aiCharacterBubble.pos, 0.24, {
 							onDone = function() end,
-						}).Y =
-							targetBubblePosition[2]
-						ease:outBack(modelCombo.pos, 0.24, {
-							onDone = function() end,
-						}).Y =
-							targetModelComboPosition[2]
+						}).Y = targetBubblePosition[2]
 					else
 						ease:inBack(aiInput.pos, 0.2, {
 							onDone = function() end,
-						}).Y =
-							targetInputPosition[2]
+						}).Y = targetInputPosition[2]
 						ease:inBack(aiCharacter.pos, 0.22, {
 							onDone = function() end,
-						}).Y =
-							targetCharacterPosition[2]
+						}).Y = targetCharacterPosition[2]
 						ease:inBack(aiCharacterBubble.pos, 0.24, {
 							onDone = function() end,
-						}).Y =
-							targetBubblePosition[2]
-						ease:inBack(modelCombo.pos, 0.24, {
-							onDone = function() end,
-						}).Y =
-							targetModelComboPosition[2]
+						}).Y = targetBubblePosition[2]
 					end
 				end
 			end
 		end
 
-		local function removeAIPrompt()
+		function removeAIPrompt()
 			if aiInput ~= nil then
 				ease:cancel(aiInput.pos)
 				aiInput:remove()
@@ -1778,12 +1764,12 @@ if DEV_MODE == true then
 			topBarBtnRelease(self)
 
 			if aiInput == nil then
+				closeModal()
 				showSubTopBar()
 
 				sfx("waterdrop_2", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 				aiUINeedsFirstLayout = true
 
-				local modelSelected = 4
 				local models = { "Claude 3.7", "Gemini 2.5", "Grok 3", "Grok 3 Mini" }
 				local modelNames = {
 					"claude-3-7-sonnet-20250219",
@@ -1792,15 +1778,18 @@ if DEV_MODE == true then
 					"grok-3-mini-beta",
 				}
 
-				local comboBtn =
-					ui:buttonSecondary({ content = models[modelSelected], textSize = "small", unfocuses = false })
-				modelCombo =
-					ui:comboBox({ choices = models, button = comboBtn, textSize = "small", optionsPosition = "top" })
+				modelCombo = ui:comboBox({
+					choices = models,
+					button = comboBtn,
+					textSize = "small",
+					optionsPosition = "bottom",
+				})
 				modelCombo.onSelect = function(self, index)
 					self.Text = models[index]
 					modelSelected = index
 				end
-
+				modelCombo.Width = 150
+				modelCombo:select(modelSelected)
 				modelCombo:setParent(background)
 
 				aiCharacter = ui:frame({ image = {
@@ -2240,8 +2229,8 @@ function getCubzhMenuModalContent()
 
 	local content = modal:createContent()
 	content.closeButton = true
-	content.title = "Cubzh"
-	content.icon = "⎔"
+	content.title = "Blip"
+	content.icon = Data:FromBundle("images/icon-blip.png")
 
 	local node = ui:createFrame()
 	content.node = node
@@ -2305,9 +2294,25 @@ function getCubzhMenuModalContent()
 		closeModal()
 	end
 
+	local label = ui:createText(" Help!", { size = "small", color = Color.White })
+	local icon = ui:frame({
+		image = {
+			data = Data:FromBundle("images/icon-discord.png"),
+			alpha = true,
+		}
+	})
+
+	local c = ui:frame()
+	label:setParent(c)
+	icon:setParent(c)
+	icon.Height = label.Height
+	icon.Width = icon.Height
+	label.pos = { icon.Width, 0 }
+	c.Width = icon.Width + label.Width
+	c.Height = icon.Height
+
 	local btnHelp = ui:buttonSecondary({
-		content = "👾 Help!",
-		textSize = "small",
+		content = c,
 	})
 	btnHelp:setParent(node)
 
@@ -2897,6 +2902,13 @@ menu.loading = function(_, message, system)
 		error("menu:loading(message, system) expects message to be a string")
 	end
 	showLoading(message)
+end
+
+menu.hideLoading = function(_, system)
+	if system ~= System then
+		error("menu:hideLoading requires System privileges")
+	end
+	hideLoading()
 end
 
 menu.ShowAlert = function(_, config, system)
