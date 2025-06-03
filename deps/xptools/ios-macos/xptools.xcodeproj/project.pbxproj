@@ -298,6 +298,15 @@
 		85D52F6B29D9EE2900070F19 /* URL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D52F6A29D9EE2900070F19 /* URL.cpp */; };
 		85D52F6C29D9EE2900070F19 /* URL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D52F6A29D9EE2900070F19 /* URL.cpp */; };
 		85D52F6D29D9EE2900070F19 /* URL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D52F6A29D9EE2900070F19 /* URL.cpp */; };
+		85D70CD32DEDE99800087BFE /* encoding_base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D70CD22DEDE99800087BFE /* encoding_base64.cpp */; };
+		85D70CD42DEDE99800087BFE /* encoding_base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D70CD22DEDE99800087BFE /* encoding_base64.cpp */; };
+		85D70CD52DEDE99800087BFE /* encoding_base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D70CD22DEDE99800087BFE /* encoding_base64.cpp */; };
+		85D70CD62DEDE99800087BFE /* encoding_base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D70CD22DEDE99800087BFE /* encoding_base64.cpp */; };
+		85D70CD72DEDE99800087BFE /* encoding_base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D70CD22DEDE99800087BFE /* encoding_base64.cpp */; };
+		85D70CDF2DEE388B00087BFE /* encoding_base64.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 85D70CDE2DEE388500087BFE /* encoding_base64.hpp */; };
+		85D70CE02DEE388B00087BFE /* encoding_base64.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 85D70CDE2DEE388500087BFE /* encoding_base64.hpp */; };
+		85D70CE12DEE388B00087BFE /* encoding_base64.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 85D70CDE2DEE388500087BFE /* encoding_base64.hpp */; };
+		85D70CE22DEE388B00087BFE /* encoding_base64.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 85D70CDE2DEE388500087BFE /* encoding_base64.hpp */; };
 		85E6380C28F703C3001FC12F /* device.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85E6380B28F703C3001FC12F /* device.cpp */; };
 		85E6380D28F703C3001FC12F /* device.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85E6380B28F703C3001FC12F /* device.cpp */; };
 		85E6380E28F703C3001FC12F /* device.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85E6380B28F703C3001FC12F /* device.cpp */; };
@@ -428,6 +437,8 @@
 		85BD47E52A5DB43300556C6E /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
 		85D52F6729D9EE1500070F19 /* URL.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = URL.hpp; sourceTree = "<group>"; };
 		85D52F6A29D9EE2900070F19 /* URL.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = URL.cpp; sourceTree = "<group>"; };
+		85D70CD22DEDE99800087BFE /* encoding_base64.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = encoding_base64.cpp; sourceTree = "<group>"; };
+		85D70CDE2DEE388500087BFE /* encoding_base64.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = encoding_base64.hpp; sourceTree = "<group>"; };
 		85E6380B28F703C3001FC12F /* device.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = device.cpp; sourceTree = "<group>"; };
 		85E9224C24111875008B5D81 /* filesystem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = filesystem.h; sourceTree = "<group>"; };
 		85F95C2F2D97380D00374D5F /* passkey.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = passkey.cpp; sourceTree = "<group>"; };
@@ -525,6 +536,7 @@
 				853C93F825A3C2330030C45D /* crypto.hpp */,
 				10E793632450129B00B7E2E2 /* device.h */,
 				10974C88244D66B6008153FE /* device.hpp */,
+				85D70CDE2DEE388500087BFE /* encoding_base64.hpp */,
 				85E9224C24111875008B5D81 /* filesystem.h */,
 				8534FDD3240E978B004B3494 /* filesystem.hpp */,
 				85BB018C279EFA7C000F1B10 /* HttpClient.hpp */,
@@ -567,6 +579,7 @@
 			isa = PBXGroup;
 			children = (
 				8506231628770DB700B270A6 /* audio.cpp */,
+				85D70CD22DEDE99800087BFE /* encoding_base64.cpp */,
 				85471B3D27E3E4AA000575D5 /* Connection.cpp */,
 				853C93FE25A3C2470030C45D /* crypto.cpp */,
 				85E6380B28F703C3001FC12F /* device.cpp */,
@@ -649,6 +662,7 @@
 				102144FB2C75E0C000099E38 /* tracking.hpp in Headers */,
 				102144FC2C75E0C000099E38 /* LocalConnection.hpp in Headers */,
 				102144FD2C75E0C000099E38 /* HttpCookie.hpp in Headers */,
+				85D70CE02DEE388B00087BFE /* encoding_base64.hpp in Headers */,
 				102144FE2C75E0C000099E38 /* crypto.hpp in Headers */,
 				102144FF2C75E0C000099E38 /* xptools.h in Headers */,
 				102145002C75E0C000099E38 /* WSTypes.hpp in Headers */,
@@ -683,6 +697,7 @@
 				10847CB8270EE8C6006A5E91 /* tracking.hpp in Headers */,
 				85471B3427E3E006000575D5 /* LocalConnection.hpp in Headers */,
 				851F2A402B63C44500E2863F /* HttpCookie.hpp in Headers */,
+				85D70CE22DEE388B00087BFE /* encoding_base64.hpp in Headers */,
 				10847CB9270EE8C6006A5E91 /* crypto.hpp in Headers */,
 				10847CBA270EE8C6006A5E91 /* xptools.h in Headers */,
 				85471B6E27E4C99F000575D5 /* WSTypes.hpp in Headers */,
@@ -717,6 +732,7 @@
 				850BDE722D19EC0F00A85B76 /* tracking.hpp in Headers */,
 				850BDE732D19EC0F00A85B76 /* LocalConnection.hpp in Headers */,
 				850BDE742D19EC0F00A85B76 /* HttpCookie.hpp in Headers */,
+				85D70CE12DEE388B00087BFE /* encoding_base64.hpp in Headers */,
 				850BDE752D19EC0F00A85B76 /* crypto.hpp in Headers */,
 				850BDE762D19EC0F00A85B76 /* xptools.h in Headers */,
 				850BDE772D19EC0F00A85B76 /* WSTypes.hpp in Headers */,
@@ -751,6 +767,7 @@
 				853C93A425A384070030C45D /* tracking.hpp in Headers */,
 				85471B3327E3E006000575D5 /* LocalConnection.hpp in Headers */,
 				851F2A3F2B63C44500E2863F /* HttpCookie.hpp in Headers */,
+				85D70CDF2DEE388B00087BFE /* encoding_base64.hpp in Headers */,
 				853C93F925A3C2330030C45D /* crypto.hpp in Headers */,
 				8534FDD2240E9762004B3494 /* xptools.h in Headers */,
 				85471B6D27E4C99F000575D5 /* WSTypes.hpp in Headers */,
@@ -917,6 +934,7 @@
 				102145182C75E0C000099E38 /* WSService.cpp in Sources */,
 				102145192C75E0C000099E38 /* vxtime.cpp in Sources */,
 				1021451A2C75E0C000099E38 /* json.cpp in Sources */,
+				85D70CD42DEDE99800087BFE /* encoding_base64.cpp in Sources */,
 				1021451B2C75E0C000099E38 /* filesystem.cpp in Sources */,
 				10373DE82DD5626F007952C3 /* iap.cpp in Sources */,
 				1021451C2C75E0C000099E38 /* notifications.mm in Sources */,
@@ -965,6 +983,7 @@
 				85E6380E28F703C3001FC12F /* device.cpp in Sources */,
 				85471B9727E85B03000575D5 /* WSService.cpp in Sources */,
 				101758BA2C99C254008318A8 /* notifications.cpp in Sources */,
+				85D70CD72DEDE99800087BFE /* encoding_base64.cpp in Sources */,
 				10847CC3270EE8C6006A5E91 /* vxtime.cpp in Sources */,
 				851224D42DD1DB7E00F84200 /* utils.m in Sources */,
 				8518D0A027BA6DD900A438D6 /* json.cpp in Sources */,
@@ -1011,6 +1030,7 @@
 				850BDE8E2D19EC0F00A85B76 /* miniaudio_impl.mm in Sources */,
 				850BDE8F2D19EC0F00A85B76 /* vxtime.cpp in Sources */,
 				850BDE902D19EC0F00A85B76 /* json.cpp in Sources */,
+				85D70CD62DEDE99800087BFE /* encoding_base64.cpp in Sources */,
 				850BDE912D19EC0F00A85B76 /* filesystem.cpp in Sources */,
 				10373DE52DD5626F007952C3 /* iap.cpp in Sources */,
 				850BDE922D19EC0F00A85B76 /* notifications.mm in Sources */,
@@ -1059,6 +1079,7 @@
 				85454CE0288003D70047A26C /* miniaudio_impl.mm in Sources */,
 				1033952325626D220083F4C0 /* vxtime.cpp in Sources */,
 				8518D09D27BA6DD900A438D6 /* json.cpp in Sources */,
+				85D70CD52DEDE99800087BFE /* encoding_base64.cpp in Sources */,
 				10E793652450137900B7E2E2 /* filesystem.cpp in Sources */,
 				10373DE42DD5626F007952C3 /* iap.cpp in Sources */,
 				85BD47D72A5DABAE00556C6E /* notifications.mm in Sources */,
@@ -1107,6 +1128,7 @@
 				85BB0196279F3BAD000F1B10 /* HttpResponse.cpp in Sources */,
 				1033952425626D220083F4C0 /* vxtime.cpp in Sources */,
 				8518D09E27BA6DD900A438D6 /* json.cpp in Sources */,
+				85D70CD32DEDE99800087BFE /* encoding_base64.cpp in Sources */,
 				10E793662450137900B7E2E2 /* filesystem.cpp in Sources */,
 				10373DE62DD5626F007952C3 /* iap.cpp in Sources */,
 				85BD47D82A5DABAE00556C6E /* notifications.mm in Sources */,
