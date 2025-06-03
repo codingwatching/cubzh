@@ -441,7 +441,7 @@ creations.createModalContent = function(_, config)
 
 		local grid = itemGrid:create({
 			minBlocks = 1,
-			type = "items",
+			type = "all",
 			displayLikes = true,
 			repo = config.authorName,
 			authorId = config.authorId,
