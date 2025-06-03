@@ -28,5 +28,3 @@ std::string decode(std::string input, std::string &out, const Variant variant = 
 }
 }
 }
-
-
