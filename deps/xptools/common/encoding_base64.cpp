@@ -8,6 +8,9 @@
 
 #include "encoding_base64.hpp"
 
+// C++
+#include <algorithm>
+
 //
 // Based on:
 // https://gist.githubusercontent.com/tomykaira/f0fd86b6c73063283afe550bc5d77594/raw/dceb7af2f73afb7aae20322cca04f27331d2e16a/Base64.h
