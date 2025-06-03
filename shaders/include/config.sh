@@ -182,6 +182,11 @@
 // from the legacy shader & iOS app =)
 #define GRID_THICKNESS_FACTOR .001745331024
 
+//// TEXT
+// Safe bounds for screen-space softness
+#define SDF_SOFTNESS_MIN 0.001
+#define SDF_SOFTNESS_MAX 0.499
+
 //// GENERAL
 // UV go from 0 to 1, edge to edge of the texture ; when computing texel index, we need to apply an offset
 #define TEXEL_OFFSET 0.5
