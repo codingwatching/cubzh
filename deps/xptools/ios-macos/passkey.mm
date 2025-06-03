@@ -8,8 +8,11 @@
 
 #include "passkey.hpp"
 
+// Apple
 #import "Foundation/Foundation.h"
 #import "AuthenticationServices/AuthenticationServices.h"
+
+// xptools
 #import "utils.m"
 
 //
@@ -124,13 +127,6 @@ typedef void (^DidCompleteAssertion)(NSString *credentialIDBase64,
         NSString *signatureBase64 = [signature base64UrlEncodedString];
         NSString *userIDString = [[NSString alloc] initWithData:userID encoding:NSUTF8StringEncoding];
 
-        NSLog(@"--------------------------------");
-        NSLog(@">> credentialIDBase64: %@", credentialIDBase64);
-        NSLog(@">> authenticatorDataBase64: %@", authenticatorDataBase64);
-        NSLog(@">> rawClientDataJSONString: %@", rawClientDataJSONString);
-        NSLog(@">> signatureBase64: %@", signatureBase64);
-        NSLog(@">> userIDString: %@", userIDString);
-
         // Call the completion handler with the public key
         self.didCompleteAssertionHandler(credentialIDBase64,
                                          authenticatorDataBase64,
@@ -201,7 +197,6 @@ typedef void (^DidCompleteAssertion)(NSString *credentialIDBase64,
 
 PasskeyDelegate *passkeyDelegate = nil;
 
-
 //
 // MARK: - C++ implementation -
 //
@@ -236,6 +231,9 @@ std::string vx::auth::PassKey::createPasskey(const std::string& relyingPartyIden
           challenge.c_str(), userID.c_str(), username.c_str());
 
     // validate arguments
+    if (relyingPartyIdentifier.empty()) {
+        return "relyingPartyIdentifier argument is empty";
+    }
     if (challenge.empty()) {
         return "challenge argument is empty";
     }
@@ -276,15 +274,15 @@ std::string vx::auth::PassKey::createPasskey(const std::string& relyingPartyIden
 
         if (error != nil) {
             // error
-            callback("", "", "", std::string([error UTF8String]));
+            callback(PassKey::CreateResponse{}, std::string([error UTF8String]));
             return;
         }
 
         // success
-        callback(std::string([credentialIDBase64 UTF8String]),
-                 std::string([rawClientDataJSONBase64 UTF8String]),
-                 std::string([rawAttestationObjectBase64 UTF8String]),
-                 "");
+        PassKey::CreateResponse resp = PassKey::CreateResponse(std::string([credentialIDBase64 UTF8String]),
+                                                               std::string([rawClientDataJSONBase64 UTF8String]),
+                                                               std::string([rawAttestationObjectBase64 UTF8String]));
+        callback(resp, "");
     }];
 
     authController.delegate = passkeyDelegate;
@@ -329,17 +327,17 @@ std::string vx::auth::PassKey::loginWithPasskey(const std::string& relyingPartyI
 
         if (error != nil) {
             // error
-            callback("", "", "", "", "", std::string([error UTF8String]));
+            callback(nullptr, std::string([error UTF8String]));
             return;
         }
 
         // success
-        callback(std::string([credentialIDBase64 UTF8String]),
-                 std::string([authenticatorDataBase64 UTF8String]),
-                 std::string([rawClientDataJSONString UTF8String]),
-                 std::string([signatureBase64 UTF8String]),
-                 std::string([userIDString UTF8String]),
-                 "");
+        PassKey::LoginResponse_SharedPtr resp = PassKey::LoginResponse::fromComponents(std::string([credentialIDBase64 UTF8String]),
+                                                                                       std::string([authenticatorDataBase64 UTF8String]),
+                                                                                       std::string([rawClientDataJSONString UTF8String]),
+                                                                                       std::string([signatureBase64 UTF8String]),
+                                                                                       std::string([userIDString UTF8String]));
+        callback(resp, "");
     }];
 
     authController.delegate = passkeyDelegate;
