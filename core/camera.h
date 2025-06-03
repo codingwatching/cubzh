@@ -63,6 +63,7 @@ float camera_get_target_width(const Camera *c);
 void camera_set_target_width(Camera *c, const float value);
 float camera_get_target_height(const Camera *c);
 void camera_set_target_height(Camera *c, const float value);
+bool camera_is_view_dirty(const Camera *c);
 bool camera_is_projection_dirty(const Camera *c);
 bool camera_is_target_dirty(const Camera *c);
 void camera_clear_dirty(Camera *c);

@@ -287,10 +287,11 @@ float camera_get_target_height(const Camera *c) {
 
 void camera_set_target_height(Camera *c, const float value) {
     c->targetHeight = value;
-    if (c->mode == Orthographic) {
-        _camera_set_dirty(c, CAMERA_PROJ);
-    }
     _camera_set_dirty(c, CAMERA_TARGET);
+}
+
+bool camera_is_view_dirty(const Camera *c) {
+    return transform_is_any_dirty(c->view);
 }
 
 bool camera_is_projection_dirty(const Camera *c) {
@@ -303,6 +304,7 @@ bool camera_is_target_dirty(const Camera *c) {
 
 void camera_clear_dirty(Camera *c) {
     c->dirty = CAMERA_NONE;
+    transform_reset_any_dirty(c->view);
 }
 
 // MARK: - View -

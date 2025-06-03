@@ -183,9 +183,8 @@
 #define GRID_THICKNESS_FACTOR .001745331024
 
 //// TEXT
-// Safe bounds for screen-space softness
-#define SDF_SOFTNESS_MIN 0.001
-#define SDF_SOFTNESS_MAX 0.499
+// Values below this threshold won't be used, to avoid creating jagged edges
+#define SDF_THRESHOLD 0.05
 
 //// GENERAL
 // UV go from 0 to 1, edge to edge of the texture ; when computing texel index, we need to apply an offset
