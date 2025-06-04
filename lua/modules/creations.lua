@@ -290,12 +290,12 @@ creations.createModalContent = function(_, config)
 						local itemDetailsContent =
 							itemDetails:createModalContent({ mode = "create", uikit = ui, item = cell })
 
-						local btnEdit = ui:button({ content="✏️ Edit", textSize = "big" })
+						local btnEdit = ui:button({ content = "✏️ Edit", textSize = "big" })
 						btnEdit.onRelease = function()
 							System.LaunchItemEditor(itemFullName, newCategory)
 						end
 
-						local btnDuplicate = ui:button({ content="📑 Duplicate", textSize = "default" })
+						local btnDuplicate = ui:button({ content = "📑 Duplicate", textSize = "default" })
 						btnDuplicate.onRelease = function()
 							-- no need to pass grid, it's already marked
 							-- for refresh at this point
@@ -563,7 +563,7 @@ creations.createModalContent = function(_, config)
 			creationsContent.tabs[1].action()
 		end
 
-		if  #creationsContent.tabs == 1 then
+		if #creationsContent.tabs == 1 then
 			creationsContent.tabs = {}
 		end
 
@@ -666,6 +666,33 @@ creations.createModalContent = function(_, config)
 				end
 
 				if mode == "create" then
+					-- archive button
+					local btnArchive = ui:buttonSecondary({ content = "🗑️", textSize = "default" })
+					btnArchive.onRelease = function()
+						local str = "Are you sure you want to archive this world?"
+						local positive = function()
+							local data = { archived = true }
+							api:patchWorld(entity.id, data, function(err, world)
+								if err or not world.archived then
+									Menu:ShowAlert({ message = "Could not archive world" }, System)
+									return
+								end
+								worldDetailsContent:pop()
+								grid:getItems()
+							end)
+							-- TODO: gaetan: add this to httpRequests and cancel it when changing scene
+							-- table.insert(httpRequests, req)
+						end
+						local alertConfig = {
+							message = str,
+							positiveLabel = "Yes",
+							positiveCallback = positive,
+							negativeLabel = "No",
+							negativeCallback = function() end,
+						}
+						Menu:ShowAlert(alertConfig, System)
+					end
+
 					local btnEditCode = ui:buttonSecondary({ content = "🤓 Code", textSize = "default" })
 					btnEditCode.onRelease = function()
 						System.EditWorldCode(entity.id)
@@ -676,7 +703,7 @@ creations.createModalContent = function(_, config)
 						System.EditWorld(entity.id)
 					end
 
-					worldDetailsContent.bottomCenter = { btnEditCode, btnEdit }
+					worldDetailsContent.bottomCenter = { btnArchive, btnEditCode, btnEdit }
 				end
 
 				worldDetailsContent.idealReducedContentSize = function(content, width, height)
