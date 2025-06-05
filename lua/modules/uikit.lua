@@ -445,33 +445,59 @@ function createUI(system)
 			return
 		end
 
-		local padding = BUTTON_PADDING
+		local padding = {
+			top = BUTTON_PADDING,
+			bottom = BUTTON_PADDING,
+			left = BUTTON_PADDING,
+			right = BUTTON_PADDING,
+		}
 		local border = BUTTON_BORDER
 		local underlinePadding = 0
 
 		local paddingType = type(self.config.padding)
 
 		if paddingType == "boolean" and self.config.padding == false then
-			padding = 0
+			padding = {
+				top = 0,
+				bottom = 0,
+				left = 0,
+				right = 0,
+			}
 		elseif paddingType == "number" then
-			padding = self.config.padding
+			padding = {
+				top = self.config.padding,
+				bottom = self.config.padding,
+				left = self.config.padding,
+				right = self.config.padding,
+			}
+		elseif paddingType == "table" then
+			padding = {
+				top = self.config.padding.top or 0,
+				bottom = self.config.padding.bottom or 0,
+				left = self.config.padding.left or 0,
+				right = self.config.padding.right or 0,
+			}
 		end
 
 		if self.config.borders == false then
 			border = 0
-			padding = 2 * padding
 		end
 
 		if self.config.underline then
 			underlinePadding = BUTTON_UNDERLINE * 2
 		end
 
-		local paddingAndBorder = padding + border
+		local paddingAndBorder = {
+			top = padding.top + border,
+			bottom = padding.bottom + border,
+			left = padding.left + border,
+			right = padding.right + border,
+		}
 
 		local content = self.content
 
-		local paddingLeft = paddingAndBorder
-		local paddingBottom = paddingAndBorder
+		local paddingLeft = paddingAndBorder.left
+		local paddingBottom = paddingAndBorder.bottom
 		local totalWidth
 		local totalHeight
 
@@ -479,14 +505,14 @@ function createUI(system)
 			totalWidth = self.fixedWidth
 			paddingLeft = (totalWidth - content.Width) * 0.5
 		else
-			totalWidth = content.Width + paddingAndBorder * 2
+			totalWidth = content.Width + paddingAndBorder.left + paddingAndBorder.right
 		end
 
 		if self.fixedHeight ~= nil then
 			totalHeight = self.fixedHeight
 			paddingBottom = (totalHeight - content.Height) * 0.5
 		else
-			totalHeight = content.Height + paddingAndBorder * 2 + underlinePadding
+			totalHeight = content.Height + paddingAndBorder.top + paddingAndBorder.bottom + underlinePadding
 		end
 
 		local background = self.object
@@ -3472,7 +3498,7 @@ function createUI(system)
 			textColorDisabled = theme.buttonTextColorDisabled,
 			textOutline = 0.0,
 			textOutlineColor = Color.Black,
-			padding = true, -- default padding when true, can also be a number
+			padding = true, -- default padding when true, can also be a number or table
 
 			-- BACKGROUND --
 			-- quad used in priority for background
@@ -3509,7 +3535,7 @@ function createUI(system)
 				colorSelected = { "Color" },
 				colorDisabled = { "Color" },
 				debugName = { "string" },
-				padding = { "boolean", "number" },
+				padding = { "boolean", "number", "table" },
 			},
 		}
 
