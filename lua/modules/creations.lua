@@ -426,6 +426,111 @@ creations.createModalContent = function(_, config)
 		return newContent
 	end
 
+	functions.createPickCreationTypeContent = function()
+		local content = modal:createContent()
+		content.title = "Creations"
+		content.icon = "🛠️"
+
+		local node = ui:frame()
+		content.node = node
+
+		local label = ui:createText("What do you want to create?", { 
+			alignment = "center",
+			size = "default", 
+			color = Color.White 
+		})
+		label:setParent(node)
+
+		local options = {
+			{
+				title = "Voxel Item",
+				description = "A Voxel Item is a 3D object made out of cubes.",
+				callback = newItem,
+			},
+			{
+				title = "3D Textured Model",
+				description = "A 3D object with a texture applied to it. Blip only supports .glb file uploads for this category, for now.",
+				comingSoon = true,
+			},
+			{
+				title = "Voxel Avatar Equipment",
+				description = "An Avatar Equipment made out of cubes (haircut, jacket, pants, boots, etc.)",
+				callback = newWearable,
+			},
+			{
+				title = "World",
+				description = "A World is a 3D scene with optional logic. That's what you need to pick if you want to create a game. Templates and AI will help you get started, wether you're a coder or not.",
+				callback = newWorld,
+			},
+			{
+				title = "Image",
+				description = "Upload an image (PNG or JPG) that can be used as a texture.",
+				comingSoon = true,
+			},
+		}
+		local nbOptions = #options
+
+		local cells = {}
+
+		local scroll = ui:scroll({
+			direction = "down",
+			backgroundColor = Color.Black,
+			cellPadding = theme.padding,
+			padding = theme.padding,
+			loadCell = function(index, _, container)
+				if index > nbOptions then
+					return nil
+				end
+				local c = cells[index]
+				if c == nil then
+					c = ui:frameScrollCell()
+					c.title = ui:createText(options[index].title, { 
+						size = "default", 
+						color = Color.White 
+					})
+					c.title:setParent(c)
+					c.description = ui:createText(options[index].description, { 
+						size = "small", 
+						color = Color(200, 200, 200) 
+					})
+					c.description:setParent(c)
+				end
+
+				c.Width = container.Width
+				c.description.object.MaxWidth = c.Width - theme.padding * 2
+				c.Height = c.title.Height + c.description.Height + theme.padding * 3
+
+				c.title.pos = { theme.padding, c.Height - c.title.Height - theme.padding }
+				c.description.pos = { theme.padding, c.title.pos.Y - c.description.Height - theme.padding }
+
+				return c
+			end,
+			unloadCell = function(_, c)
+				c:setParent(nil)
+			end,
+		})
+
+		scroll:setParent(node)
+
+		node.refresh = function(self)
+			label.object.MaxWidth = self.Width - theme.padding * 2
+			scroll.Width = self.Width
+			scroll.Height = self.Height - label.Height - theme.padding
+			label.pos = { self.Width * 0.5 - label.Width * 0.5, self.Height - label.Height }
+			scroll:flush()
+			scroll:refresh()
+		end
+
+		content.idealReducedContentSize = function(content, width, height)
+			content.Width = width
+			content.Height = height
+			content:refresh()
+			return Number2(content.Width, content.Height)
+		end
+
+		return content
+	end
+
 	local createCreationsContent = function()
 		local creationsContent = modal:createContent()
 		if config.title ~= nil then
@@ -451,35 +556,45 @@ creations.createModalContent = function(_, config)
 		})
 		grid:setParent(node)
 
-		local newLabel
-		local btnNewItem
-		local btnNewWearable
-		local btnNewWorld
+		-- local newLabel
+		-- local btnNewItem
+		-- local btnNewWearable
+		-- local btnNewWorld
+
+		local btnCreate
 
 		if config.authorId == Player.UserID then
-			newLabel = ui:createText("Create:", {size = "small", color = Color.White})
-			newLabel:setParent(node)
+			btnCreate = ui:buttonPositive({ 
+				content = "Create", 
+				textSize = "default", 
+				padding = {
+					top = theme.paddingTiny,
+					bottom = theme.paddingTiny,
+					left = theme.paddingBig,
+					right = theme.paddingBig,
+				}
+			})
+			btnCreate:setParent(node)
 
-			btnNewItem = ui:buttonNeutral({ content = "Item", textSize = "small", padding = theme.padding })
-			btnNewItem:setParent(node)
+			-- newLabel = ui:createText("Create:", {size = "small", color = Color.White})
+			-- newLabel:setParent(node)
 
-			btnNewWearable = ui:buttonNeutral({ content = "Wearable", textSize = "small", padding = theme.padding })
-			btnNewWearable:setParent(node)
+			-- btnNewItem = ui:buttonNeutral({ content = "Item", textSize = "small", padding = theme.padding })
+			-- btnNewItem:setParent(node)
 
-			btnNewWorld = ui:buttonNeutral({ content = "World", textSize = "small", padding = theme.padding })
-			btnNewWorld:setParent(node)
+			-- btnNewWearable = ui:buttonNeutral({ content = "Wearable", textSize = "small", padding = theme.padding })
+			-- btnNewWearable:setParent(node)
+
+			-- btnNewWorld = ui:buttonNeutral({ content = "World", textSize = "small", padding = theme.padding })
+			-- btnNewWorld:setParent(node)
 		end
 
 		node.parentDidResize = function(self)
-			if btnNewItem then
+			if btnCreate then
 				grid.Width = self.Width
-				grid.Height = self.Height - btnNewItem.Height - theme.padding
-				grid.pos.Y = btnNewItem.Height + theme.padding
-				local w = newLabel.Width + btnNewItem.Width + btnNewWearable.Width + btnNewWorld.Width + theme.padding * 3
-				newLabel.pos = { self.Width * 0.5 - w * 0.5, btnNewItem.Height * 0.5 - newLabel.Height * 0.5 }
-				btnNewItem.pos = { newLabel.pos.X + newLabel.Width + theme.padding, 0 }
-				btnNewWearable.pos = { btnNewItem.pos.X + btnNewItem.Width + theme.padding, 0 }
-				btnNewWorld.pos = { btnNewWearable.pos.X + btnNewWearable.Width + theme.padding, 0 }
+				grid.Height = self.Height - btnCreate.Height - theme.padding
+				grid.pos.Y = btnCreate.Height + theme.padding
+				btnCreate.pos = { self.Width * 0.5 - btnCreate.Width * 0.5, 0 }
 			else
 				grid.Width = self.Width
 				grid.Height = self.Height
@@ -506,6 +621,13 @@ creations.createModalContent = function(_, config)
 			end
 		end
 
+		local newPickCreationType = function()
+			local m = creationsContent:getModalIfContentIsActive()
+			if m ~= nil then
+				m:push(functions.createPickCreationTypeContent())
+			end
+		end
+
 		local newItem = function()
 			local m = creationsContent:getModalIfContentIsActive()
 			if m ~= nil then
@@ -527,6 +649,7 @@ creations.createModalContent = function(_, config)
 			end
 		end
 
+		if btnCreate then btnCreate.onRelease = newPickCreationType end
 		if btnNewItem then btnNewItem.onRelease = newItem end
 		if btnNewWearable then btnNewWearable.onRelease = newWearable end
 		if btnNewWorld then btnNewWorld.onRelease = newWorld end
