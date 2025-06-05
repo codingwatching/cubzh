@@ -2294,7 +2294,7 @@ function home()
 
 			local iconSize = 36
 			icon = ui:frame({ image = {
-				data = Data:FromBundle(icon or "images/logo.png"),
+				data = Data:FromBundle(icon or "images/blip-logo.png"),
 				alpha = true,
 				filtering = true,
 			} })
@@ -2326,7 +2326,6 @@ function home()
 			return btn
 		end
 
-		-- local btnHome = createBottomBarButton("Home", "images/logo.png")
 		local btnExplore = createBottomBarButton("Worlds", "images/bottom-bar/worlds.png")
 		local btnProfile = createBottomBarButton("Profile", "images/bottom-bar/profile.png")
 		local btnFriends = createBottomBarButton("Friends", "images/bottom-bar/friends.png")
