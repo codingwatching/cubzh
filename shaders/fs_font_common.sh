@@ -31,7 +31,7 @@ void main() {
 	vec4 vlighting = unpackVoxelLight(u_vlighting);
 #endif
 	float metadata2 = unpackFontAttributesMetadata(v_texcoord0.w);
-	#define colored metadata2
+	float colored = step(0.5, metadata2);
 
 	vec4 base = textureCube(s_atlas, v_texcoord0.xyz);
 	base = mix(base.bbbb, base.rgba, colored);
