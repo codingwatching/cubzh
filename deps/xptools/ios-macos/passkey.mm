@@ -144,8 +144,7 @@ typedef void (^DidCompleteAssertion)(NSString *credentialIDBase64,
 - (void)authorizationController:(ASAuthorizationController *)controller didCompleteWithError:(NSError *)error {
 
     // get error message
-    NSString *errorMessage = [NSString stringWithFormat:@"Authorization failed: %@", error.localizedDescription];
-    NSLog(@"%@", errorMessage);
+    NSString *errorMessage = [NSString stringWithFormat:@"%@", error.localizedDescription];
 
     // call callback
     if (self.didCompleteAuthorizationHandler) {
