@@ -21,6 +21,7 @@ uniform vec4 u_normal;
 #endif
 
 SAMPLERCUBE(s_atlas, 0);
+SAMPLERCUBE(s_atlasPoint, 1);
 
 void main() {
 	vec3 metadata1 = unpackFontUniformMetadata(u_metadata);
@@ -30,21 +31,26 @@ void main() {
 #if FONT_VARIANT_UNLIT == 0
 	vec4 vlighting = unpackVoxelLight(u_vlighting);
 #endif
-	float metadata2 = unpackFontAttributesMetadata(v_texcoord0.w);
-	#define colored metadata2
+	vec2 metadata2 = unpackFontAttributesMetadata(v_texcoord0.w);
+	#define colored metadata2.x
+	#define filtering metadata2.y
 
-	vec4 base = textureCube(s_atlas, v_texcoord0.xyz);
+	vec4 base = mix(textureCube(s_atlasPoint, v_texcoord0.xyz),
+					textureCube(s_atlas, v_texcoord0.xyz),
+					filtering);
 	base = mix(base.bbbb, base.rgba, colored);
 
-	if (base.a <= EPSILON) discard;
+	float totalWeight = clamp(1.0 - weight - outlineWeight, SDF_THRESHOLD + softness, 1.0 - softness);
+	float softnessFlag = step(EPSILON, softness);
+	float alpha = mix(step(totalWeight, base.r), smoothstep(totalWeight - softness, totalWeight + softness, base.r), softnessFlag);
+	float outline = mix(step(1.0 - weight, base.r), smoothstep(1.0 - weight - 2.0 * softness, 1.0 - weight, base.r), softnessFlag);
 
-	float totalWeight = 1.0 - clamp(weight + outlineWeight, 0, 1.0 - 2.5 * softness);
-	float alpha = smoothstep(totalWeight - softness, totalWeight + softness, base.r);
-	float outline = smoothstep(1.0 - weight - 2.0 * softness, 1.0 - weight, base.r);
 	vec3 rgb = mix(unpackFloatToRgb(u_outlineColor), v_color0.rgb, outline);
 	base = mix(vec4(rgb, alpha), base, colored);
 
 	vec4 color = vec4(base.rgb, v_color0.a * base.a);
+
+	if (color.a <= EPSILON) discard;
 
 #if FONT_VARIANT_MRT_LIGHTING == 0 && FONT_VARIANT_UNLIT == 0
 	color = getNonVoxelVertexLitColor(color, vlighting.x, vlighting.yzw, u_sunColor.xyz, v_clipZ);

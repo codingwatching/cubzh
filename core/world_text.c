@@ -493,7 +493,10 @@ bool world_text_is_slant_dirty(const WorldText *wt) {
 }
 
 void world_text_drawmode_set_outline_weight(WorldText *wt, float value) {
-    if (wt->drawmodes == NULL && float_isZero(value, EPSILON_ZERO) == false) {
+    if (wt->drawmodes == NULL) {
+        if (float_isZero(value, EPSILON_ZERO)) {
+            return;
+        }
         world_text_toggle_drawmodes(wt, true);
     }
     const uint8_t packed = (uint8_t)(CLAMP01F(value) * 255);
