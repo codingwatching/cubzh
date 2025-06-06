@@ -450,7 +450,12 @@ creations.createModalContent = function(_, config)
 				previewItem = "shapes/turnip.3zh",
 				title = "Voxel Item",
 				description = "A Voxel Item is a 3D object made out of cubes.",
-				callback = newItem,
+				callback = function()
+					local m = content:getModalIfContentIsActive()
+					if m ~= nil then
+						m:push(functions.createNewContent("item", nil, grid))
+					end
+				end,
 			},
 			{
 				title = "3D Textured Model",
@@ -462,12 +467,22 @@ creations.createModalContent = function(_, config)
 				title = "Voxel Avatar Equipment",
 				previewItem = "shapes/mantle.3zh",
 				description = "An Avatar Equipment made out of cubes (haircut, jacket, pants, boots, etc.)",
-				callback = newWearable,
+				callback = function()
+					local m = content:getModalIfContentIsActive()
+					if m ~= nil then
+						m:push(functions.createNewContent("wearable", nil, grid))
+					end
+				end,
 			},
 			{
 				title = "World",
 				description = "A World is a 3D scene with optional logic. That's what you need to pick if you want to create a game. Templates and AI will help you get started, wether you're a coder or not.",
-				callback = newWorld,
+				callback = function()
+					local m = content:getModalIfContentIsActive()
+					if m ~= nil then
+						m:push(functions.createNewContent("world", nil, grid))
+					end
+				end,
 			},
 			{
 				title = "Image",
@@ -491,6 +506,11 @@ creations.createModalContent = function(_, config)
 				local c = cells[index]
 				if c == nil then
 					c = ui:frameScrollCell()
+
+					if options[index].callback ~= nil then
+						c.onRelease = options[index].callback
+					end
+
 					cells[index] = c
 					
 					c.title = ui:createText(options[index].title, { 
@@ -666,31 +686,7 @@ creations.createModalContent = function(_, config)
 			end
 		end
 
-		local newItem = function()
-			local m = creationsContent:getModalIfContentIsActive()
-			if m ~= nil then
-				m:push(functions.createNewContent("item", nil, grid))
-			end
-		end
-
-		local newWearable = function()
-			local m = creationsContent:getModalIfContentIsActive()
-			if m ~= nil then
-				m:push(functions.createNewContent("wearable", nil, grid))
-			end
-		end
-
-		local newWorld = function()
-			local m = creationsContent:getModalIfContentIsActive()
-			if m ~= nil then
-				m:push(functions.createNewContent("world", nil, grid))
-			end
-		end
-
 		if btnCreate then btnCreate.onRelease = newPickCreationType end
-		if btnNewItem then btnNewItem.onRelease = newItem end
-		if btnNewWearable then btnNewWearable.onRelease = newWearable end
-		if btnNewWorld then btnNewWorld.onRelease = newWorld end
 
 		creationsContent.tabs = {}
 
