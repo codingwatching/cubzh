@@ -202,7 +202,7 @@ itemGrid.create = function(_, config)
 
 		local s = toggleFilterOptions[currentToggleFilterOption].label
 
-		sortBtn = ui:buttonNeutral({ content = s, textSize = "small", textColor = Color.Black })
+		sortBtn = ui:buttonSecondary({ content = s, textSize = "small", textColor = Color.White })
 		sortBtn:setParent(grid)
 		sortBtn.onRelease = function()
 			currentToggleFilterOption = currentToggleFilterOption + 1

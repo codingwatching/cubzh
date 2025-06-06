@@ -431,6 +431,9 @@ creations.createModalContent = function(_, config)
 		content.title = "Creations"
 		content.icon = "🛠️"
 
+		local requests = {}
+		local listeners = {}
+
 		local node = ui:frame()
 		content.node = node
 
@@ -443,17 +446,21 @@ creations.createModalContent = function(_, config)
 
 		local options = {
 			{
+				type = "voxel-item",
+				previewItem = "shapes/turnip.3zh",
 				title = "Voxel Item",
 				description = "A Voxel Item is a 3D object made out of cubes.",
 				callback = newItem,
 			},
 			{
 				title = "3D Textured Model",
+				previewItem = "shapes/blux.glb",
 				description = "A 3D object with a texture applied to it. Blip only supports .glb file uploads for this category, for now.",
 				comingSoon = true,
 			},
 			{
 				title = "Voxel Avatar Equipment",
+				previewItem = "shapes/mantle.3zh",
 				description = "An Avatar Equipment made out of cubes (haircut, jacket, pants, boots, etc.)",
 				callback = newWearable,
 			},
@@ -484,6 +491,8 @@ creations.createModalContent = function(_, config)
 				local c = cells[index]
 				if c == nil then
 					c = ui:frameScrollCell()
+					cells[index] = c
+					
 					c.title = ui:createText(options[index].title, { 
 						size = "default", 
 						color = Color.White 
@@ -494,14 +503,39 @@ creations.createModalContent = function(_, config)
 						color = Color(200, 200, 200) 
 					})
 					c.description:setParent(c)
+
+					c.iconFrame = ui:frame()
+					c.iconFrame.Width = 100
+					c.iconFrame.Height = 100
+					c.iconFrame:setParent(c)
+
+					if options[index].previewItem ~= nil then
+						local req = Object:Load(Data:FromBundle(options[index].previewItem), function(o)
+							local s = ui:createShape(o, { spherized = true })
+							s:setParent(c.iconFrame)
+
+							s.pivot.LocalRotation = { -0.1, 0, -0.2 }
+
+							-- setting Width sets Height & Depth as well when spherized
+							s.Width = c.iconFrame.Width * 1.1
+							s.pos = { -c.iconFrame.Width * 0.05, -c.iconFrame.Height * 0.05 }
+							
+							c.rotatingIcon = s
+						end)
+						table.insert(requests, req)
+					end
 				end
 
-				c.Width = container.Width
-				c.description.object.MaxWidth = c.Width - theme.padding * 2
-				c.Height = c.title.Height + c.description.Height + theme.padding * 3
+				local padding = theme.paddingBig
 
-				c.title.pos = { theme.padding, c.Height - c.title.Height - theme.padding }
-				c.description.pos = { theme.padding, c.title.pos.Y - c.description.Height - theme.padding }
+				c.Width = container.Width
+				c.description.object.MaxWidth = c.Width - c.iconFrame.Width - padding * 3
+				c.title.object.MaxWidth = c.Width - c.iconFrame.Width - padding * 3
+				c.Height = math.max(c.iconFrame.Height, c.title.Height + c.description.Height + padding) + padding * 2
+
+				c.iconFrame.pos = { padding, c.Height - c.iconFrame.Height - padding }
+				c.title.pos = { c.iconFrame.pos.X + c.iconFrame.Width + padding, c.Height - c.title.Height - padding }
+				c.description.pos = { c.iconFrame.pos.X + c.iconFrame.Width + padding, c.title.pos.Y - c.description.Height - padding }
 
 				return c
 			end,
@@ -526,6 +560,27 @@ creations.createModalContent = function(_, config)
 			content.Height = height
 			content:refresh()
 			return Number2(content.Width, content.Height)
+		end
+
+		local l = LocalEvent:Listen(LocalEvent.Name.Tick, function(dt)
+			for _, c in cells do
+				if c.rotatingIcon then
+					c.rotatingIcon.pivot.LocalRotation.Y += dt * 2
+				end
+			end
+		end)
+		table.insert(listeners, l)
+
+		content.willResignActive = function()
+			for _, l in listeners do
+				l:pause()
+			end
+		end
+
+		content.didBecomeActive = function()
+			for _, l in listeners do
+				l:resume()
+			end
 		end
 
 		return content
@@ -556,11 +611,6 @@ creations.createModalContent = function(_, config)
 		})
 		grid:setParent(node)
 
-		-- local newLabel
-		-- local btnNewItem
-		-- local btnNewWearable
-		-- local btnNewWorld
-
 		local btnCreate
 
 		if config.authorId == Player.UserID then
@@ -575,18 +625,6 @@ creations.createModalContent = function(_, config)
 				}
 			})
 			btnCreate:setParent(node)
-
-			-- newLabel = ui:createText("Create:", {size = "small", color = Color.White})
-			-- newLabel:setParent(node)
-
-			-- btnNewItem = ui:buttonNeutral({ content = "Item", textSize = "small", padding = theme.padding })
-			-- btnNewItem:setParent(node)
-
-			-- btnNewWearable = ui:buttonNeutral({ content = "Wearable", textSize = "small", padding = theme.padding })
-			-- btnNewWearable:setParent(node)
-
-			-- btnNewWorld = ui:buttonNeutral({ content = "World", textSize = "small", padding = theme.padding })
-			-- btnNewWorld:setParent(node)
 		end
 
 		node.parentDidResize = function(self)
@@ -655,49 +693,6 @@ creations.createModalContent = function(_, config)
 		if btnNewWorld then btnNewWorld.onRelease = newWorld end
 
 		creationsContent.tabs = {}
-
-		-- for _, category in ipairs(config.categories) do
-		-- 	if category == "items" then
-		-- 		table.insert(creationsContent.tabs, {
-		-- 			label = "⚔️ Items",
-		-- 			short = "⚔️",
-		-- 			action = function()
-		-- 				grid:setCategories({ "null" }, "items")
-		-- 				if btnNew then
-		-- 					btnNew.Text = "✨ Create item ⚔️"
-		-- 					btnNew.pos.X = btnNew.parent.Width * 0.5 - btnNew.Width * 0.5
-		-- 					btnNew.onRelease = newItem
-		-- 				end
-		-- 			end,
-		-- 		})
-		-- 	elseif category == "wearables" then
-		-- 		table.insert(creationsContent.tabs, {
-		-- 			label = "👕 Wearables",
-		-- 			short = "👕",
-		-- 			action = function()
-		-- 				grid:setCategories({ "hair", "jacket", "pants", "boots" }, "items")
-		-- 				if btnNew then
-		-- 					btnNew.Text = "✨ Create wearable 👕"
-		-- 					btnNew.pos.X = btnNew.parent.Width * 0.5 - btnNew.Width * 0.5
-		-- 					btnNew.onRelease = newWearable
-		-- 				end
-		-- 			end,
-		-- 		})
-		-- 	elseif category == "worlds" then
-		-- 		table.insert(creationsContent.tabs, {
-		-- 			label = "🌎 Worlds",
-		-- 			short = "🌎",
-		-- 			action = function()
-		-- 				grid:setCategories({ "null" }, "worlds")
-		-- 				if btnNew then
-		-- 					btnNew.Text = "✨ Create world 🌎"
-		-- 					btnNew.pos.X = btnNew.parent.Width * 0.5 - btnNew.Width * 0.5
-		-- 					btnNew.onRelease = newWorld
-		-- 				end
-		-- 			end,
-		-- 		})
-		-- 	end
-		-- end
 
 		if #creationsContent.tabs > 0 then
 			creationsContent.tabs[1].action()
