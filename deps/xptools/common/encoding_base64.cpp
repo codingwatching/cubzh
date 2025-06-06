@@ -10,6 +10,7 @@
 
 // C++
 #include <algorithm>
+#include <cstdint>
 
 //
 // Based on:
