@@ -39,8 +39,9 @@ void main() {
 	if (base.a <= EPSILON) discard;
 
 	float totalWeight = clamp(1.0 - weight - outlineWeight, SDF_THRESHOLD + softness, 1.0 - softness);
-	float alpha = smoothstep(totalWeight - softness, totalWeight + softness, base.r);
-	float outline = smoothstep(1.0 - weight - 2.0 * softness, 1.0 - weight, base.r);
+	float softnessFlag = step(EPSILON, softness);
+	float alpha = mix(step(totalWeight, base.r), smoothstep(totalWeight - softness, totalWeight + softness, base.r), softnessFlag);
+	float outline = mix(step(1.0 - weight, base.r), smoothstep(1.0 - weight - 2.0 * softness, 1.0 - weight, base.r), softnessFlag);
 
 	vec3 rgb = mix(unpackFloatToRgb(u_outlineColor), v_color0.rgb, outline);
 	base = mix(vec4(rgb, alpha), base, colored);
