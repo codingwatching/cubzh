@@ -83,6 +83,11 @@ bool _readMagicBytes(Stream *s, uint8_t size, const char *magic) {
 }
 
 bool readMagicBytes(Stream *s, bool allowLegacy) {
+    // reset to read magic byte chars from start
+    // in some cases, we try to read magic bytes from other formats before
+    // and thus the cursor is at the wrong position when calling that function
+    stream_set_cursor_position(s, 0);
+
     if (_readMagicBytes(s, MAGIC_BYTES_SIZE, MAGIC_BYTES)) {
         return true;
     }
