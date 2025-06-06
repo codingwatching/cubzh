@@ -40,8 +40,6 @@ void main() {
 					filtering);
 	base = mix(base.bbbb, base.rgba, colored);
 
-	if (base.a <= EPSILON) discard;
-
 	float totalWeight = clamp(1.0 - weight - outlineWeight, SDF_THRESHOLD + softness, 1.0 - softness);
 	float softnessFlag = step(EPSILON, softness);
 	float alpha = mix(step(totalWeight, base.r), smoothstep(totalWeight - softness, totalWeight + softness, base.r), softnessFlag);
@@ -51,6 +49,8 @@ void main() {
 	base = mix(vec4(rgb, alpha), base, colored);
 
 	vec4 color = vec4(base.rgb, v_color0.a * base.a);
+
+	if (color.a <= EPSILON) discard;
 
 #if FONT_VARIANT_MRT_LIGHTING == 0 && FONT_VARIANT_UNLIT == 0
 	color = getNonVoxelVertexLitColor(color, vlighting.x, vlighting.yzw, u_sunColor.xyz, v_clipZ);
