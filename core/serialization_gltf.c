@@ -272,6 +272,7 @@ bool serialization_gltf_load(const void *buffer, const size_t size, const ASSET_
                     for (size_t k = 0; k < vertexCount; ++k) {
                         // position (float3)
                         cgltf_accessor_read_float(posAccessor, k, &vertices[k].x, 3);
+                        vertices[k].x *= -1.0f; // swap to left-handed coordinates
                         
                         // normal (uint8 normalized)
                         if (normalAccessor != NULL) {
@@ -498,7 +499,7 @@ bool serialization_gltf_load(const void *buffer, const size_t size, const ASSET_
                     mesh_set_vertex_buffer(mesh, vertices, (uint32_t)posAccessor->count);
                     mesh_set_index_buffer(mesh, indices, ibCount);
                     mesh_set_primitive_type(mesh, primitiveType);
-                    mesh_set_front_ccw(mesh, false);
+                    mesh_set_front_ccw(mesh, true); // swap to left-handed coordinates
                     mesh_reset_model_aabb(mesh);
                     mesh_set_material(mesh, material);
                     
