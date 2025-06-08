@@ -14,9 +14,18 @@
 // xptools
 #include "vxlog.h"
 
-using namespace vx;
+namespace vx {
 
-bool json::readStringField(const cJSON *const src, const std::string& field, std::string& value, bool canBeOmitted) {
+namespace json {
+
+bool hasField(const cJSON * const obj, const std::string& field) {
+    if (obj == nullptr || cJSON_IsObject(obj) == false) {
+        return false;
+    }
+    return cJSON_HasObjectItem(obj, field.c_str());
+}
+
+bool readStringField(const cJSON *const src, const std::string& field, std::string& value, bool canBeOmitted) {
     if (cJSON_IsObject(src) == false) {
         return false;
     }
@@ -38,7 +47,7 @@ bool json::readStringField(const cJSON *const src, const std::string& field, std
     return false;
 }
 
-bool json::writeStringField(cJSON * const obj, const std::string& field, const std::string& value, bool omitIfEmpty) {
+bool writeStringField(cJSON * const obj, const std::string& field, const std::string& value, bool omitIfEmpty) {
     if (obj == nullptr) {
         return false;
     }
@@ -60,7 +69,7 @@ bool json::writeStringField(cJSON * const obj, const std::string& field, const s
     return true; // success
 }
 
-bool json::readIntField(const cJSON *src, const std::string &field, int &value, bool canBeOmitted) {
+bool readIntField(const cJSON *src, const std::string &field, int &value, bool canBeOmitted) {
     if (cJSON_IsObject(src) == false) {
         return false;
     }
@@ -79,7 +88,7 @@ bool json::readIntField(const cJSON *src, const std::string &field, int &value, 
     return false;
 }
 
-bool json::readUInt8Field(const cJSON *src, const std::string &field, uint8_t &value, bool canBeOmitted) {
+bool readUInt8Field(const cJSON *src, const std::string &field, uint8_t &value, bool canBeOmitted) {
     int intValue = 0;
     const bool ok = readIntField(src, field, intValue, canBeOmitted);
     if (ok == false) {
@@ -92,7 +101,7 @@ bool json::readUInt8Field(const cJSON *src, const std::string &field, uint8_t &v
     return true;
 }
 
-void json::writeIntField(cJSON *dest, const std::string &field, const int value) {
+void writeIntField(cJSON *dest, const std::string &field, const int value) {
     cJSON *jnum = cJSON_CreateNumber(static_cast<double>(value));
     if (jnum == nullptr) {
         vxlog_error("can't create json int");
@@ -101,7 +110,7 @@ void json::writeIntField(cJSON *dest, const std::string &field, const int value)
     cJSON_AddItemToObject(dest, field.c_str(), jnum);
 }
 
-void json::writeInt64Field(cJSON *dest, const std::string& field, const int64_t value) {
+void writeInt64Field(cJSON *dest, const std::string& field, const int64_t value) {
     cJSON *jnum = cJSON_CreateNumber(static_cast<double>(value));
     if (jnum == nullptr) {
         vxlog_error("can't create json int");
@@ -110,7 +119,7 @@ void json::writeInt64Field(cJSON *dest, const std::string& field, const int64_t 
     cJSON_AddItemToObject(dest, field.c_str(), jnum);
 }
 
-bool json::readBoolField(const cJSON *src,
+bool readBoolField(const cJSON *src,
                              const std::string& field,
                              bool& value,
                              bool canBeOmitted) {
@@ -132,7 +141,7 @@ bool json::readBoolField(const cJSON *src,
     return false;
 }
 
-void json::writeBoolField(cJSON *dest, const std::string &field, const bool value) {
+void writeBoolField(cJSON *dest, const std::string &field, const bool value) {
     cJSON *jbool = cJSON_CreateBool(value);
     if (jbool == nullptr) {
         vxlog_error("can't create json bool");
@@ -141,7 +150,7 @@ void json::writeBoolField(cJSON *dest, const std::string &field, const bool valu
     cJSON_AddItemToObject(dest, field.c_str(), jbool);
 }
 
-void json::writeNullField(cJSON *dest, const std::string &field) {
+void writeNullField(cJSON *dest, const std::string &field) {
     cJSON *jnull = cJSON_CreateNull();
     if (jnull == nullptr) {
         vxlog_error("can't create json null");
@@ -152,7 +161,7 @@ void json::writeNullField(cJSON *dest, const std::string &field) {
 
 // Parses this kind of JSON and returns the array of strings : [str1, str2] here.
 // ["str1", "str2"]
-bool json::readStringArray(const cJSON * const array, std::vector<std::string>& out) {
+bool readStringArray(const cJSON * const array, std::vector<std::string>& out) {
     if (array == nullptr || cJSON_IsArray(array) == false) {
         return false;
     }
@@ -170,7 +179,7 @@ bool json::readStringArray(const cJSON * const array, std::vector<std::string>& 
 
 //// Parses this kind of JSON and returns the array of strings : [str1, str2] here.
 //// { "field" : ["str1", "str2"] }
-//bool json::readStringArrayField(const cJSON *const src,
+//bool readStringArrayField(const cJSON *const src,
 //                                const std::string& field,
 //                                std::vector<std::string>& value,
 //                                bool canBeOmitted) {
@@ -201,7 +210,7 @@ bool json::readStringArray(const cJSON * const array, std::vector<std::string>& 
 //    return false;
 //}
 
-bool json::readMapStringString(const cJSON * const obj, std::unordered_map<std::string, std::string>& result) {
+bool readMapStringString(const cJSON * const obj, std::unordered_map<std::string, std::string>& result) {
     if (obj == nullptr || cJSON_IsObject(obj) == false) {
         return false;
     }
@@ -223,3 +232,7 @@ bool json::readMapStringString(const cJSON * const obj, std::unordered_map<std::
 
     return true;
 }
+
+} // namespace json
+
+} // namespace vx
