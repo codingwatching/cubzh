@@ -21,6 +21,7 @@
 #define QUAD_FLAG_ALPHABLEND 16
 #define QUAD_FLAG_VCOLOR 32
 #define QUAD_FLAG_9SLICE 64
+#define QUAD_FLAG_FILTERING 128
 
 #define QUAD_DEFAULT_9SLICE_UV 0.5f
 #define QUAD_DEFAULT_9SLICE_SCALE 1.0f
@@ -41,7 +42,7 @@ struct _Quad {
     uint16_t layers;        /* 2 bytes */
     uint8_t flags;          /* 1 byte */
     uint8_t sortOrder;      /* 1 byte */
-
+    
     // no padding
 };
 
@@ -78,7 +79,7 @@ Quad *quad_new(void) {
     q->offsetV = 0.0f;
     q->cutout = -1.0f;
     q->layers = CAMERA_LAYERS_DEFAULT;
-    q->flags = QUAD_FLAG_DOUBLESIDED;
+    q->flags = QUAD_FLAG_DOUBLESIDED | QUAD_FLAG_FILTERING;
     q->sortOrder = 0;
 
     q->rgba = (uint32_t *)malloc(sizeof(uint32_t));
@@ -333,6 +334,14 @@ void quad_set_alpha_blending(Quad *q, bool toggle) {
 
 bool quad_uses_alpha_blending(const Quad *q) {
     return _quad_get_flag(q, QUAD_FLAG_ALPHABLEND);
+}
+
+void quad_set_filtering(Quad *q, bool toggle) {
+    _quad_toggle_flag(q, QUAD_FLAG_FILTERING, toggle);
+}
+
+bool quad_uses_filtering(const Quad *q) {
+    return _quad_get_flag(q, QUAD_FLAG_FILTERING);
 }
 
 void quad_set_sort_order(Quad *q, uint8_t value) {

@@ -63,6 +63,8 @@ void quad_set_mask(Quad *q, bool toggle);
 bool quad_is_mask(const Quad *q);
 void quad_set_alpha_blending(Quad *q, bool toggle);
 bool quad_uses_alpha_blending(const Quad *q);
+void quad_set_filtering(Quad *q, bool toggle);
+bool quad_uses_filtering(const Quad *q);
 void quad_set_sort_order(Quad *q, uint8_t value);
 uint8_t quad_get_sort_order(const Quad *q);
 void quad_set_9slice(Quad *q, bool toggle);
