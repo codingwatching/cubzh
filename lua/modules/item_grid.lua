@@ -456,7 +456,7 @@ itemGrid.create = function(_, config)
 							elseif entry.type == "world" then
 								local timer = Timer(LOAD_CONTENT_DELAY, function()
 									local req = api:getWorldThumbnail({
-										worldID = cell.id, 
+										worldID = cell.id,
 										width = 250,
 										callback = function(img, err)
 											if err ~= nil then
@@ -479,7 +479,7 @@ itemGrid.create = function(_, config)
 											thumbnail.pos = { 0, 0 }
 
 											cell.thumbnail = thumbnail
-										end
+										end,
 									})
 									table.insert(self.requests, req)
 								end)
@@ -597,26 +597,22 @@ itemGrid.create = function(_, config)
 		end
 
 		if type == "all" then
-			local req = api:getWorlds({
+			local req = api:getCreations({
 				authorId = config.authorId,
 				category = categories[1], -- TODO: review this
 				page = 1,
 				perPage = config.perPage,
 				search = search,
 				sortBy = sortBy,
-				fields = { "title", "created", "updated", "views", "likes" },
-			}, function(worlds, err)
+				fields = { "id", "type", "name", "authorName", "created", "updated", "views", "likes" },
+			}, function(creations, err)
 				if err then
 					-- silent error
 					return
 				end
-				for _, entry in worlds do
-					entry.type = "world"
-				end
-				setGridEntries(worlds)
+				setGridEntries(creations)
 			end)
 			addSentRequest(req)
-
 		elseif type == "items" then
 			local req = api:getItems({
 				minBlock = config.minBlocks,
@@ -632,7 +628,7 @@ itemGrid.create = function(_, config)
 					return
 				end
 				for _, entry in items do
-					entry.type = "item"
+					entry.type = "item" -- force type to `item`
 				end
 				setGridEntries(items)
 			end)
@@ -652,7 +648,7 @@ itemGrid.create = function(_, config)
 					return
 				end
 				for _, entry in worlds do
-					entry.type = "world"
+					entry.type = "world" -- force type to `world`
 				end
 				setGridEntries(worlds)
 			end)

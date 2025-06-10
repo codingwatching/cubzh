@@ -357,7 +357,7 @@ mod.getCreations = function(self, config, callback)
 	end
 
 	local defaultConfig = {
-		type = "all", -- "all", "items", "worlds"
+		type = "", -- "items", "worlds"
 		authorId = "",
 		category = "", -- string or table of strings
 		search = "",
@@ -366,7 +366,7 @@ mod.getCreations = function(self, config, callback)
 		perPage = 50,
 		repo = "",
 		minBlock = nil, -- min number of blocks, for items
-		fields = { "title", "created", "updated", "views", "likes" },
+		fields = { "id", "type", "name", "createdAt", "updatedAt", "views", "likes" },
 	}
 
 	ok, err = pcall(function()
@@ -384,7 +384,7 @@ mod.getCreations = function(self, config, callback)
 
 	local u = url:parse(mod.kApiAddr .. "/creations")
 
-	u:addQueryParameter("type", config.type)
+	-- u:addQueryParameter("type", config.type)
 	u:addQueryParameter("authorId", config.authorId)
 	u:addQueryParameter("category", config.category)
 	u:addQueryParameter("search", config.search)
@@ -402,6 +402,7 @@ mod.getCreations = function(self, config, callback)
 	local req = HTTP:Get(u:toString(), function(res)
 		-- check status code
 		if res.StatusCode ~= 200 then
+			print("ERROR", res.StatusCode)
 			callback(nil, mod:error(res.StatusCode, "status code: " .. res.StatusCode))
 			return
 		end
@@ -413,7 +414,9 @@ mod.getCreations = function(self, config, callback)
 			return
 		end
 
-		for _, v in ipairs(items.results) do
+		print(res.Body:ToString())
+
+		for _, v in ipairs(items.creations) do
 			if v.created then v.created = time.iso8601_to_os_time(v.created) end
 			if v.updated then v.updated = time.iso8601_to_os_time(v.updated) end
 			if v.likes ~= nil then
@@ -426,9 +429,12 @@ mod.getCreations = function(self, config, callback)
 			else
 				v.views = 0
 			end
+			-- support legacy fields
+			v.title = v.name
+			v.repo = v.authorName
 		end
 
-		callback(items.results) -- success
+		callback(items.creations) -- success
 	end)
 	return req
 end
