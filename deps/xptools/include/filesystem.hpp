@@ -180,12 +180,14 @@ FILE *openStorageFile(std::string relFilePath, std::string mode = "rb", size_t w
 /// returns a vector containing the storage-relative paths of direct (not recursive) children of the given directory
 std::vector<std::string> listStorageDirectory(const std::string& relStoragePath);
 
+/// Callback for importing files
 enum class ImportFileCallbackStatus {
     OK = 0,
-    ERROR_IMPORT,
+    ERROR,
     CANCELLED,
 };
-typedef std::function<void(void *bytes, size_t len, ImportFileCallbackStatus status)> ImportFileCallback;
+typedef std::function<void(ImportFileCallbackStatus status, std::string bytes)> ImportFileCallback;
+
 void importFile(ImportFileCallback callback);
 
 #ifdef _ANDROID

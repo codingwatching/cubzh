@@ -151,7 +151,7 @@ static NSString *getStoragePath() {
 }
 
 - (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller {
-    static_cast<DocumentPickerDelegate*>([DocumentPickerDelegate shared]).callback(nullptr, 0, vx::fs::ImportFileCallbackStatus::CANCELLED);
+    static_cast<DocumentPickerDelegate*>([DocumentPickerDelegate shared]).callback(vx::fs::ImportFileCallbackStatus::CANCELLED, std::string());
 }
 
 - (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
@@ -159,12 +159,11 @@ static NSString *getStoragePath() {
     NSError* error = nil;
     NSData* data = [NSData dataWithContentsOfURL:fileURL options:NSDataReadingUncached error:&error];
     if (error) {
-        static_cast<DocumentPickerDelegate*>([DocumentPickerDelegate shared]).callback(nullptr, 0, vx::fs::ImportFileCallbackStatus::ERROR_IMPORT);
+        static_cast<DocumentPickerDelegate*>([DocumentPickerDelegate shared]).callback(vx::fs::ImportFileCallbackStatus::ERROR, std::string());
 
     } else {
-        void *bytes = static_cast<void*>(malloc(data.length));
-        memcpy(bytes, data.bytes, data.length);
-        static_cast<DocumentPickerDelegate*>([DocumentPickerDelegate shared]).callback(bytes, data.length, vx::fs::ImportFileCallbackStatus::OK);
+        std::string bytes(static_cast<const char*>(data.bytes), data.length);
+        static_cast<DocumentPickerDelegate*>([DocumentPickerDelegate shared]).callback(vx::fs::ImportFileCallbackStatus::OK, bytes);
     }
 }
 
@@ -203,14 +202,13 @@ void ::vx::fs::importFile(ImportFileCallback callback) {
             NSError* error = nil;
             NSData* data = [NSData dataWithContentsOfURL:fileURL options:NSDataReadingUncached error:&error];
             if (error) {
-                callback(nullptr, 0, ImportFileCallbackStatus::ERROR_IMPORT);
+                callback(ImportFileCallbackStatus::ERROR, std::string());
             } else {
-                void *bytes = static_cast<void*>(malloc(data.length));
-                memcpy(bytes, data.bytes, data.length);
-                callback(bytes, data.length, ImportFileCallbackStatus::OK);
+                std::string bytes(static_cast<const char*>(data.bytes), data.length);
+                callback(ImportFileCallbackStatus::OK, bytes);
             }
         } else if (result == NSModalResponseCancel) {
-            callback(nullptr, 0, ImportFileCallbackStatus::CANCELLED);
+            callback(ImportFileCallbackStatus::CANCELLED, std::string());
         }
     }];
 #endif
