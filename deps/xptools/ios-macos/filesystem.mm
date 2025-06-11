@@ -11,9 +11,6 @@
 // C++
 #include <fstream>
 
-// Obj-C
-#import <Foundation/Foundation.h>
-
 #if TARGET_OS_IPHONE
 #import <Photos/Photos.h>
 #import <UIKit/UIKit.h>
@@ -24,6 +21,7 @@
 
 // xptools
 #include "vxlog.h"
+#include "apple-utils.h"
 
 // --------------------------------------------------
 // MARK: - Path separator -
@@ -172,8 +170,8 @@ static NSString *getStoragePath() {
 
 void ::vx::fs::importFile(ImportFileCallback callback) {
 #if TARGET_OS_IPHONE
-    UIViewController *vc = [UIApplication sharedApplication].keyWindow.rootViewController;
-    
+    UIViewController *vc = vx::utils::ios::getRootUIViewController();
+
     UIDocumentPickerViewController *pickerVC = [[UIDocumentPickerViewController alloc] initWithDocumentTypes:@[@"com.voxowl.particubes.vox",
                                                                                                                @"com.voxowl.particubes.pcubes",
                                                                                                                @"com.voxowl.particubes.particubes",
@@ -610,17 +608,14 @@ bool vx::fs::mergeBundleDirInStorage(const std::string& bundleDir, const std::st
 //}
 
 -(void)prepareForPopoverPresentation:(UIPopoverPresentationController *)popoverPresentationController {
-    
-    UIViewController *vc = [UIApplication sharedApplication].keyWindow.rootViewController;
+    UIViewController *vc = vx::utils::ios::getRootUIViewController();
     [UIView animateWithDuration:0.2 animations:^{
         vc.view.alpha = 0.5;
     }];
 }
 
 - (void)popoverPresentationController:(UIPopoverPresentationController *)popoverPresentationController willRepositionPopoverToRect:(inout CGRect *)rect inView:(inout UIView * _Nonnull __autoreleasing *)view {
- 
-    UIViewController *vc = [UIApplication sharedApplication].keyWindow.rootViewController;
-    
+    UIViewController *vc = vx::utils::ios::getRootUIViewController();
     *rect = CGRectMake(CGRectGetMidX(vc.view.bounds),
                       CGRectGetMidY(vc.view.bounds),
                       0,
@@ -638,7 +633,7 @@ void vx::fs::shareFile(const std::string& filepath,
     
     vxlog_info("📸 [shareFile] %s", filepath.c_str());
 #if TARGET_OS_IPHONE
-    UIViewController *vc = [UIApplication sharedApplication].keyWindow.rootViewController;
+    UIViewController *vc = vx::utils::ios::getRootUIViewController();
 
     NSString *filepathStr = [NSString stringWithCString:filepath.c_str() encoding:NSUTF8StringEncoding];
     NSString *srcFullpath = [NSString stringWithFormat:@"%@/%@", getStoragePath(), filepathStr];
@@ -885,7 +880,7 @@ void showIOSPicker() {
             imagePicker.allowsEditing = false;
             imagePicker.delegate = [ImagePickerDelegate shared];
 
-            UIViewController *rootController = [[[UIApplication sharedApplication] keyWindow] rootViewController];
+            UIViewController *rootController = vx::utils::ios::getRootUIViewController();
             [rootController presentViewController:imagePicker animated:true completion:nil];
         }
     });

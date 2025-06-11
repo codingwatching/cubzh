@@ -13,7 +13,7 @@
 #import "AuthenticationServices/AuthenticationServices.h"
 
 // xptools
-#import "utils.m"
+#include "apple-utils.h"
 
 //
 // MARK: - PasskeyDelegate class -
