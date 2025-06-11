@@ -438,22 +438,6 @@ bool c_storageFileExists(const char *relFilePath, bool *isDir) {
     return exists;
 }
 
-bool c_mergeBundleDirInStorage(const char *bundleDir, const char *storageDir) {
-
-    if (bundleDir == nullptr) {
-        return false;
-    }
-
-    if (storageDir == nullptr) {
-        return false;
-    }
-
-    std::string bundleDirStr(bundleDir);
-    std::string storageDirStr(storageDir);
-
-    return vx::fs::mergeBundleDirInStorage(bundleDirStr, storageDirStr);
-}
-
 bool c_removeStorageFilesWithPrefix(const char* c_directory, const char* c_prefix) {
     if (c_directory == nullptr) { return false; }
     if (c_prefix == nullptr || strlen(c_prefix) == 0) { return false; }

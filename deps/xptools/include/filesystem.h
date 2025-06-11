@@ -43,8 +43,6 @@ bool c_bundleFileExists(const char *relFilePath, bool *isDir);
 
 bool c_storageFileExists(const char *relFilePath, bool *isDir);
 
-bool c_mergeBundleDirInStorage(const char *bundleDir, const char *storageDir);
-
 bool c_removeStorageFilesWithPrefix(const char* directory, const char* prefix);
 
 void c_syncFSToDisk(void);

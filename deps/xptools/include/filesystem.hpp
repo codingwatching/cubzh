@@ -205,10 +205,6 @@ bool bundleFileExists(const std::string& relFilePath, bool& isDir);
 bool storageFileExists(const std::string& relFilePath);
 bool storageFileExists(const std::string& relFilePath, bool& isDir);
 
-/// Merges content of bundle directory into cache directory.
-/// Overriding existing cache files if found.
-bool mergeBundleDirInStorage(const std::string& bundleDir, const std::string& storageDir);
-
 /// filepath is relative to storage
 void shareFile(const std::string& filepath, // where the file to export is stored
                const std::string& title, // share dialog title (when applicable)
