@@ -9,6 +9,12 @@
 // this file can only be included in Objective-C source files
 #ifdef __OBJC__
 
+#import <Foundation/Foundation.h>
+
+#if TARGET_OS_IPHONE
+#import <UIKit/UIKit.h>
+#endif
+
 // --------------------------------------------------
 // MARK: - Objective-C utilities -
 // --------------------------------------------------
@@ -21,6 +27,18 @@
 - (NSString *)base64UrlEncodedString;
 @end
 
+#if TARGET_OS_IPHONE
+
+//
+// PopoverPresentationControllerDelegate (iOS)
+//
+
+@interface PopoverPresentationControllerDelegate: NSObject<UIPopoverPresentationControllerDelegate> {}
++ (id)shared;
+@end
+
+#endif
+
 // --------------------------------------------------
 // MARK: - C++ utilities -
 // --------------------------------------------------
@@ -30,8 +48,6 @@ namespace utils {
 
 #if TARGET_OS_IPHONE
 namespace ios {
-
-// #import <UIKit/UIKit.h>
 
 /// returns the root view controller (iOS)
 UIViewController* getRootUIViewController();

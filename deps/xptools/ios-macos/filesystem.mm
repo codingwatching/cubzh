@@ -565,66 +565,6 @@ bool vx::fs::mergeBundleDirInStorage(const std::string& bundleDir, const std::st
     return true;
 }
 
-#if TARGET_OS_IPHONE
-@interface PopoverPresentationControllerDelegate: NSObject<UIPopoverPresentationControllerDelegate> {
-
-}
-
-+ (id)shared;
-
-@end
-
-@implementation PopoverPresentationControllerDelegate
-
-+ (id)shared {
-    static PopoverPresentationControllerDelegate *sharedDelegate = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sharedDelegate = [[PopoverPresentationControllerDelegate alloc] init];
-    });
-    return sharedDelegate;
-}
-
-- (id)init {
-    if ((self = [super init])) {
-      // someProperty = [[NSString alloc] initWithString:@"Default Property Value"];
-  }
-  return self;
-}
-
-- (void)dealloc {
-  // Should never be called
-}
-
-// called when taping outside the activity view
-// not called when share action completed.
-// NOTE: animation done in activityViewController.completionWithItemsHandler,
-// as it can handle both cases (action completed or not)
-//-(void)presentationControllerWillDismiss:(UIPresentationController *)presentationController {
-//    UIViewController *vc = [UIApplication sharedApplication].keyWindow.rootViewController;
-//    [UIView animateWithDuration:0.2 animations:^{
-//        vc.view.alpha = 1.0;
-//    }];
-//}
-
--(void)prepareForPopoverPresentation:(UIPopoverPresentationController *)popoverPresentationController {
-    UIViewController *vc = vx::utils::ios::getRootUIViewController();
-    [UIView animateWithDuration:0.2 animations:^{
-        vc.view.alpha = 0.5;
-    }];
-}
-
-- (void)popoverPresentationController:(UIPopoverPresentationController *)popoverPresentationController willRepositionPopoverToRect:(inout CGRect *)rect inView:(inout UIView * _Nonnull __autoreleasing *)view {
-    UIViewController *vc = vx::utils::ios::getRootUIViewController();
-    *rect = CGRectMake(CGRectGetMidX(vc.view.bounds),
-                      CGRectGetMidY(vc.view.bounds),
-                      0,
-                      0);
-}
-
-@end
-#endif
-
 ///
 void vx::fs::shareFile(const std::string& filepath,
                        const std::string& title,
