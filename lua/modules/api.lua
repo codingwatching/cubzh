@@ -414,7 +414,7 @@ mod.getCreations = function(self, config, callback)
 			return
 		end
 
-		print(res.Body:ToString())
+		-- print(res.Body:ToString())
 
 		for _, v in ipairs(items.creations) do
 			if v.created then v.created = time.iso8601_to_os_time(v.created) end
