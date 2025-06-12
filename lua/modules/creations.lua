@@ -444,6 +444,44 @@ creations.createModalContent = function(_, config)
 		})
 		label:setParent(node)
 
+		local texturesIcon = Object()
+
+		local scale = 10
+		local block = MutableShape()
+		block.Scale = Number3( 4, 3, 0.5 ) * scale
+		block.Pivot = { 0.5, 0.5, 0.5 }
+		block:AddBlock(Color.White, 0, 0, 0)
+		block:SetParent(texturesIcon)
+		block.IsHidden = true
+
+		local cover = 0.8
+
+		local q1 = Quad() 
+		q1.Image = Data:FromBundle("images/texture-sample-2.png")
+		q1.Anchor = { 1, 0 } 
+		q1.Color = Color.White
+		q1.Width = block.Scale.X * cover
+		q1.Height = block.Scale.Y * cover
+		q1:SetParent(texturesIcon) 
+		q1.LocalPosition = { 
+			block.Scale.X * 0.5, 
+			-block.Scale.Y * 0.5, 
+			-block.Scale.Z * 0.6 
+		}
+
+		local q2 = Quad()
+		q2.Image = Data:FromBundle("images/texture-sample-1.png")
+		q2.Anchor = { 0, 1 } 
+		q2.Color = Color.White
+		q2.Width = block.Scale.X * cover
+		q2.Height = block.Scale.Y * cover
+		q2:SetParent(texturesIcon) 
+		q2.LocalPosition = { 
+			-block.Scale.X * 0.5, 
+			block.Scale.Y * 0.5, 
+			block.Scale.Z * 0.6 
+		}
+
 		local options = {
 			{
 				type = "voxel-item",
@@ -458,7 +496,7 @@ creations.createModalContent = function(_, config)
 				end,
 			},
 			{
-				title = "3D Textured Model",
+				title = "Textured 3D Model",
 				previewItem = "shapes/blux.glb",
 				description = "A 3D object with a texture applied to it. Blip only supports .glb file uploads for this category, for now.",
 				comingSoon = true,
@@ -488,6 +526,7 @@ creations.createModalContent = function(_, config)
 				title = "Image",
 				description = "Upload an image (PNG or JPG) that can be used as a texture.",
 				comingSoon = true,
+				previewItem = texturesIcon,
 			},
 		}
 		local nbOptions = #options
@@ -530,19 +569,27 @@ creations.createModalContent = function(_, config)
 					c.iconFrame:setParent(c)
 
 					if options[index].previewItem ~= nil then
-						local req = Object:Load(Data:FromBundle(options[index].previewItem), function(o)
-							local s = ui:createShape(o, { spherized = true })
+						local previewItem = options[index].previewItem
+						if typeof(previewItem) == "Object" then
+							local s = ui:createShape(previewItem, { spherized = true })
 							s:setParent(c.iconFrame)
-
 							s.pivot.LocalRotation = { -0.1, 0, -0.2 }
-
 							-- setting Width sets Height & Depth as well when spherized
 							s.Width = c.iconFrame.Width * 1.1
 							s.pos = { -c.iconFrame.Width * 0.05, -c.iconFrame.Height * 0.05 }
-							
 							c.rotatingIcon = s
-						end)
-						table.insert(requests, req)
+						else
+							local req = Object:Load(Data:FromBundle(previewItem), function(o)
+								local s = ui:createShape(o, { spherized = true })
+								s:setParent(c.iconFrame)
+								s.pivot.LocalRotation = { -0.1, 0, -0.2 }
+								-- setting Width sets Height & Depth as well when spherized
+								s.Width = c.iconFrame.Width * 1.1
+								s.pos = { -c.iconFrame.Width * 0.05, -c.iconFrame.Height * 0.05 }
+								c.rotatingIcon = s
+							end)
+							table.insert(requests, req)
+						end
 					end
 				end
 
