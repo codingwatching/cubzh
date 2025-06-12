@@ -587,12 +587,12 @@ mod.getWorldThumbnail = function(self, config)
 		error("api:getWorldThumbnail(config): config.callback should be a function", 2)
 	end
 
-	local u
-	if config.width ~= nil then
-		u = url:parse(mod.kApiAddr .. "/worlds/" .. config.worldID .. "/thumbnail-" .. config.width .. ".png")
-	else
-		u = url:parse(mod.kApiAddr .. "/worlds/" .. config.worldID .. "/thumbnail.png")
-	end
+	local u = url:parse(mod.kApiAddr .. "/worlds/" .. config.worldID .. "/thumbnail")
+	-- if config.width ~= nil then
+	-- 	u = url:parse(mod.kApiAddr .. "/worlds/" .. config.worldID .. "/thumbnail-" .. config.width .. ".png")
+	-- else
+	-- 	u = url:parse(mod.kApiAddr .. "/worlds/" .. config.worldID .. "/thumbnail.png")
+	-- end
 
 	local req = HTTP:Get(u:toString(), function(res)
 		if res.StatusCode == 200 then
