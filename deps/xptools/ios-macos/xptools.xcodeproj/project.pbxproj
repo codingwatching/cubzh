@@ -325,6 +325,10 @@
 		85FA71E22D9709D100CBD3F7 /* passkey.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85FA71DF2D9709CC00CBD3F7 /* passkey.mm */; };
 		85FA71E32D9709D100CBD3F7 /* passkey.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85FA71DF2D9709CC00CBD3F7 /* passkey.mm */; };
 		85FA71E42D9709D100CBD3F7 /* passkey.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85FA71DF2D9709CC00CBD3F7 /* passkey.mm */; };
+		85FB39AB2DFA3C7300AA831E /* apple-utils.h in Headers */ = {isa = PBXBuildFile; fileRef = 85FB39AA2DFA3C6F00AA831E /* apple-utils.h */; };
+		85FB39AC2DFA3C7300AA831E /* apple-utils.h in Headers */ = {isa = PBXBuildFile; fileRef = 85FB39AA2DFA3C6F00AA831E /* apple-utils.h */; };
+		85FB39AD2DFA3C7300AA831E /* apple-utils.h in Headers */ = {isa = PBXBuildFile; fileRef = 85FB39AA2DFA3C6F00AA831E /* apple-utils.h */; };
+		85FB39AE2DFA3C7300AA831E /* apple-utils.h in Headers */ = {isa = PBXBuildFile; fileRef = 85FB39AA2DFA3C6F00AA831E /* apple-utils.h */; };
 		85FB39B62DFB61CC00AA831E /* xp_http.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 85FB39B52DFB61AD00AA831E /* xp_http.hpp */; };
 		85FB39B72DFB61CC00AA831E /* xp_http.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 85FB39B52DFB61AD00AA831E /* xp_http.hpp */; };
 		85FB39B82DFB61CC00AA831E /* xp_http.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 85FB39B52DFB61AD00AA831E /* xp_http.hpp */; };
@@ -334,10 +338,6 @@
 		85FB39BD2DFB634D00AA831E /* xp_http.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85FB39BA2DFB634300AA831E /* xp_http.mm */; };
 		85FB39BE2DFB634D00AA831E /* xp_http.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85FB39BA2DFB634300AA831E /* xp_http.mm */; };
 		85FB39BF2DFB634D00AA831E /* xp_http.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85FB39BA2DFB634300AA831E /* xp_http.mm */; };
-		85FB39AB2DFA3C7300AA831E /* apple-utils.h in Headers */ = {isa = PBXBuildFile; fileRef = 85FB39AA2DFA3C6F00AA831E /* apple-utils.h */; };
-		85FB39AC2DFA3C7300AA831E /* apple-utils.h in Headers */ = {isa = PBXBuildFile; fileRef = 85FB39AA2DFA3C6F00AA831E /* apple-utils.h */; };
-		85FB39AD2DFA3C7300AA831E /* apple-utils.h in Headers */ = {isa = PBXBuildFile; fileRef = 85FB39AA2DFA3C6F00AA831E /* apple-utils.h */; };
-		85FB39AE2DFA3C7300AA831E /* apple-utils.h in Headers */ = {isa = PBXBuildFile; fileRef = 85FB39AA2DFA3C6F00AA831E /* apple-utils.h */; };
 		85FCECA528072D3200CD6115 /* WSBackend.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 85FCECA128072D3200CD6115 /* WSBackend.hpp */; };
 		85FCECA628072D3200CD6115 /* WSBackend.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 85FCECA128072D3200CD6115 /* WSBackend.hpp */; };
 		85FED02C2B0B5C6A00C68F6D /* HttpRequestOpts.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85FED02B2B0B5C6A00C68F6D /* HttpRequestOpts.cpp */; };
@@ -457,9 +457,9 @@
 		85F95C2F2D97380D00374D5F /* passkey.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = passkey.cpp; sourceTree = "<group>"; };
 		85FA71DA2D97083400CBD3F7 /* passkey.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = passkey.hpp; sourceTree = "<group>"; };
 		85FA71DF2D9709CC00CBD3F7 /* passkey.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = passkey.mm; sourceTree = "<group>"; };
+		85FB39AA2DFA3C6F00AA831E /* apple-utils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "apple-utils.h"; sourceTree = "<group>"; };
 		85FB39B52DFB61AD00AA831E /* xp_http.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = xp_http.hpp; sourceTree = "<group>"; };
 		85FB39BA2DFB634300AA831E /* xp_http.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = xp_http.mm; sourceTree = "<group>"; };
-		85FB39AA2DFA3C6F00AA831E /* apple-utils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "apple-utils.h"; sourceTree = "<group>"; };
 		85FCECA128072D3200CD6115 /* WSBackend.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = WSBackend.hpp; sourceTree = "<group>"; };
 		85FED0252B0AB80F00C68F6D /* HttpRequestOpts.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HttpRequestOpts.hpp; sourceTree = "<group>"; };
 		85FED02B2B0B5C6A00C68F6D /* HttpRequestOpts.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HttpRequestOpts.cpp; sourceTree = "<group>"; };
@@ -596,11 +596,11 @@
 			isa = PBXGroup;
 			children = (
 				8506231628770DB700B270A6 /* audio.cpp */,
-				85D70CD22DEDE99800087BFE /* encoding_base64.cpp */,
 				85471B3D27E3E4AA000575D5 /* Connection.cpp */,
 				853C93FE25A3C2470030C45D /* crypto.cpp */,
 				85E6380B28F703C3001FC12F /* device.cpp */,
 				8534FDD7240E9EAE004B3494 /* device_c.cpp */,
+				85D70CD22DEDE99800087BFE /* encoding_base64.cpp */,
 				10E793642450137900B7E2E2 /* filesystem.cpp */,
 				85BB0187279EFA0E000F1B10 /* HttpClient.cpp */,
 				851F2A412B63C45E00E2863F /* HttpCookie.cpp */,
