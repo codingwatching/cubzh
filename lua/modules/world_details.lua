@@ -225,12 +225,16 @@ mod.createModalContent = function(_, config)
 					return
 				end
 
-				print("setting icon for world id:", world.id)
+				print("setting icon for world id:", world.id, "size:", data.Length)
 				systemApi:setWorldIcon(world.id, data, function(err)
 					if err ~= nil then
 						print("could not set world icon")
+						return
 					end
 					print("icon set!")
+					-- refresh the world's thumbnail
+					world.thumbnail = nil
+					privateFields.loadWorld()
 				end)
 			end)
 		end
