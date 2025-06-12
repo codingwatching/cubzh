@@ -500,6 +500,9 @@ creations.createModalContent = function(_, config)
 				previewItem = "shapes/blux.glb",
 				description = "A 3D object with a texture applied to it. Blip only supports .glb file uploads for this category, for now.",
 				comingSoon = true,
+				callback = function()
+					Menu:ShowAlert({ message = "Coming soon!" }, System)
+				end
 			},
 			{
 				title = "Voxel Avatar Equipment",
@@ -527,6 +530,9 @@ creations.createModalContent = function(_, config)
 				description = "Upload an image (PNG or JPG) that can be used as a texture.",
 				comingSoon = true,
 				previewItem = texturesIcon,
+				callback = function()
+					Menu:ShowAlert({ message = "Coming soon!" }, System)
+				end
 			},
 		}
 		local nbOptions = #options
