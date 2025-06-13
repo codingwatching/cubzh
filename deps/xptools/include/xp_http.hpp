@@ -6,11 +6,17 @@
 //  Copyright © 2025 voxowl. All rights reserved.
 //
 
+// xptools
+#include "URL.hpp"
+
 namespace vx {
 namespace http {
 
-/// Clears the operating system's HTTP cache for the app
-void clearSystemCache();
+/// Clears the operating system's HTTP cache
+void clearSystemHttpCache();
+
+/// Clears the operating system's HTTP cache for a given URL
+void clearSystemHttpCacheForURL(const vx::URL &url);
 
 } // namespace http
 } // namespace vx
