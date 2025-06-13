@@ -25,7 +25,7 @@ void main() {
 	
 	float alpha = texture2D(s_fb1, uv).a;
 
-	if (alpha <= u_cutout) discard;
+	if (alpha <= u_cutout - EPSILON) discard;
 
 	float depth = fromClipSpaceDepth(v_depth);
 	//float depth = fromClipSpaceDepth(gl_FragCoord.z);

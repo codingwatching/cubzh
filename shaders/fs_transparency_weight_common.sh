@@ -89,7 +89,7 @@ void main() {
 	color *= texture2D(s_fb1, uv);
 
 #if OIT_VARIANT_CUTOUT
-	if (color.a <= v_cutout) discard;
+	if (color.a < v_cutout) discard;
 #endif
 
 #elif VOXEL_VARIANT_DRAWMODES

@@ -2296,6 +2296,7 @@ function home()
 			icon = ui:frame({ image = {
 				data = Data:FromBundle(icon or "images/logo.png"),
 				alpha = true,
+				filtering = true,
 			} })
 			icon.Width = iconSize
 			icon.Height = iconSize

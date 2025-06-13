@@ -1017,6 +1017,7 @@ topBar = ui:frame({
 		data = Data:FromBundle("images/menu-background.png"),
 		slice9 = { 0.5, 0.5 },
 		slice9Scale = 1.0,
+		slice9Width = 20,
 		alpha = true,
 	},
 })
@@ -1036,6 +1037,7 @@ function showSubTopBar()
 			data = Data:FromBundle("images/menu-background.png"),
 			slice9 = { 0.5, 0.5 },
 			slice9Scale = 1.0,
+			slice9Width = 20,
 			alpha = true,
 		},
 	})
@@ -1115,7 +1117,6 @@ function hideSubTopBar()
 end
 -- showSubTopBar()
 
--- menu-background.png
 topBar:setParent(background)
 topBar:hide()
 
