@@ -126,7 +126,7 @@ void showIOSPhotosPickerForImport(vx::fs::ImportFileCallback importFileCallback)
                 importFileCallback(vx::fs::ImportFileCallbackStatus::OK, bytes);
                 break;
             case vx::utils::PickerCallbackStatus::ERROR:
-                importFileCallback(vx::fs::ImportFileCallbackStatus::ERROR, bytes);
+                importFileCallback(vx::fs::ImportFileCallbackStatus::ERR, bytes);
                 break;
             case vx::utils::PickerCallbackStatus::CANCELLED:
                 importFileCallback(vx::fs::ImportFileCallbackStatus::CANCELLED, bytes);
@@ -222,7 +222,7 @@ void showIOSFilesPickerForImport(vx::fs::ImportFileCallback importFileCallback) 
                     importFileCallback(vx::fs::ImportFileCallbackStatus::OK, bytes);
                     break;
                 case vx::utils::PickerCallbackStatus::ERROR:
-                    importFileCallback(vx::fs::ImportFileCallbackStatus::ERROR, bytes);
+                    importFileCallback(vx::fs::ImportFileCallbackStatus::ERR, bytes);
                     break;
                 case vx::utils::PickerCallbackStatus::CANCELLED:
                     importFileCallback(vx::fs::ImportFileCallbackStatus::CANCELLED, bytes);
@@ -312,7 +312,7 @@ void ::vx::fs::importFile(ImportFileCallback callback) {
             NSError* error = nil;
             NSData* data = [NSData dataWithContentsOfURL:fileURL options:NSDataReadingUncached error:&error];
             if (error) {
-                callback(ImportFileCallbackStatus::ERROR, std::string());
+                callback(ImportFileCallbackStatus::ERR, std::string());
             } else {
                 std::string bytes(static_cast<const char*>(data.bytes), data.length);
                 callback(ImportFileCallbackStatus::OK, bytes);

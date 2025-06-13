@@ -339,7 +339,7 @@ void vx::fs::importFile(ImportFileCallback callback) {
         IFileDialog* pfd = NULL;
         HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
         if (SUCCEEDED(hr) == false) {
-            callback(nullptr, 0, ImportFileCallbackStatus::ERROR_IMPORT);
+            callback(ImportFileCallbackStatus::ERR, std::string());
             return;
         }
         
@@ -350,7 +350,7 @@ void vx::fs::importFile(ImportFileCallback callback) {
                               IID_PPV_ARGS(&pfd));
         if (SUCCEEDED(hr) == false) {
             pfd->Release();
-            callback(nullptr, 0, ImportFileCallbackStatus::ERROR_IMPORT);
+            callback(ImportFileCallbackStatus::ERR, std::string());
             return;
         }
         
@@ -359,7 +359,7 @@ void vx::fs::importFile(ImportFileCallback callback) {
         hr = CDialogEventHandler_CreateInstance(IID_PPV_ARGS(&pfde));
         if (SUCCEEDED(hr) == false) {
             pfd->Release();
-            callback(nullptr, 0, ImportFileCallbackStatus::ERROR_IMPORT);
+            callback(ImportFileCallbackStatus::ERR, std::string());
             return;
         }
 
@@ -369,7 +369,7 @@ void vx::fs::importFile(ImportFileCallback callback) {
             // the user cancelled in the system window
             pfde->Release();
             pfd->Release();
-            callback(nullptr, 0, ImportFileCallbackStatus::CANCELLED);
+            callback(ImportFileCallbackStatus::CANCELLED, std::string());
             return;
         }
 
@@ -381,7 +381,7 @@ void vx::fs::importFile(ImportFileCallback callback) {
         if (SUCCEEDED(hr) == false) {
             pfde->Release();
             pfd->Release();
-            callback(nullptr, 0, ImportFileCallbackStatus::ERROR_IMPORT);
+            callback(ImportFileCallbackStatus::ERR, std::string());
             return;
         }
 
@@ -392,7 +392,7 @@ void vx::fs::importFile(ImportFileCallback callback) {
             psiResult->Release();
             pfde->Release();
             pfd->Release();
-            callback(nullptr, 0, ImportFileCallbackStatus::ERROR_IMPORT);
+            callback(ImportFileCallbackStatus::ERR, std::string());
             return;
         }
 
@@ -407,7 +407,7 @@ void vx::fs::importFile(ImportFileCallback callback) {
             psiResult->Release();
             pfde->Release();
             pfd->Release();
-            callback(nullptr, 0, ImportFileCallbackStatus::ERROR_IMPORT);
+            callback(ImportFileCallbackStatus::ERR, std::string());
             return;
         }
 
@@ -424,7 +424,7 @@ void vx::fs::importFile(ImportFileCallback callback) {
             psiResult->Release();
             pfde->Release();
             pfd->Release();
-            callback(nullptr, 0, ImportFileCallbackStatus::ERROR_IMPORT);
+            callback(ImportFileCallbackStatus::ERR, std::string());
             return;
         }
         
@@ -444,8 +444,13 @@ void vx::fs::importFile(ImportFileCallback callback) {
         psiResult->Release();
         pfde->Release();
         pfd->Release();
+
+        std::string bytes(static_cast<char *>(fileBytes), len);
+        free(fileBytes);
+        fileBytes = nullptr;
         
-        callback(fileBytes, len, ImportFileCallbackStatus::OK);
+        callback(ImportFileCallbackStatus::OK, bytes);
+
         return;
     });
 
@@ -496,74 +501,6 @@ bool vx::fs::storageFileExists(const std::string &relFilePath, bool &isDir) {
         return true;
     }
     return false;
-}
-
-/// Merges content of bundle directory into cache directory.
-/// Overriding existing cache files if found.
-bool vx::fs::mergeBundleDirInStorage(const std::string &bundleDir, const std::string &storageDir) {
-    const std::string absBundleDir = _getAbsBundlePath() + "\\" + bundleDir;
-    const std::string absStorageDir = _getAbsStoragePath() + "\\" + storageDir;
-
-    bool isDirectory = false;
-    bool fileExists = false;
-        
-    fileExists = bundleFileExists(bundleDir, isDirectory);
-    if (isDirectory == false || fileExists == false) {
-        return false;
-    }
-
-    fileExists = storageFileExists(storageDir, isDirectory);
-    if (fileExists == false) {
-        const bool ok = _createDirectoryWithParents(absStorageDir);
-        if (ok == false) {
-            return false;
-        }
-    } else if (isDirectory == false) {
-        return false;
-    }
-
-    bool ok = _createDirectoryWithParents(absBundleDir);
-    if (ok == false) {
-        return false;
-    }
-
-    // Loop over files in absBundleDir and copy them into absStorageDir
-    // We ignore directories, and only copy top level regular files.
-    WIN32_FIND_DATAA FindFileData;
-    HANDLE hFind;
-
-    const std::string searchedPath = absBundleDir + "/*";
-    hFind = FindFirstFileA(searchedPath.c_str(), &FindFileData);
-    if (hFind == INVALID_HANDLE_VALUE) {
-        vxlog_error("FindFirstFile failed (%d)", GetLastError());
-        return false;
-    }
-
-    ok = false;
-    while (true) {
-        if (strcmp(FindFileData.cFileName, ".") != 0 &&
-            strcmp(FindFileData.cFileName, "..") != 0) {
-            const std::string relFilename = std::string(FindFileData.cFileName);
-            const std::string sourcePath = absBundleDir + "\\" + relFilename;
-            const std::string destPath = absStorageDir + "\\" + relFilename;
-            vxlog_error(">>> COPY FILE : %s %s", sourcePath.c_str(), destPath.c_str());
-            _copyFiles(sourcePath, destPath);
-        }
-
-        ok = FindNextFileA(hFind, &FindFileData);
-        if (ok == false) {
-            break;
-        }
-    }    
-    FindClose(hFind);
-
-    return true;
-}
-
-/// show a file picker for uploading a thumbnail
-void vx::fs::pickThumbnail(std::function<void(FILE* thumbnail)> callback) {
-    // TODO: implement
-    callback(nullptr);
 }
 
 void vx::fs::shareFile(const std::string& filepath,

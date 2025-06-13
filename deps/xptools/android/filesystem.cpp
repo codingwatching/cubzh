@@ -212,12 +212,12 @@ void vx::fs::importFile(vx::fs::ImportFileCallback callback) {
 
 #ifdef _ANDROID
 // calls the assigned static function, bytes needs to be freed
-void vx::fs::callCurrentImportCallback(void *bytes, size_t len, vx::fs::ImportFileCallbackStatus status) {
+void vx::fs::callCurrentImportCallback(vx::fs::ImportFileCallbackStatus status, std::string bytes) {
     if (currentImportCallback == nullptr) {
         return;
     }
 
-    currentImportCallback(bytes, len, status);
+    currentImportCallback(status, bytes);
 }
 #endif
 
@@ -286,38 +286,6 @@ bool vx::fs::storageFileExists(const std::string &relFilePath, bool &isDir) {
         return true;
     }
     return false;
-}
-
-///
-bool vx::fs::mergeBundleDirInStorage(const std::string &bundleDir, const std::string &storageDir) {
-    __android_log_print(ANDROID_LOG_ERROR, "Particubes", "[mergeBundleDirInStorage]");
-
-    bool just_attached = false;
-    vx::tools::JniMethodInfo methodInfo;
-
-    if (!vx::tools::JNIUtils::getInstance()->getMethodInfo(&just_attached, &methodInfo,
-                                               "com/voxowl/tools/Filesystem",
-                                               "mergeBundleDirInStorage",
-                                               "(Ljava/lang/String;Ljava/lang/String;)Z"))
-    {
-        __android_log_print(ANDROID_LOG_ERROR, "Particubes", "%s %d: error to get methodInfo", __FILE__, __LINE__);
-        assert(false); // crash the program
-    }
-
-    jstring j_bundleDir = methodInfo.env->NewStringUTF(bundleDir.c_str());
-    jstring j_storageDir = methodInfo.env->NewStringUTF(storageDir.c_str());
-
-    jboolean result = methodInfo.env->CallStaticBooleanMethod(methodInfo.classID, methodInfo.methodID, j_bundleDir, j_storageDir);
-
-    methodInfo.env->DeleteLocalRef(methodInfo.classID);
-    methodInfo.env->DeleteLocalRef(j_bundleDir);
-    methodInfo.env->DeleteLocalRef(j_storageDir);
-
-    if (just_attached) {
-        vx::tools::JNIUtils::getInstance()->getJavaVM()->DetachCurrentThread();
-    }
-
-    return result;
 }
 
 void vx::fs::shareFile(const std::string& filepath,

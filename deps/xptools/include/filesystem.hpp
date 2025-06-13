@@ -183,7 +183,7 @@ std::vector<std::string> listStorageDirectory(const std::string& relStoragePath)
 /// Callback for importing files
 enum class ImportFileCallbackStatus {
     OK = 0,
-    ERROR,
+    ERR,
     CANCELLED,
 };
 typedef std::function<void(ImportFileCallbackStatus status, std::string bytes)> ImportFileCallback;
@@ -191,7 +191,7 @@ typedef std::function<void(ImportFileCallbackStatus status, std::string bytes)> 
 void importFile(ImportFileCallback callback);
 
 #ifdef _ANDROID
-void callCurrentImportCallback(void *bytes, size_t len, ImportFileCallbackStatus status);
+void callCurrentImportCallback(ImportFileCallbackStatus status, std::string bytes);
 #endif
 
 /// Description
