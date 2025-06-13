@@ -11,6 +11,7 @@
 // C
 #include <cstdint>
 // C++
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 
