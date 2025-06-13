@@ -1225,6 +1225,7 @@ function createUI(system)
 				data = frameTextBackgroundQuadData,
 				slice9 = { 0.5, 0.5 },
 				slice9Scale = DEFAULT_SLICE_9_SCALE,
+				slice9Width = 10,
 				alpha = true,
 			},
 		})
@@ -1364,6 +1365,14 @@ function createUI(system)
 		background.IsDoubleSided = false
 		background.IsMask = config.mask
 		if config.image ~= nil then
+			if typeof(config.image) == "table" then
+				if config.image.cutout == true then
+					config.image.cutout = 0.1
+				end
+				if config.image.filtering == nil then
+					config.image.filtering = false
+				end
+			end
 			background.Image = node.config.image
 		else
 			if config.color == nil then
@@ -4107,6 +4116,7 @@ function createUI(system)
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
 			alpha = displayAsDisabled,
 			cutout = not displayAsDisabled,
+			filtering = false,
 		}
 
 		config.backgroundQuadPressed = Quad()
@@ -4116,6 +4126,7 @@ function createUI(system)
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
 			alpha = displayAsDisabled,
 			cutout = not displayAsDisabled,
+			filtering = false,
 		}
 
 		config.backgroundQuadSelected = Quad()
@@ -4125,6 +4136,7 @@ function createUI(system)
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
 			alpha = displayAsDisabled,
 			cutout = not displayAsDisabled,
+			filtering = false,
 		}
 
 		config.backgroundQuadDisabled = Quad()
@@ -4133,6 +4145,7 @@ function createUI(system)
 			slice9 = { 0.5, 0.5 },
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
 			alpha = true,
+			filtering = false,
 		}
 
 		return ui.button(self, config)
@@ -4154,6 +4167,7 @@ function createUI(system)
 			data = btnPositiveQuadData,
 			slice9 = { 0.5, 0.5 },
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
+			filtering = false,
 			cutout = true,
 		}
 
@@ -4165,6 +4179,7 @@ function createUI(system)
 			data = btnPositivePressedQuadData,
 			slice9 = { 0.5, 0.5 },
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
+			filtering = false,
 			cutout = true,
 		}
 
@@ -4176,6 +4191,7 @@ function createUI(system)
 			data = btnPositiveDisabledQuadData,
 			slice9 = { 0.5, 0.5 },
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
+			filtering = false,
 			alpha = true,
 		}
 
@@ -4193,6 +4209,7 @@ function createUI(system)
 			data = image,
 			slice9 = { 0.5, 0.5 },
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
+			filtering = false,
 			cutout = true,
 		}
 
@@ -4202,6 +4219,7 @@ function createUI(system)
 			data = image,
 			slice9 = { 0.5, 0.5 },
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
+			filtering = false,
 			cutout = true,
 		}
 
@@ -4245,6 +4263,7 @@ function createUI(system)
 			data = btnSecondaryQuadData,
 			slice9 = { 0.5, 0.5 },
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
+			filtering = false,
 			alpha = true,
 		}
 
@@ -4256,6 +4275,7 @@ function createUI(system)
 			data = btnSecondaryPressedQuadData,
 			slice9 = { 0.5, 0.5 },
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
+			filtering = false,
 			alpha = true,
 		}
 
@@ -4267,6 +4287,7 @@ function createUI(system)
 			data = btnNeutralSelectedQuadData,
 			slice9 = { 0.5, 0.5 },
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
+			filtering = false,
 			alpha = true,
 		}
 
