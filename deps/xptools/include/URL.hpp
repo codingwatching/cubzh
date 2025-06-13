@@ -38,6 +38,7 @@ public:
 
     // accessors
 
+    std::string toString() const;
     inline const QueryParams& queryParams() const { return _queryParams; }
     inline const std::string& scheme() const { return _scheme; }
     inline const std::string& host() const { return _host; }
