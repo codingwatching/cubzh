@@ -64,7 +64,7 @@ void main() {
 #else
     float cutout = v_cutout;
 #endif
-    if (color.a <= cutout) discard;
+    if (color.a < cutout) discard;
 #endif
 
 #if MESH_VARIANT_ALPHA == 0

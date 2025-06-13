@@ -50,7 +50,7 @@ void main() {
 
 	vec4 color = vec4(base.rgb, v_color0.a * base.a);
 
-	if (color.a <= EPSILON) discard;
+	if (color.a < EPSILON) discard;
 
 #if FONT_VARIANT_MRT_LIGHTING == 0 && FONT_VARIANT_UNLIT == 0
 	color = getNonVoxelVertexLitColor(color, vlighting.x, vlighting.yzw, u_sunColor.xyz, v_clipZ);

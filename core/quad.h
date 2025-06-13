@@ -16,6 +16,9 @@ extern "C" {
 #include "float3.h"
 #include "transform.h"
 
+#define QUAD_CUTOUT_NONE -1.0f
+#define QUAD_CUTOUT_DEFAULT 1.0f
+
 typedef struct _Quad Quad;
 
 Quad *quad_new(void);

@@ -24,7 +24,7 @@ void main() {
 	
 	float alpha = texture2D(s_fb1, uv).a;
 
-	if (alpha <= u_cutout) discard;
+	if (alpha < u_cutout) discard;
 
 	gl_FragColor = vec4_splat(0.0);
 }
