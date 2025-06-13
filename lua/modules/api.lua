@@ -593,6 +593,8 @@ mod.getWorldThumbnail = function(self, config)
 	else
 		u = url:parse(mod.kApiAddr .. "/worlds/" .. config.worldID .. "/thumbnail.png")
 	end
+	-- TODO: make sure we want to use the URLs above or the one below (or another one)
+	-- url:parse(mod.kApiAddr .. "/worlds/" .. config.worldID .. "/thumbnail")
 
 	local req = HTTP:Get(u:toString(), function(res)
 		if res.StatusCode == 200 then

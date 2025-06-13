@@ -19,6 +19,10 @@
 #include "HttpCookie.hpp"
 #include "strings.hpp"
 
+#if !defined(__VX_USE_HTTP_CACHING)
+#error __VX_USE_HTTP_CACHING not defined
+#endif
+
 using namespace vx;
 
 #if defined(__VX_PLATFORM_WASM)
@@ -92,7 +96,7 @@ bool HttpRequest::callCallback() {
             }
         }
 
-#if !defined(__VX_PLATFORM_WASM)
+#if __VX_USE_HTTP_CACHING == 1
         // if ETag was valid, we use the cached response
         if (strongSelf->getResponse().getStatusCode() == HTTP_NOT_MODIFIED) {
             strongSelf->_useCachedResponse();
@@ -165,9 +169,7 @@ void HttpRequest::sendAsync() {
         }
     }
 
-    // Caching is not needed on WASM platform,
-    // as the web browser is already taking care of it.
-#if !defined(__VX_PLATFORM_WASM)
+#if __VX_USE_HTTP_CACHING == 1
     // check if cache is available for GET requests
     if (this->getMethod() == "GET") {
         HttpClient::CacheMatch cacheMatch = vx::HttpClient::shared().getCachedResponseForRequest(strongSelf);
@@ -439,7 +441,7 @@ void HttpRequest::_init(const HttpRequest_SharedPtr& ref,
     this->_secure = secure;
 }
 
-#if !defined(__VX_PLATFORM_WASM)
+#if __VX_USE_HTTP_CACHING == 1
 
 void HttpRequest::_useCachedResponse() {
     HttpRequest_SharedPtr strongSelf = this->_weakSelf.lock();

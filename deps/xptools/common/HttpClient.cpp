@@ -15,6 +15,7 @@
 
 // xptools
 #include "device.hpp"
+#include "Macros.h"
 #include "vxlog.h"
 #include "strings.hpp"
 #include "filesystem.hpp"
@@ -46,6 +47,10 @@
 #define VX_HTTP_CACHE_CHUNK_HEADERS 5 // value is string (multiple occurences)
 #define VX_HTTP_CACHE_CHUNK_BODY 6 // value is string (raw bytes)
 #define VX_HTTP_CACHE_CHUNK_ETAG 7 // value is string (ETag bytes)
+
+#if !defined(__VX_USE_HTTP_CACHING)
+#error __VX_USE_HTTP_CACHING not defined
+#endif
 
 namespace vx {
 
@@ -473,7 +478,7 @@ return_false:
     return false;
 }
 
-#if !defined(__VX_PLATFORM_WASM)
+#if __VX_USE_HTTP_CACHING == 1
 
 HttpClient::CacheMatch HttpClient::getCachedResponseForRequest(HttpRequest_SharedPtr req) {
     const std::lock_guard<std::mutex> lock(this->_cacheMutex);

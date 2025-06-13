@@ -180,12 +180,14 @@ FILE *openStorageFile(std::string relFilePath, std::string mode = "rb", size_t w
 /// returns a vector containing the storage-relative paths of direct (not recursive) children of the given directory
 std::vector<std::string> listStorageDirectory(const std::string& relStoragePath);
 
+/// Callback for importing files
 enum class ImportFileCallbackStatus {
     OK = 0,
-    ERROR_IMPORT,
+    ERROR,
     CANCELLED,
 };
-typedef std::function<void(void *bytes, size_t len, ImportFileCallbackStatus status)> ImportFileCallback;
+typedef std::function<void(ImportFileCallbackStatus status, std::string bytes)> ImportFileCallback;
+
 void importFile(ImportFileCallback callback);
 
 #ifdef _ANDROID
@@ -202,16 +204,6 @@ bool bundleFileExists(const std::string& relFilePath, bool& isDir);
 ///
 bool storageFileExists(const std::string& relFilePath);
 bool storageFileExists(const std::string& relFilePath, bool& isDir);
-
-/// Merges content of bundle directory into cache directory.
-/// Overriding existing cache files if found.
-bool mergeBundleDirInStorage(const std::string& bundleDir, const std::string& storageDir);
-
-/// Shows a file picker, prepares the thumbnails and puts in the storage
-/// directory, ready to be uploaded.
-/// Uses callback to return a FILE* that can be NULL if anything goes wrong
-/// or if the operation is cancelled.
-void pickThumbnail(std::function<void(FILE* thumbnail)> callback);
 
 /// filepath is relative to storage
 void shareFile(const std::string& filepath, // where the file to export is stored
