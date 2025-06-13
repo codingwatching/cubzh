@@ -339,7 +339,7 @@ void vx::fs::importFile(ImportFileCallback callback) {
         IFileDialog* pfd = NULL;
         HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
         if (SUCCEEDED(hr) == false) {
-            callback(nullptr, 0, ImportFileCallbackStatus::ERROR_IMPORT);
+            callback(ImportFileCallbackStatus::ERR, std::string());
             return;
         }
         
@@ -350,7 +350,7 @@ void vx::fs::importFile(ImportFileCallback callback) {
                               IID_PPV_ARGS(&pfd));
         if (SUCCEEDED(hr) == false) {
             pfd->Release();
-            callback(nullptr, 0, ImportFileCallbackStatus::ERROR_IMPORT);
+            callback(ImportFileCallbackStatus::ERR, std::string());
             return;
         }
         
@@ -359,7 +359,7 @@ void vx::fs::importFile(ImportFileCallback callback) {
         hr = CDialogEventHandler_CreateInstance(IID_PPV_ARGS(&pfde));
         if (SUCCEEDED(hr) == false) {
             pfd->Release();
-            callback(nullptr, 0, ImportFileCallbackStatus::ERROR_IMPORT);
+            callback(ImportFileCallbackStatus::ERR, std::string());
             return;
         }
 
@@ -369,7 +369,7 @@ void vx::fs::importFile(ImportFileCallback callback) {
             // the user cancelled in the system window
             pfde->Release();
             pfd->Release();
-            callback(nullptr, 0, ImportFileCallbackStatus::CANCELLED);
+            callback(ImportFileCallbackStatus::CANCELLED, std::string());
             return;
         }
 
@@ -381,7 +381,7 @@ void vx::fs::importFile(ImportFileCallback callback) {
         if (SUCCEEDED(hr) == false) {
             pfde->Release();
             pfd->Release();
-            callback(nullptr, 0, ImportFileCallbackStatus::ERROR_IMPORT);
+            callback(ImportFileCallbackStatus::ERR, std::string());
             return;
         }
 
@@ -392,7 +392,7 @@ void vx::fs::importFile(ImportFileCallback callback) {
             psiResult->Release();
             pfde->Release();
             pfd->Release();
-            callback(nullptr, 0, ImportFileCallbackStatus::ERROR_IMPORT);
+            callback(ImportFileCallbackStatus::ERR, std::string());
             return;
         }
 
@@ -407,7 +407,7 @@ void vx::fs::importFile(ImportFileCallback callback) {
             psiResult->Release();
             pfde->Release();
             pfd->Release();
-            callback(nullptr, 0, ImportFileCallbackStatus::ERROR_IMPORT);
+            callback(ImportFileCallbackStatus::ERR, std::string());
             return;
         }
 
@@ -424,7 +424,7 @@ void vx::fs::importFile(ImportFileCallback callback) {
             psiResult->Release();
             pfde->Release();
             pfd->Release();
-            callback(nullptr, 0, ImportFileCallbackStatus::ERROR_IMPORT);
+            callback(ImportFileCallbackStatus::ERR, std::string());
             return;
         }
         
@@ -444,8 +444,13 @@ void vx::fs::importFile(ImportFileCallback callback) {
         psiResult->Release();
         pfde->Release();
         pfd->Release();
+
+        std::string bytes(static_cast<char *>(fileBytes), len);
+        free(fileBytes);
+        fileBytes = nullptr;
         
-        callback(fileBytes, len, ImportFileCallbackStatus::OK);
+        callback(ImportFileCallbackStatus::OK, bytes);
+
         return;
     });
 

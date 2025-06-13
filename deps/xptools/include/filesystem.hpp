@@ -183,7 +183,7 @@ std::vector<std::string> listStorageDirectory(const std::string& relStoragePath)
 /// Callback for importing files
 enum class ImportFileCallbackStatus {
     OK = 0,
-    ERROR,
+    ERR,
     CANCELLED,
 };
 typedef std::function<void(ImportFileCallbackStatus status, std::string bytes)> ImportFileCallback;
