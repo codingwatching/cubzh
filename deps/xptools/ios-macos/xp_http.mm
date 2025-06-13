@@ -9,11 +9,20 @@
 // apple
 #import <Foundation/Foundation.h>
 
+// xptools
+#include "URL.hpp"
+
 namespace vx {
 namespace http {
 
-void clearSystemCache() {
+void clearSystemHttpCache() {
     [[NSURLCache sharedURLCache] removeAllCachedResponses];
+}
+
+void clearSystemHttpCacheForURL(const vx::URL &url) {
+    NSString *nsUrlString = [NSString stringWithUTF8String:url.toString().c_str()];
+    NSURL *nsUrl = [NSURL URLWithString:nsUrlString];
+    [[NSURLCache sharedURLCache] removeCachedResponseForRequest:[NSURLRequest requestWithURL:nsUrl]];
 }
 
 } // namespace http

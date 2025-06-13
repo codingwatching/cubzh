@@ -6,12 +6,13 @@
 //  Copyright © 2023 voxowl. All rights reserved.
 //
 
+#include "URL.hpp"
+
 // C++
 #include <regex>
 #include <string>
 
 // xptools
-#include "URL.hpp"
 #include "strings.hpp"
 #include "vxlog.h"
 
@@ -34,6 +35,26 @@ _isValid(false) {}
 URL::~URL() {}
 
 // MARK: - Accessors -
+
+std::string URL::toString() const {
+    std::string urlString = _scheme + "://" + _host;
+    if (_port != 0) {
+        urlString += ":" + std::to_string(_port);
+    }
+    urlString += _path;
+    if (_queryParams.empty() == false) {
+        urlString += "?";
+        for (const auto& param : _queryParams) {
+            const std::string& key = param.first;
+            const std::unordered_set<std::string>& values = param.second;
+            for (const auto& value : values) {
+                urlString += key + "=" + value + "&";
+            }
+        }
+        urlString.pop_back(); // remove the last '&'
+    }
+    return urlString;
+}
 
 bool URL::queryContainsKey(const std::string& key) const {
     return (_queryParams.find(key) != _queryParams.end() && // key found
