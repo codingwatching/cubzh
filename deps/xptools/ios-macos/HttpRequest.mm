@@ -193,10 +193,18 @@ void HttpRequest::_sendAsync() {
     HttpRequest_SharedPtr *httpReqPtr = new HttpRequest_SharedPtr(httpReq);
 
     @autoreleasepool {
-        NSString *urlString = [NSString stringWithUTF8String:httpReq->constructURLString().c_str()];
+        const std::string urlCppString = httpReq->constructURLString();
+        NSString *urlString = [NSString stringWithUTF8String:urlCppString.c_str()];
         NSURL *url = [NSURL URLWithString:urlString];
 
         NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+
+        // whether the cache data should be validated by the origin
+        if (httpReq->getOpts().getForceCacheRevalidate()) {
+            request.cachePolicy = NSURLRequestReloadRevalidatingCacheData;
+        }
+
+        // set HTTP method
         NSString *httpMethod = [NSString stringWithUTF8String:httpReq->getMethod().c_str()];
         if (httpMethod) {
             [request setHTTPMethod:httpMethod];
