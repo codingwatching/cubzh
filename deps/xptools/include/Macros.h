@@ -14,7 +14,7 @@ TypeName( const TypeName& ) = delete;\
 TypeName& operator=( const TypeName& ) = delete;
 
 // Make sure at least one VX_PLATFORM is defined
-#if !defined(__VX_PLATFORM_WASM) && !defined(__VX_PLATFORM_IOS) && !defined(__VX_PLATFORM_MACOS) && !defined(__VX_PLATFORM_ANDROID) && !defined(__VX_PLATFORM_WINDOWS)
+#if !defined(__VX_PLATFORM_WASM) && !defined(__VX_PLATFORM_IOS) && !defined(__VX_PLATFORM_MACOS) && !defined(__VX_PLATFORM_ANDROID) && !defined(__VX_PLATFORM_WINDOWS) && !defined(__VX_PLATFORM_LINUX)
 #error no VX PLATFORM defined
 #endif
 
