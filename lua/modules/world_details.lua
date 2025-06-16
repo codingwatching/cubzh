@@ -185,7 +185,7 @@ mod.createModalContent = function(_, config)
 			editTitleBtn.Text = "✅"
 			editTitleBtn.onRelease = submit
 		end
-		
+
 		title.onTextChange = function(self)
 			local _, err = api.checkWorldName(self.Text)
 			if err ~= nil then
@@ -220,7 +220,7 @@ mod.createModalContent = function(_, config)
 					print("could not read file")
 					return
 				end
-	
+
 				if data == nil then
 					return
 				end
@@ -232,9 +232,19 @@ mod.createModalContent = function(_, config)
 						return
 					end
 					print("icon set!")
-					-- refresh the world's thumbnail
-					world.thumbnail = nil
-					privateFields.loadWorld()
+
+					-- refresh the world's thumbnail in the UI
+					local req = api:getWorldThumbnail({
+						worldID = world.id,
+						width = 250,
+						callback = function(thumbnail, err)
+							if err == nil then
+								world.thumbnail = thumbnail
+								privateFields:refreshWorld()
+							end
+						end,
+					})
+					table.insert(requests, req)
 				end)
 			end)
 		end
@@ -263,7 +273,7 @@ mod.createModalContent = function(_, config)
 				table.insert(requests, req)
 			end
 		end
-		
+
 		serverSizeSlider:setParent(cell)
 	end
 
@@ -529,17 +539,15 @@ mod.createModalContent = function(_, config)
 		table.insert(requests, req)
 
 		if world.thumbnail == nil then
-			local req = api:getWorldThumbnail({ 
-				worldID = world.id, 
+			local req = api:getWorldThumbnail({
+				worldID = world.id,
 				width = 250,
 				callback = function(thumbnail, err)
-					if err ~= nil then
-						return
+					if err == nil then
+						world.thumbnail = thumbnail
+						privateFields:refreshWorld()
 					end
-					world.thumbnail = thumbnail
-
-					privateFields:refreshWorld()
-				end
+				end,
 			})
 			table.insert(requests, req)
 		end

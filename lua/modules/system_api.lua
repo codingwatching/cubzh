@@ -620,13 +620,24 @@ end
 
 -- callback(err) (nil err on success)
 moduleMT.setWorldIcon = function(self, worldID, data, callback)
-	local url = self.kApiAddr .. "/worlds/" .. worldID .. "/thumbnail"
-	local req = System:HttpPost(url, data, function(res)
+	local urlStr = self:getWorldThumbnailUrl(worldID, nil)
+	local urlStr250 = self:getWorldThumbnailUrl(worldID, 250) -- resized thumbnail
+
+	-- upload new World's thumbnail
+	local req = System:HttpPost(urlStr, data, function(res)
 		if res.StatusCode ~= 200 then
 			callback(api:error(res.StatusCode, "could not set world icon"))
 			return
 		end
-		callback(nil)
+
+		-- clear HTTP cache for the world's thumbnail
+		-- no need to clear the original URL, the cache is automatically invalidated when the POST request is successful
+		-- System:ClearHttpCacheForUrl(urlStr)
+		-- Explicitly clear cache for resized thumbnail URL
+		System:ClearHttpCacheForUrl(urlStr250)
+
+		-- call callback
+		callback(nil) -- success
 	end)
 	return req
 end
