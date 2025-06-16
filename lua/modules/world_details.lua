@@ -137,7 +137,7 @@ mod.createModalContent = function(_, config)
 
 	local iconRatio = 1 -- 16 / 9
 
-	local iconMask = ui:frame({ 
+	local iconMask = ui:frame({
 		image = {
 			data = Data:FromBundle("images/round-corner-mask.png"),
 			slice9 = { 0.5, 0.5 },
@@ -201,16 +201,16 @@ mod.createModalContent = function(_, config)
 		title = ui:createText(config.world.title, { color = Color.White, size = "big", outline = 0.5 })
 	end
 	title:setParent(cell)
-	
-	local descriptionTitle = ui:createText("Description", { color = Color.White, size = "default"})
+
+	local descriptionTitle = ui:createText("Description", { color = Color.White, size = "default" })
 	descriptionTitle:setParent(cell)
 
-	local badgesTitle = ui:createText("Badges", { color = Color.White, size = "default"})
+	local badgesTitle = ui:createText("Badges", { color = Color.White, size = "default" })
 	badgesTitle:setParent(cell)
 
-	local badgesComingSoon = ui:createText("Coming soon", { color = TEXT_COLOR, size = "small"})
+	local badgesComingSoon = ui:createText("Coming soon", { color = TEXT_COLOR, size = "small" })
 	badgesComingSoon:setParent(cell)
-	
+
 	if createMode then
 		editIconBtn = ui:buttonSecondary({ content = "✏️ Edit icon", textSize = "small" })
 		editIconBtn:setParent(cell)
@@ -226,11 +226,13 @@ mod.createModalContent = function(_, config)
 				end
 
 				print("setting icon for world id:", world.id, "size:", data.Length)
+
 				systemApi:setWorldIcon(world.id, data, function(err)
 					if err ~= nil then
 						print("could not set world icon")
 						return
 					end
+
 					print("icon set!")
 
 					-- refresh the world's thumbnail in the UI
@@ -249,7 +251,7 @@ mod.createModalContent = function(_, config)
 			end)
 		end
 
-		serverSizeText = ui:createText("Server Size: …", { color = Color.White, size = "small"})
+		serverSizeText = ui:createText("Server Size: …", { color = Color.White, size = "small" })
 		serverSizeText:setParent(cell)
 
 		serverSizeSlider = ui:slider({
@@ -306,8 +308,8 @@ mod.createModalContent = function(_, config)
 	likeBtn = ui:buttonNeutral({ content = "🤍 …", textSize = "small" })
 	likeBtn:setParent(cell)
 
-	reportBtn = ui:button({ 
-		content = "Report", 
+	reportBtn = ui:button({
+		content = "Report",
 		textSize = "small",
 		borders = false,
 		padding = false,
@@ -623,7 +625,8 @@ mod.createModalContent = function(_, config)
 			title.object.MaxWidth = widthAsideIcon
 		end
 
-		by.object.Scale = 1 author.object.Scale = 1
+		by.object.Scale = 1
+		author.object.Scale = 1
 		local w = by.Width + author.Width
 		if w > widthAsideIcon then
 			local scale = widthAsideIcon / w
@@ -684,7 +687,7 @@ mod.createModalContent = function(_, config)
 			local h = title.Height
 			editTitleBtn.Height = h
 			editTitleBtn.Width = h
-			editTitleBtn.pos = { title.pos.X + title.Width + theme.paddingTiny, y }	
+			editTitleBtn.pos = { title.pos.X + title.Width + theme.paddingTiny, y }
 		end
 
 		-- author

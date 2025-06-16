@@ -348,6 +348,97 @@ end
 --- items: []Item (can be nil)
 ---
 
+mod.getCreations = function(self, config, callback)
+	if self ~= mod then
+		error("api:getCreations(config, callback): use `:`", 2)
+	end
+	if type(callback) ~= "function" then
+		error("api:getCreations(config, callback): callback must be a function", 2)
+	end
+
+	local defaultConfig = {
+		type = "", -- "items", "worlds"
+		authorId = "",
+		category = "", -- string or table of strings
+		search = "",
+		sortBy = "updatedAt:desc", -- likes:desc
+		page = 1,
+		perPage = 50,
+		repo = "",
+		minBlock = nil, -- min number of blocks, for items
+		fields = { "id", "type", "name", "createdAt", "updatedAt", "views", "likes" },
+	}
+
+	ok, err = pcall(function()
+		config = require("config"):merge(defaultConfig, config, {
+			acceptTypes = {
+				minBlock = { "number" },
+				category = { "string", "table" },
+			},
+		})
+	end)
+
+	if not ok then
+		error("api:getCreations(config, callback): config error (" .. err .. ")", 2)
+	end
+
+	local u = url:parse(mod.kApiAddr .. "/creations")
+
+	-- u:addQueryParameter("type", config.type)
+	u:addQueryParameter("authorId", config.authorId)
+	u:addQueryParameter("category", config.category)
+	u:addQueryParameter("search", config.search)
+	u:addQueryParameter("sortBy", config.sortBy)
+	u:addQueryParameter("perPage", math.floor(config.perPage))
+	u:addQueryParameter("page", math.floor(config.page))
+	if config.minBlock ~= nil then
+		u:addQueryParameter("minBlock", math.floor(config.minBlock))
+	end
+
+	for _, field in ipairs(config.fields) do
+		u:addQueryParameter("f", field)
+	end
+
+	local req = HTTP:Get(u:toString(), function(res)
+		-- check status code
+		if res.StatusCode ~= 200 then
+			print("ERROR", res.StatusCode)
+			callback(nil, mod:error(res.StatusCode, "status code: " .. res.StatusCode))
+			return
+		end
+
+		-- decode body
+		local items, err = JSON:Decode(res.Body)
+		if err ~= nil then
+			callback(nil, mod:error(res.StatusCode, "getItems JSON decode error: " .. err))
+			return
+		end
+
+		-- print(res.Body:ToString())
+
+		for _, v in ipairs(items.creations) do
+			if v.created then v.created = time.iso8601_to_os_time(v.created) end
+			if v.updated then v.updated = time.iso8601_to_os_time(v.updated) end
+			if v.likes ~= nil then
+				v.likes = math.floor(v.likes)
+			else
+				v.likes = 0
+			end
+			if v.views ~= nil then
+				v.views = math.floor(v.views)
+			else
+				v.views = 0
+			end
+			-- support legacy fields
+			v.title = v.name
+			v.repo = v.authorName
+		end
+
+		callback(items.creations) -- success
+	end)
+	return req
+end
+
 -- /itemdrafts?search=banana,gdevillele&page=1&perPage=100
 mod.getItems = function(self, config, callback)
 	if self ~= mod then

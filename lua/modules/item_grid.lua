@@ -16,7 +16,7 @@ itemGrid.create = function(_, config)
 	-- load config (overriding defaults)
 	local defaultConfig = {
 		-- type of entities displayed
-		type = "items", -- "items", "worlds"
+		type = "items", -- "items", "worlds", "all"
 		-- shows search bar when true
 		searchBar = true,
 		--
@@ -202,7 +202,7 @@ itemGrid.create = function(_, config)
 
 		local s = toggleFilterOptions[currentToggleFilterOption].label
 
-		sortBtn = ui:buttonNeutral({ content = s, textSize = "small", textColor = Color.Black })
+		sortBtn = ui:buttonSecondary({ content = s, textSize = "small", textColor = Color.White })
 		sortBtn:setParent(grid)
 		sortBtn.onRelease = function()
 			currentToggleFilterOption = currentToggleFilterOption + 1
@@ -243,7 +243,8 @@ itemGrid.create = function(_, config)
 	local cellSize = MIN_CELL_SIZE
 
 	local rowPool = {}
-	local cellPool = {}
+	local itemCellPool = {}
+	local worldCellPool = {}
 	local activeCells = {}
 
 	local function improveNameFormat(str)
@@ -276,10 +277,18 @@ itemGrid.create = function(_, config)
 					if entryIndex > nbEntries then
 						break
 					end
+					local entry = entries[entryIndex]
 
-					local cell = table.remove(cellPool)
+					local cell
+					if entry.type == "world" then
+						cell = table.remove(worldCellPool)
+					elseif entry.type == "item" then
+						cell = table.remove(itemCellPool)
+					end
+
 					if cell == nil then
 						cell = ui:frameScrollCell()
+						cell.entityType = entry.type
 
 						cell.onPress = function()
 							cellSelector:setParent(cell)
@@ -288,11 +297,10 @@ itemGrid.create = function(_, config)
 							cellSelector.LocalPosition.Z = -1
 						end
 
-						cell.onRelease = function()
+						cell.onRelease = function(self)
 							if grid.onOpen then
 								local entity
-
-								if type == "items" then
+								if self.entityType == "item" then
 									entity = {
 										type = "item",
 										id = cell.id,
@@ -303,7 +311,7 @@ itemGrid.create = function(_, config)
 										liked = cell.liked,
 										category = cell.category,
 									}
-								elseif type == "worlds" then
+								elseif self.entityType == "world" then
 									entity = {
 										type = "world",
 										id = cell.id,
@@ -370,13 +378,13 @@ itemGrid.create = function(_, config)
 						cell.loadEntry = function(self, entry)
 							self.id = entry.id
 
-							if type == "items" then
+							if entry.type == "item" then
 								self.repo = entry.repo
 								self.name = entry.name
 								self.fullName = self.repo .. "." .. self.name
 								self.category = entry.category
-							elseif type == "world" then
-								self.title = entry.title
+							elseif entry.type == "world" then
+								-- self.title = entry.title
 							end
 
 							self.description = entry.description
@@ -425,7 +433,7 @@ itemGrid.create = function(_, config)
 								self.priceFrame.pos = { 0, self.Height - self.likesFrame.Height }
 							end
 
-							if type == "items" then
+							if entry.type == "item" then
 								local timer = Timer(LOAD_CONTENT_DELAY, function()
 									local req = Object:Load(self.fullName, function(obj)
 										if obj == nil then
@@ -445,10 +453,10 @@ itemGrid.create = function(_, config)
 									table.insert(self.requests, req)
 								end)
 								table.insert(self.timers, timer)
-							elseif type == "worlds" then
+							elseif entry.type == "world" then
 								local timer = Timer(LOAD_CONTENT_DELAY, function()
 									local req = api:getWorldThumbnail({
-										worldID = cell.id, 
+										worldID = cell.id,
 										width = 250,
 										callback = function(img, err)
 											if err ~= nil then
@@ -471,7 +479,7 @@ itemGrid.create = function(_, config)
 											thumbnail.pos = { 0, 0 }
 
 											cell.thumbnail = thumbnail
-										end
+										end,
 									})
 									table.insert(self.requests, req)
 								end)
@@ -515,7 +523,12 @@ itemGrid.create = function(_, config)
 				cell.requests = {}
 				cell.timers = {}
 				activeCells[cell.entryIndex] = nil
-				table.insert(cellPool, cell)
+
+				if cell.entityType == "item" then
+					table.insert(itemCellPool, cell)
+				elseif cell.entityType == "world" then
+					table.insert(worldCellPool, cell)
+				end
 			end
 			row.cells = {}
 			row:setParent(nil)
@@ -575,15 +588,32 @@ itemGrid.create = function(_, config)
 		cancelRequestsAndTimers()
 		setGridEntries({})
 
-		if type == "items" then
-			local categories = config.categories
-			if search == "" and toggleFilterOptions[currentToggleFilterOption].name == "featured" then
-				categories = { "featured" }
-				for _, category in ipairs(config.categories) do
-					table.insert(categories, category)
-				end
+		local categories = config.categories or {}
+		if search == "" and toggleFilterOptions[currentToggleFilterOption].name == "featured" then
+			categories = { "featured" }
+			for _, category in ipairs(config.categories) do
+				table.insert(categories, category)
 			end
+		end
 
+		if type == "all" then
+			local req = api:getCreations({
+				authorId = config.authorId,
+				category = categories[1], -- TODO: review this
+				page = 1,
+				perPage = config.perPage,
+				search = search,
+				sortBy = sortBy,
+				fields = { "id", "type", "name", "authorName", "created", "updated", "views", "likes" },
+			}, function(creations, err)
+				if err then
+					-- silent error
+					return
+				end
+				setGridEntries(creations)
+			end)
+			addSentRequest(req)
+		elseif type == "items" then
 			local req = api:getItems({
 				minBlock = config.minBlocks,
 				repo = config.repo,
@@ -597,19 +627,16 @@ itemGrid.create = function(_, config)
 					-- silent error
 					return
 				end
-
+				for _, entry in items do
+					entry.type = "item" -- force type to `item`
+				end
 				setGridEntries(items)
 			end)
 			addSentRequest(req)
 		elseif type == "worlds" then
-			local category = ""
-			if search == "" and toggleFilterOptions[currentToggleFilterOption].name == "featured" then
-				category = "featured"
-			end
-
 			local req = api:getWorlds({
 				authorId = config.authorId,
-				category = category,
+				category = categories[1], -- TODO: review this
 				page = 1,
 				perPage = config.perPage,
 				search = search,
@@ -620,7 +647,9 @@ itemGrid.create = function(_, config)
 					-- silent error
 					return
 				end
-
+				for _, entry in worlds do
+					entry.type = "world" -- force type to `world`
+				end
 				setGridEntries(worlds)
 			end)
 			addSentRequest(req)

@@ -42,7 +42,6 @@ signup.startFlow = function(self, config)
 	local ease = require("ease")
 	local loc = require("localize")
 	local str = require("str")
-	-- local bundle = require("bundle")
 
 	local theme = require("uitheme").current
 	local padding = theme.padding
@@ -85,9 +84,22 @@ signup.startFlow = function(self, config)
 
 	local function showBackButton()
 		if backButton == nil then
-			backButton = ui:buttonNegative({ content = "⬅️", textSize = "default", padding = theme.padding })
-			-- backButton = ui:createButton("⬅️", { textSize = "default" })
-			-- backButton:setColor(theme.colorNegative)
+			local icon = ui:frame({
+				image = {
+					data = Data:FromBundle("images/icon-back.png"),
+					alpha = true,
+				},
+			})
+			local textRef = ui:createText("X")
+			local size = math.max(textRef.Width, textRef.Height)
+			textRef:remove()
+			icon.Width = size
+			icon.Height = size
+			backButton = ui:buttonNegative({ 
+				content = icon,
+				textSize = "default",
+				padding = theme.padding 
+			})
 			backButton.parentDidResize = function(self)
 				ease:cancel(self)
 				self.pos = {
@@ -976,8 +988,8 @@ signup.startFlow = function(self, config)
 					color = Color.White,
 					size = "big",
 				})
-				age.object.Font = Font.Pixel
-				age.object.FontSize = age.object.FontSize * 2
+				-- age.object.Font = Font.Pixel
+				age.object.FontSize = age.object.FontSize * 1.5
 				age:setParent(drawer)
 
 				local ageSlider = ui:slider({

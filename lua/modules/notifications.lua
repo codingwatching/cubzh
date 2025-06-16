@@ -138,7 +138,6 @@ mod.createModalContent = function(_, config)
 		}
 	end
 
-	local quadData = {}
 	local function getNotificationCell(notification, containerWidth)
 		local c = table.remove(recycledCells)
 		if c == nil then
@@ -148,38 +147,21 @@ mod.createModalContent = function(_, config)
 			c.when:setParent(c)
 			c.description = ui:createText("", { color = Color(240, 240, 240), size = "small" })
 			c.description:setParent(c)
+			c.icon = ui:createText("", { color = Color.White, size = "small "})
+			c.icon.object.Scale = 0.8
+			c.icon:setParent(c)
 			c.parentDidResize = notificationCellParentDidResize
 		end
 
-		if c.icon ~= nil then
-			c.icon:remove()
-		end
-
-		local img
 		if notification.category == "money" then
-			img = "images/icon-blux.png"
+			c.icon.Text = "💰"
 		elseif notification.category == "social" then
-			img = "images/icon-friends.png"
+			c.icon.Text = "👥"
 		elseif notification.category == "like" then
-			img = "images/icon-like.png"
+			c.icon.Text = "❤️"
 		else
-			img = "images/icon-alert.png"
+			c.icon.Text = "❌"
 		end
-		local data = quadData[img]
-		if data == nil then
-			data = Data:FromBundle(img)
-			quadData[img] = data
-		end
-
-		c.icon = ui:frame({
-			image = {
-				data = data,
-				cutout = true,
-			},
-		})
-		c.icon.Width = 22
-		c.icon.Height = 22
-		c.icon:setParent(c)
 
 		local t, units = time.ago(notification.created, {
 			years = false,

@@ -62,7 +62,6 @@ coins.createModalContent = function(_, config)
 		s.Width = coinSize
 		s.Height = coinSize
 		s:setParent(balanceFrame)
-		o.Scale.X = -o.Scale.X
 		o.Tick = function(o, dt)
 			o.LocalRotation.Y += dt * 2
 		end

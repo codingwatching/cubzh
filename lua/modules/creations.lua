@@ -426,6 +426,244 @@ creations.createModalContent = function(_, config)
 		return newContent
 	end
 
+	functions.createPickCreationTypeContent = function()
+		local content = modal:createContent()
+		content.title = "Creations"
+		content.icon = "🛠️"
+
+		local requests = {}
+		local listeners = {}
+
+		local node = ui:frame()
+		content.node = node
+
+		local label = ui:createText("What do you want to create?", { 
+			alignment = "center",
+			size = "default", 
+			color = Color.White 
+		})
+		label:setParent(node)
+
+		local texturesIcon = Object()
+
+		local scale = 10
+		local block = MutableShape()
+		block.Scale = Number3( 4, 3, 0.5 ) * scale
+		block.Pivot = { 0.5, 0.5, 0.5 }
+		block:AddBlock(Color.White, 0, 0, 0)
+		block:SetParent(texturesIcon)
+		block.IsHidden = true
+
+		local cover = 0.8
+
+		local q1 = Quad() 
+		q1.Image = Data:FromBundle("images/texture-sample-2.png")
+		q1.Anchor = { 1, 0 } 
+		q1.Color = Color.White
+		q1.Width = block.Scale.X * cover
+		q1.Height = block.Scale.Y * cover
+		q1:SetParent(texturesIcon) 
+		q1.LocalPosition = { 
+			block.Scale.X * 0.5, 
+			-block.Scale.Y * 0.5, 
+			-block.Scale.Z * 0.6 
+		}
+
+		local q2 = Quad()
+		q2.Image = Data:FromBundle("images/texture-sample-1.png")
+		q2.Anchor = { 0, 1 } 
+		q2.Color = Color.White
+		q2.Width = block.Scale.X * cover
+		q2.Height = block.Scale.Y * cover
+		q2:SetParent(texturesIcon) 
+		q2.LocalPosition = { 
+			-block.Scale.X * 0.5, 
+			block.Scale.Y * 0.5, 
+			block.Scale.Z * 0.6 
+		}
+
+		local worldIcon = Object()
+		local worldIconShape = Shape(Data:FromBundle("shapes/world_map_icon.3zh"))
+		worldIconShape:SetParent(worldIcon)
+
+		local options = {
+			{
+				type = "voxel-item",
+				previewItem = "shapes/turnip.3zh",
+				title = "Voxel Item",
+				description = "A Voxel Item is a 3D object made out of cubes.",
+				callback = function()
+					local m = content:getModalIfContentIsActive()
+					if m ~= nil then
+						m:push(functions.createNewContent("item", nil, grid))
+					end
+				end,
+			},
+			{
+				title = "Textured 3D Model",
+				previewItem = "shapes/small-tree.glb",
+				description = "A 3D object with a texture applied to it. Blip only supports .glb file uploads for this category, for now.",
+				comingSoon = true,
+				callback = function()
+					Menu:ShowAlert({ message = "Coming soon!" }, System)
+				end
+			},
+			{
+				title = "Voxel Avatar Equipment",
+				previewItem = "shapes/mantle.3zh",
+				description = "An Avatar Equipment made out of cubes (haircut, jacket, pants, boots, etc.)",
+				callback = function()
+					local m = content:getModalIfContentIsActive()
+					if m ~= nil then
+						m:push(functions.createNewContent("wearable", nil, grid))
+					end
+				end,
+			},
+			{
+				title = "World",
+				previewItem = worldIcon,
+				description = "A World is a 3D scene with optional logic. That's what you need to pick if you want to create a game. Templates and AI will help you get started, wether you're a coder or not.",
+				callback = function()
+					local m = content:getModalIfContentIsActive()
+					if m ~= nil then
+						m:push(functions.createNewContent("world", nil, grid))
+					end
+				end,
+			},
+			{
+				title = "Image",
+				description = "Upload an image (PNG or JPG) that can be used as a texture.",
+				comingSoon = true,
+				previewItem = texturesIcon,
+				callback = function()
+					Menu:ShowAlert({ message = "Coming soon!" }, System)
+				end
+			},
+		}
+		local nbOptions = #options
+
+		local cells = {}
+
+		local scroll = ui:scroll({
+			direction = "down",
+			backgroundColor = Color.Black,
+			cellPadding = theme.padding,
+			padding = theme.padding,
+			loadCell = function(index, _, container)
+				if index > nbOptions then
+					return nil
+				end
+				local c = cells[index]
+				if c == nil then
+					c = ui:frameScrollCell()
+
+					if options[index].callback ~= nil then
+						c.onRelease = options[index].callback
+					end
+
+					cells[index] = c
+					
+					c.title = ui:createText(options[index].title, { 
+						size = "default", 
+						color = Color.White 
+					})
+					c.title:setParent(c)
+					c.description = ui:createText(options[index].description, { 
+						size = "small", 
+						color = Color(200, 200, 200) 
+					})
+					c.description:setParent(c)
+
+					c.iconFrame = ui:frame()
+					c.iconFrame.Width = 100
+					c.iconFrame.Height = 100
+					c.iconFrame:setParent(c)
+
+					if options[index].previewItem ~= nil then
+						local previewItem = options[index].previewItem
+						if typeof(previewItem) == "Object" then
+							local s = ui:createShape(previewItem, { spherized = true })
+							s:setParent(c.iconFrame)
+							s.pivot.LocalRotation = { -0.1, 0, -0.2 }
+							-- setting Width sets Height & Depth as well when spherized
+							s.Width = c.iconFrame.Width * 1.1
+							s.pos = { -c.iconFrame.Width * 0.05, -c.iconFrame.Height * 0.05 }
+							c.rotatingIcon = s
+						else
+							local req = Object:Load(Data:FromBundle(previewItem), function(o)
+								local s = ui:createShape(o, { spherized = true })
+								s:setParent(c.iconFrame)
+								s.pivot.LocalRotation = { -0.1, 0, -0.2 }
+								-- setting Width sets Height & Depth as well when spherized
+								s.Width = c.iconFrame.Width * 1.1
+								s.pos = { -c.iconFrame.Width * 0.05, -c.iconFrame.Height * 0.05 }
+								c.rotatingIcon = s
+							end)
+							table.insert(requests, req)
+						end
+					end
+				end
+
+				local padding = theme.paddingBig
+
+				c.Width = container.Width
+				c.description.object.MaxWidth = c.Width - c.iconFrame.Width - padding * 3
+				c.title.object.MaxWidth = c.Width - c.iconFrame.Width - padding * 3
+				c.Height = math.max(c.iconFrame.Height, c.title.Height + c.description.Height + padding) + padding * 2
+
+				c.iconFrame.pos = { padding, c.Height - c.iconFrame.Height - padding }
+				c.title.pos = { c.iconFrame.pos.X + c.iconFrame.Width + padding, c.Height - c.title.Height - padding }
+				c.description.pos = { c.iconFrame.pos.X + c.iconFrame.Width + padding, c.title.pos.Y - c.description.Height - padding }
+
+				return c
+			end,
+			unloadCell = function(_, c)
+				c:setParent(nil)
+			end,
+		})
+
+		scroll:setParent(node)
+
+		node.refresh = function(self)
+			label.object.MaxWidth = self.Width - theme.padding * 2
+			scroll.Width = self.Width
+			scroll.Height = self.Height - label.Height - theme.padding
+			label.pos = { self.Width * 0.5 - label.Width * 0.5, self.Height - label.Height }
+			scroll:flush()
+			scroll:refresh()
+		end
+
+		content.idealReducedContentSize = function(content, width, height)
+			content.Width = width
+			content.Height = height
+			content:refresh()
+			return Number2(content.Width, content.Height)
+		end
+
+		local l = LocalEvent:Listen(LocalEvent.Name.Tick, function(dt)
+			for _, c in cells do
+				if c.rotatingIcon then
+					c.rotatingIcon.pivot.LocalRotation.Y += dt * 2
+				end
+			end
+		end)
+		table.insert(listeners, l)
+
+		content.willResignActive = function()
+			for _, l in listeners do
+				l:pause()
+			end
+		end
+
+		content.didBecomeActive = function()
+			for _, l in listeners do
+				l:resume()
+			end
+		end
+
+		return content
+	end
+
 	local createCreationsContent = function()
 		local creationsContent = modal:createContent()
 		if config.title ~= nil then
@@ -441,7 +679,7 @@ creations.createModalContent = function(_, config)
 
 		local grid = itemGrid:create({
 			minBlocks = 1,
-			type = "items",
+			type = "all",
 			displayLikes = true,
 			repo = config.authorName,
 			authorId = config.authorId,
@@ -451,18 +689,28 @@ creations.createModalContent = function(_, config)
 		})
 		grid:setParent(node)
 
-		local btnNew
+		local btnCreate
+
 		if config.authorId == Player.UserID then
-			btnNew = ui:buttonPositive({ content = "✨ Create item ⚔️", padding = theme.padding })
-			btnNew:setParent(node)
+			btnCreate = ui:buttonPositive({ 
+				content = "Create", 
+				textSize = "default", 
+				padding = {
+					top = theme.paddingTiny,
+					bottom = theme.paddingTiny,
+					left = theme.paddingBig,
+					right = theme.paddingBig,
+				}
+			})
+			btnCreate:setParent(node)
 		end
 
 		node.parentDidResize = function(self)
-			if btnNew then
+			if btnCreate then
 				grid.Width = self.Width
-				grid.Height = self.Height - btnNew.Height - theme.padding
-				grid.pos.Y = btnNew.Height + theme.padding
-				btnNew.pos = { self.Width * 0.5 - btnNew.Width * 0.5, 0 }
+				grid.Height = self.Height - btnCreate.Height - theme.padding
+				grid.pos.Y = btnCreate.Height + theme.padding
+				btnCreate.pos = { self.Width * 0.5 - btnCreate.Width * 0.5, 0 }
 			else
 				grid.Width = self.Width
 				grid.Height = self.Height
@@ -489,75 +737,16 @@ creations.createModalContent = function(_, config)
 			end
 		end
 
-		local newItem = function()
+		local newPickCreationType = function()
 			local m = creationsContent:getModalIfContentIsActive()
 			if m ~= nil then
-				m:push(functions.createNewContent("item", nil, grid))
+				m:push(functions.createPickCreationTypeContent())
 			end
 		end
 
-		local newWearable = function()
-			local m = creationsContent:getModalIfContentIsActive()
-			if m ~= nil then
-				m:push(functions.createNewContent("wearable", nil, grid))
-			end
-		end
-
-		local newWorld = function()
-			local m = creationsContent:getModalIfContentIsActive()
-			if m ~= nil then
-				m:push(functions.createNewContent("world", nil, grid))
-			end
-		end
-
-		if btnNew then
-			btnNew.onRelease = newItem
-		end
+		if btnCreate then btnCreate.onRelease = newPickCreationType end
 
 		creationsContent.tabs = {}
-
-		for _, category in ipairs(config.categories) do
-			if category == "items" then
-				table.insert(creationsContent.tabs, {
-					label = "⚔️ Items",
-					short = "⚔️",
-					action = function()
-						grid:setCategories({ "null" }, "items")
-						if btnNew then
-							btnNew.Text = "✨ Create item ⚔️"
-							btnNew.pos.X = btnNew.parent.Width * 0.5 - btnNew.Width * 0.5
-							btnNew.onRelease = newItem
-						end
-					end,
-				})
-			elseif category == "wearables" then
-				table.insert(creationsContent.tabs, {
-					label = "👕 Wearables",
-					short = "👕",
-					action = function()
-						grid:setCategories({ "hair", "jacket", "pants", "boots" }, "items")
-						if btnNew then
-							btnNew.Text = "✨ Create wearable 👕"
-							btnNew.pos.X = btnNew.parent.Width * 0.5 - btnNew.Width * 0.5
-							btnNew.onRelease = newWearable
-						end
-					end,
-				})
-			elseif category == "worlds" then
-				table.insert(creationsContent.tabs, {
-					label = "🌎 Worlds",
-					short = "🌎",
-					action = function()
-						grid:setCategories({ "null" }, "worlds")
-						if btnNew then
-							btnNew.Text = "✨ Create world 🌎"
-							btnNew.pos.X = btnNew.parent.Width * 0.5 - btnNew.Width * 0.5
-							btnNew.onRelease = newWorld
-						end
-					end,
-				})
-			end
-		end
 
 		if #creationsContent.tabs > 0 then
 			creationsContent.tabs[1].action()
@@ -703,7 +892,8 @@ creations.createModalContent = function(_, config)
 						System.EditWorld(entity.id)
 					end
 
-					worldDetailsContent.bottomCenter = { btnArchive, btnEditCode, btnEdit }
+					worldDetailsContent.bottomLeft = { btnArchive }
+					worldDetailsContent.bottomRight = { btnEdit, btnEditCode }
 				end
 
 				worldDetailsContent.idealReducedContentSize = function(content, width, height)
