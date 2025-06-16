@@ -215,6 +215,11 @@
 		851224D32DD1DB7E00F84200 /* apple-utils.mm in Sources */ = {isa = PBXBuildFile; fileRef = 851224D02DD1DB7100F84200 /* apple-utils.mm */; };
 		851224D42DD1DB7E00F84200 /* apple-utils.mm in Sources */ = {isa = PBXBuildFile; fileRef = 851224D02DD1DB7100F84200 /* apple-utils.mm */; };
 		851224D52DD1DB7E00F84200 /* apple-utils.mm in Sources */ = {isa = PBXBuildFile; fileRef = 851224D02DD1DB7100F84200 /* apple-utils.mm */; };
+		8512C75B2E0069D1006F12DA /* xp_http.cpp in Headers */ = {isa = PBXBuildFile; fileRef = 8512C75A2E0069CD006F12DA /* xp_http.cpp */; };
+		8512C75C2E0069D1006F12DA /* xp_http.cpp in Headers */ = {isa = PBXBuildFile; fileRef = 8512C75A2E0069CD006F12DA /* xp_http.cpp */; };
+		8512C75D2E0069D1006F12DA /* xp_http.cpp in Headers */ = {isa = PBXBuildFile; fileRef = 8512C75A2E0069CD006F12DA /* xp_http.cpp */; };
+		8512C75E2E0069D1006F12DA /* xp_http.cpp in Headers */ = {isa = PBXBuildFile; fileRef = 8512C75A2E0069CD006F12DA /* xp_http.cpp */; };
+		8512C75F2E006B77006F12DA /* xp_http.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8512C75A2E0069CD006F12DA /* xp_http.cpp */; };
 		8518D09827BA6D9000A438D6 /* ThreadManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8518D09727BA6D9000A438D6 /* ThreadManager.cpp */; };
 		8518D09927BA6D9000A438D6 /* ThreadManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8518D09727BA6D9000A438D6 /* ThreadManager.cpp */; };
 		8518D09B27BA6D9000A438D6 /* ThreadManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8518D09727BA6D9000A438D6 /* ThreadManager.cpp */; };
@@ -395,6 +400,7 @@
 		850623592877898C00B270A6 /* miniaudio_impl.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = miniaudio_impl.mm; sourceTree = "<group>"; };
 		850BDEB32D19EC0F00A85B76 /* libxptools-macos-epicgames.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libxptools-macos-epicgames.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		851224D02DD1DB7100F84200 /* apple-utils.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "apple-utils.mm"; sourceTree = "<group>"; };
+		8512C75A2E0069CD006F12DA /* xp_http.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = xp_http.cpp; sourceTree = "<group>"; };
 		8518D09627BA6D7C00A438D6 /* ThreadManager.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ThreadManager.hpp; sourceTree = "<group>"; };
 		8518D09727BA6D9000A438D6 /* ThreadManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadManager.cpp; sourceTree = "<group>"; };
 		8518D09C27BA6DD900A438D6 /* json.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = json.cpp; sourceTree = "<group>"; };
@@ -623,6 +629,7 @@
 				85471B3E27E3E4AA000575D5 /* WSServer.cpp */,
 				85471B6827E47DAB000575D5 /* WSServerConnection.cpp */,
 				85471B9427E85B03000575D5 /* WSService.cpp */,
+				8512C75A2E0069CD006F12DA /* xp_http.cpp */,
 			);
 			name = common;
 			path = ../common;
@@ -682,6 +689,7 @@
 				102144FC2C75E0C000099E38 /* LocalConnection.hpp in Headers */,
 				102144FD2C75E0C000099E38 /* HttpCookie.hpp in Headers */,
 				85D70CE02DEE388B00087BFE /* encoding_base64.hpp in Headers */,
+				8512C75C2E0069D1006F12DA /* xp_http.cpp in Headers */,
 				102144FE2C75E0C000099E38 /* crypto.hpp in Headers */,
 				102144FF2C75E0C000099E38 /* xptools.h in Headers */,
 				102145002C75E0C000099E38 /* WSTypes.hpp in Headers */,
@@ -719,6 +727,7 @@
 				85471B3427E3E006000575D5 /* LocalConnection.hpp in Headers */,
 				851F2A402B63C44500E2863F /* HttpCookie.hpp in Headers */,
 				85D70CE22DEE388B00087BFE /* encoding_base64.hpp in Headers */,
+				8512C75D2E0069D1006F12DA /* xp_http.cpp in Headers */,
 				10847CB9270EE8C6006A5E91 /* crypto.hpp in Headers */,
 				10847CBA270EE8C6006A5E91 /* xptools.h in Headers */,
 				85471B6E27E4C99F000575D5 /* WSTypes.hpp in Headers */,
@@ -756,6 +765,7 @@
 				850BDE732D19EC0F00A85B76 /* LocalConnection.hpp in Headers */,
 				850BDE742D19EC0F00A85B76 /* HttpCookie.hpp in Headers */,
 				85D70CE12DEE388B00087BFE /* encoding_base64.hpp in Headers */,
+				8512C75E2E0069D1006F12DA /* xp_http.cpp in Headers */,
 				850BDE752D19EC0F00A85B76 /* crypto.hpp in Headers */,
 				850BDE762D19EC0F00A85B76 /* xptools.h in Headers */,
 				850BDE772D19EC0F00A85B76 /* WSTypes.hpp in Headers */,
@@ -793,6 +803,7 @@
 				85471B3327E3E006000575D5 /* LocalConnection.hpp in Headers */,
 				851F2A3F2B63C44500E2863F /* HttpCookie.hpp in Headers */,
 				85D70CDF2DEE388B00087BFE /* encoding_base64.hpp in Headers */,
+				8512C75B2E0069D1006F12DA /* xp_http.cpp in Headers */,
 				853C93F925A3C2330030C45D /* crypto.hpp in Headers */,
 				8534FDD2240E9762004B3494 /* xptools.h in Headers */,
 				85471B6D27E4C99F000575D5 /* WSTypes.hpp in Headers */,
@@ -1194,6 +1205,7 @@
 				851224D12DD1DB7E00F84200 /* apple-utils.mm in Sources */,
 				100512122CC6BECB00B16FB1 /* WSConnection.cpp in Sources */,
 				85FA71E22D9709D100CBD3F7 /* passkey.mm in Sources */,
+				8512C75F2E006B77006F12DA /* xp_http.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

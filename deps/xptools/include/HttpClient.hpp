@@ -18,8 +18,6 @@
 #include "HttpRequest.hpp"
 #include "URL.hpp"
 
-#define VX_HTTP_CACHE_DIR_NAME "http_cache"
-
 // HTTP status codes
 #define HTTP_OK 200
 #define HTTP_NOT_MODIFIED 304
