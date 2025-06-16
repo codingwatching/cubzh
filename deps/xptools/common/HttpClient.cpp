@@ -19,6 +19,7 @@
 #include "vxlog.h"
 #include "strings.hpp"
 #include "filesystem.hpp"
+#include "xp_http.hpp"
 
 #include "BZMD5.hpp"
 #include "cJSON.h"

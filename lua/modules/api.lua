@@ -28,6 +28,23 @@ mod.error = function(_, statusCode, message)
 	return err
 end
 
+-- API URLs
+
+-- Returns the URL for a world's thumbnail
+-- @param worldID string
+-- @param width number?
+-- @return url string
+mod.getWorldThumbnailUrl = function(_, worldID, width)
+	local urlStr = mod.kApiAddr .. "/worlds/" .. worldID .. "/thumbnail.png"
+	if width ~= nil and width > 0 then
+		if width ~= 250 then -- we only use 250px width for now
+			print("⚠️ getWorldThumbnailUrl: unsupported width: " .. width)
+		end
+		urlStr = urlStr .. "?width=" .. width
+	end
+	return urlStr
+end
+
 local function urlGetFields(url, fields)
 	if fields == nil then
 		return url
@@ -565,6 +582,7 @@ mod.getWorldThumbnail = function(self, config)
 		worldID = "",
 		width = nil,
 		callback = nil,
+		-- validateCache = false, -- TODO: do we want to expose "forceCacheRevalidation" in Luau?
 	}
 
 	ok, err = pcall(function()
@@ -587,20 +605,11 @@ mod.getWorldThumbnail = function(self, config)
 		error("api:getWorldThumbnail(config): config.callback should be a function", 2)
 	end
 
-	local u
-	if config.width ~= nil then
-		u = url:parse(mod.kApiAddr .. "/worlds/" .. config.worldID .. "/thumbnail-" .. config.width .. ".png")
-	else
-		u = url:parse(mod.kApiAddr .. "/worlds/" .. config.worldID .. "/thumbnail.png")
-	end
-	-- TODO: make sure we want to use the URLs above or the one below (or another one)
-	-- url:parse(mod.kApiAddr .. "/worlds/" .. config.worldID .. "/thumbnail")
+	local urlStr = self:getWorldThumbnailUrl(config.worldID, config.width)
 
-	local req = HTTP:Get(u:toString(), function(res)
+	local req = HTTP:Get(urlStr, function(res)
 		if res.StatusCode == 200 then
 			config.callback(res.Body)
-		elseif res.StatusCode == 400 then
-			config.callback(nil, mod:error(res.StatusCode, "status code: " .. res.StatusCode))
 		else
 			config.callback(nil, mod:error(res.StatusCode, "status code: " .. res.StatusCode))
 		end

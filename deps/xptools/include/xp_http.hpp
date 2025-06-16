@@ -9,6 +9,8 @@
 // xptools
 #include "URL.hpp"
 
+#define VX_HTTP_CACHE_DIR_NAME "http_cache"
+
 namespace vx {
 namespace http {
 
@@ -16,7 +18,7 @@ namespace http {
 void clearSystemHttpCache();
 
 /// Clears the operating system's HTTP cache for a given URL
-void clearSystemHttpCacheForURL(const vx::URL &url);
+void clearSystemHttpCacheForURL(const std::string &urlString);
 
 } // namespace http
 } // namespace vx

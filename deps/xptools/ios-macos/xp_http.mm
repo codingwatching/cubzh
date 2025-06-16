@@ -18,8 +18,8 @@ void clearSystemHttpCache() {
     [[NSURLCache sharedURLCache] removeAllCachedResponses];
 }
 
-void clearSystemHttpCacheForURL(const vx::URL &url) {
-    NSString *nsUrlString = [NSString stringWithUTF8String:url.toString().c_str()];
+void clearSystemHttpCacheForURL(const std::string &urlString) {
+    NSString *nsUrlString = [NSString stringWithUTF8String:urlString.c_str()];
     NSURL *nsUrl = [NSURL URLWithString:nsUrlString];
     [[NSURLCache sharedURLCache] removeCachedResponseForRequest:[NSURLRequest requestWithURL:nsUrl]];
 }
