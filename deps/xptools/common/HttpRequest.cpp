@@ -18,6 +18,7 @@
 #include "OperationQueue.hpp"
 #include "HttpCookie.hpp"
 #include "strings.hpp"
+#include "xp_http.hpp"
 
 #if !defined(__VX_USE_HTTP_CACHING)
 #error __VX_USE_HTTP_CACHING not defined
@@ -97,17 +98,22 @@ bool HttpRequest::callCallback() {
         }
 
 #if __VX_USE_HTTP_CACHING == 1
-        // if ETag was valid, we use the cached response
-        if (strongSelf->getResponse().getStatusCode() == HTTP_NOT_MODIFIED) {
-            strongSelf->_useCachedResponse();
+
+        if (strongSelf->getMethod() == VX_HTTPMETHOD_GET) {
+            // if ETag was valid, we use the cached response
+            if (strongSelf->getResponse().getStatusCode() == HTTP_NOT_MODIFIED) {
+                strongSelf->_useCachedResponse();
+            } else {
+                // Store response in cache (if conditions are met)
+                const bool _ = vx::HttpClient::shared().cacheHttpResponse(strongSelf);
+            }
+        } else if (strongSelf->getMethod() == VX_HTTPMETHOD_POST) {
+            // when a POST request succeeds, we can clear HTTP cache
+            if (strongSelf->getResponse().getStatusCode() == HTTP_OK) {
+                vx::http::clearSystemHttpCacheForURL(strongSelf->constructURLString());
+            }
         }
 
-        // Store response in cache (if conditions are met)
-        // optim possible: if it was a 304, we don't need to update the response bytes in the cache
-        const bool ok = vx::HttpClient::shared().cacheHttpResponse(strongSelf);
-        if (ok) {
-            // vxlog_debug("HTTP response cached : %s", strongSelf->constructURLString().c_str());
-        }
 #endif
 
         if (strongSelf->_callback != nullptr) {
