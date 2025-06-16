@@ -482,6 +482,10 @@ creations.createModalContent = function(_, config)
 			block.Scale.Z * 0.6 
 		}
 
+		local worldIcon = Object()
+		local worldIconShape = Shape(Data:FromBundle("shapes/world_map_icon.3zh"))
+		worldIconShape:SetParent(worldIcon)
+
 		local options = {
 			{
 				type = "voxel-item",
@@ -497,7 +501,7 @@ creations.createModalContent = function(_, config)
 			},
 			{
 				title = "Textured 3D Model",
-				previewItem = "shapes/blux.glb",
+				previewItem = "shapes/small-tree.glb",
 				description = "A 3D object with a texture applied to it. Blip only supports .glb file uploads for this category, for now.",
 				comingSoon = true,
 				callback = function()
@@ -517,6 +521,7 @@ creations.createModalContent = function(_, config)
 			},
 			{
 				title = "World",
+				previewItem = worldIcon,
 				description = "A World is a 3D scene with optional logic. That's what you need to pick if you want to create a game. Templates and AI will help you get started, wether you're a coder or not.",
 				callback = function()
 					local m = content:getModalIfContentIsActive()
