@@ -1617,6 +1617,7 @@
 				);
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
+					__VX_PLATFORM_IOS,
 					"__VX_APP_BUILD_TARGET=\"\\\"ios_appstore\\\"\"",
 				);
 				HEADER_SEARCH_PATHS = "";
@@ -1650,6 +1651,7 @@
 				);
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
+					__VX_PLATFORM_IOS,
 					"__VX_APP_BUILD_TARGET=\"\\\"ios_appstore\\\"\"",
 				);
 				HEADER_SEARCH_PATHS = "";
