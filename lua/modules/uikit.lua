@@ -4310,7 +4310,7 @@ function createUI(system)
 		end
 		config.backgroundQuadSelected = Quad()
 		config.backgroundQuadSelected.Image = {
-			data = btnNeutralSelectedQuadData,
+			data = btnSecondarySelectedQuadData,
 			slice9 = { 0.5, 0.5 },
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
 			filtering = false,
