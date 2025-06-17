@@ -50,6 +50,7 @@ mod.create = function(self, config)
 	q.Image = {
 		data = animationQuadData,
 		alpha = true,
+		filtering = false,
 	}
 	q.Color = Color.White
 	q.Tiling = Number2(1, 1 / nbFrames)
