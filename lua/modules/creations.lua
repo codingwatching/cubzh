@@ -80,7 +80,7 @@ creations.createModalContent = function(_, config)
 			}
 		elseif what == "world" then
 			categories = { "null" }
-			categoryShapes = { "shapes/world_icon" }
+			categoryShapes = { "shapes/world_map_icon" }
 			buttonLabels = { "✨ Create World 🌎" }
 			inputLabel = "World Name?"
 			textWithEmptyInput = "A World needs a name! No pressure, this can be changed later on."
