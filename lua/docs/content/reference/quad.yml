@@ -66,15 +66,17 @@ properties:
         
           When getting this value, it returns `true` if the quad is currently textured.
 
-          Alternatively, you can assign a table to have full control over its options: `{ data, slice9, slice9Scale, slice9Width, alpha, cutout }`,
+          Alternatively, you can assign a table to have full control over its options:
+          `{ data, slice9, slice9Scale, slice9Width, alpha, cutout, filtering }`,
           - `data` ([Data](reference/data)) is the image data you would normally set.
           - `slice9` ([boolean](reference/boolean) or [Number2](reference/number2)) can be set to `true` to activate 9-slice with default UV slice (0.5, 0.5), it can also be set to a custom UV slice directly.
           - `slice9Scale` ([number](reference/number)) is the scale of the 9-slice corners, default `1.0`.
           - `slice9Width` ([number](reference/number)) is an optional fixed width. You may use this if you need the 9-slice corners to be of a specific size. In case your asset isn't symetrical, this value corresponds to the width of the top-left 9-slice corner ; all 3 other corners will have a proportional size based of the original dimensions of your asset.
           - `alpha` ([boolean](reference/boolean)) enables alpha-blending transparency, default `false`. Set this to `true` if you want Blip to use the image alpha.
-          - `cutout` ([boolean](reference/boolean) or [number](reference/number)) can be set to `true` to enable alpha cutout with default alpha `0.0`, or set to a custom cutout directly. This means all texels from the image with alpha value lower or equal to the cutout value will be ignored. This value is typically redundant with `alpha`, and unless you have a specific use-case in mind, you should use one or the other. Animating the cutout value is a great way of creating interesting visual effects.
+          - `cutout` ([boolean](reference/boolean) or [number](reference/number)) can be set to `true` to enable alpha cutout with default cutout `1.0`, or set to a custom cutout directly. This means all texels from the image with alpha value lower than the cutout value will be ignored. This value is typically redundant with `alpha`, and unless you have a specific use-case in mind, you should use one or the other. Animating the cutout value is a great way of creating interesting visual effects.
+          - `filtering` ([boolean](reference/boolean)) will smooth the resulting image when `true` (by default), or keep the texels as they are when `false`. It is recommended to keep this `true` except when using pixelart images, or when using the image as a way to store/visualize data.
 
-          Note: you can also enable transparency on a textured quad by giving it an alpha value less than 255, eg. `quad.Color.A = 254`. This however will have it be rendered in an unordered transparency pass.
+          Note: you can also enable transparency on a textured quad by giving it an alpha value less than 255, eg. `quad.Color.A = 254`. This will have it be rendered in an unordered transparency pass, which is more performant but less accurate.
 
           Code examples of [This].[Image]'s options can be found in the following worlds,
           - `Quad Image Test`
@@ -102,6 +104,9 @@ properties:
 
             -- make an opaque cutout quad with custom value
             q.Image = { data=d, cutout=0.2 }
+
+            -- make an opaque cutout quad for a pixelart image
+            q.Image = { data=d, cutout=true, filtering=false }
 
     - name: "Width"
       type: "number"
