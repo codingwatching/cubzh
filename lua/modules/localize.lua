@@ -6,17 +6,21 @@ prefLanguages = nil
 loadedLanguages = {}
 
 function loadLanguage(l)
-	if loadedLanguages[l] ~= nil then
-		return
+	local lang = loadedLanguages[l]
+	if lang ~= nil then
+		return lang
 	end
 
 	local data = Data:FromBundle("i18n/" .. l .. ".json")
 	if data == nil then
-		loadedLanguages[l] = {}
-		return
+		lang = {}
+		loadedLanguages[l] = lang
+		return lang
 	end
 
-	loadedLanguages[l] = JSON:Decode(data)
+	lang = JSON:Decode(data)
+	loadedLanguages[l] = lang
+	return lang
 end
 
 function getLanguageWithoutRegion(languageCode)
@@ -25,8 +29,7 @@ function getLanguageWithoutRegion(languageCode)
 end
 
 function _localize(l, key, context)
-	loadLanguage(l)
-	local val = loadedLanguages[l][key]
+	local val = loadLanguage(l)[key]
 
 	if val == nil then
 		return nil
@@ -68,8 +71,9 @@ local mt = {
 	__call = function(_, str, context)
 		if prefLanguages == nil then
 			-- hack to test languages:
-			-- prefLanguages = { "pl" } -- ua
-			prefLanguages = Client.PreferredLanguages
+			-- prefLanguages = { "jp" } -- pl, ua
+			prefLanguages = { "fr" }
+			-- prefLanguages = Client.PreferredLanguages
 		end
 
 		local v

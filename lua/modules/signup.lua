@@ -95,10 +95,10 @@ signup.startFlow = function(self, config)
 			textRef:remove()
 			icon.Width = size
 			icon.Height = size
-			backButton = ui:buttonNegative({ 
+			backButton = ui:buttonNegative({
 				content = icon,
 				textSize = "default",
-				padding = theme.padding 
+				padding = theme.padding,
 			})
 			backButton.parentDidResize = function(self)
 				ease:cancel(self)
@@ -507,7 +507,7 @@ signup.startFlow = function(self, config)
 
 				frame = ui:frameGenericContainer()
 
-				local title = ui:createText(str:upperFirstChar(loc("who are you?")) .. " 🙂", Color.White)
+				local title = ui:createText(loc("Who are you? 🙂"), Color.White)
 				title:setParent(frame)
 
 				local errorLabel = ui:createText("", Color.Red)
@@ -518,7 +518,7 @@ signup.startFlow = function(self, config)
 				loadingLabel:setParent(frame)
 				loadingLabel:hide()
 
-				local usernameInput = ui:createTextInput("", str:upperFirstChar(loc("username or email")))
+				local usernameInput = ui:createTextInput("", loc("Username or email"))
 				usernameInput:setParent(frame)
 
 				local didStartTyping = false
@@ -954,19 +954,19 @@ signup.startFlow = function(self, config)
 
 				cache.age = cache.age ~= nil and cache.age or -1
 
-				local okBtn = ui:buttonPositive({ content = "OK", textSize = "big", padding = 10 })
+				local okBtn = ui:buttonPositive({ content = loc("OK"), textSize = "big", padding = 10 })
 				okBtn:setParent(drawer)
 				if cache.age == -1 then
 					okBtn:disable()
 				end
 
-				local text = ui:createText("My age is…", {
+				local text = ui:createText(loc("My age is…"), {
 					color = Color.White,
 					size = "big",
 				})
 				text:setParent(drawer)
 
-				local secondaryText = ui:createText("Please tell us your age,\nit will not affect gameplay.", {
+				local secondaryText = ui:createText(loc("Please tell us your age,\nit will not affect gameplay."), {
 					color = Color(200, 200, 200),
 					size = "small",
 					alignment = "center",
@@ -984,12 +984,11 @@ signup.startFlow = function(self, config)
 				end
 				setAgeStr()
 
-				local age = ui:createText("🎂 " .. cache.ageStr .. " 🎂", {
+				local age = ui:createText("🎂  " .. cache.ageStr .. "  🎂", {
 					color = Color.White,
 					size = "big",
 				})
-				-- age.object.Font = Font.Pixel
-				age.object.FontSize = age.object.FontSize * 1.5
+
 				age:setParent(drawer)
 
 				local ageSlider = ui:slider({
@@ -1260,21 +1259,19 @@ signup.startFlow = function(self, config)
 
 				-- UI
 
-				local text = ui:createText("Pick a Username!", {
+				local text = ui:createText(loc("Pick a Username!"), {
 					color = Color.White,
 					size = "default",
 					alignment = "center",
 				})
 				text:setParent(drawer)
 
-				local instructions = ui:createText(
-					"Must start with a letter, followed by letters (a-z) and numbers (0-9) only.",
-					{
+				local instructions =
+					ui:createText(loc("Must start with a letter, followed by letters (a-z) and numbers (0-9) only."), {
 						color = Color(150, 150, 150),
 						size = "small",
 						alignment = "center",
-					}
-				)
+					})
 				instructions:setParent(drawer)
 
 				local statusMessage = ui:createText("...", {
@@ -1311,7 +1308,7 @@ signup.startFlow = function(self, config)
 				end
 
 				-- Warning message
-				local warning = ui:createText("⚠️ Choose carefully, you can't change it later!", {
+				local warning = ui:createText(loc("⚠️ Choose carefully, you can't change it later!"), {
 					color = Color(251, 206, 0),
 					size = "small",
 					alignment = "center",
@@ -1320,7 +1317,7 @@ signup.startFlow = function(self, config)
 
 				-- Button
 				local confirmButton = ui:buttonPositive({
-					content = "This is it!",
+					content = loc("This is it!"),
 					padding = 10,
 				})
 				confirmButton:setParent(drawer)
@@ -1329,7 +1326,7 @@ signup.startFlow = function(self, config)
 				-- Text input
 				local usernameInput = ui:createTextInput(
 					"",
-					str:upperFirstChar(loc("don't use your real name!")),
+					loc("Don't use your real name!"),
 					{ textSize = "default", bottomMargin = confirmButton.Height + theme.padding * 2 }
 				)
 				usernameInput:setParent(drawer)
@@ -1363,16 +1360,16 @@ signup.startFlow = function(self, config)
 								loading:setParent(nil)
 
 								if ok == false or response == nil then
-									showStatusMessage("❌ failed to validate username")
+									showStatusMessage(loc("❌ failed to validate username"))
 								else
 									if response.format == false then
-										showStatusMessage("❌ invalid format")
+										showStatusMessage(loc("❌ invalid format"))
 									elseif response.available == false then
-										showStatusMessage("❌ username already taken")
+										showStatusMessage(loc("❌ username already taken"))
 									elseif response.appropriate == false then
-										showStatusMessage("❌ username is inappropriate")
+										showStatusMessage(loc("❌ username is inappropriate"))
 									else
-										showStatusMessage("✅ username is available")
+										showStatusMessage(loc("✅ username is available"))
 										username = s
 										usernameKey = response.key
 										confirmButton:enable()
@@ -1558,12 +1555,13 @@ signup.startFlow = function(self, config)
 					},
 				})
 
-				loginBtn = ui:buttonSecondary({ content = "Sign In", textSize = "small" })
+				loginBtn = ui:buttonSecondary({ content = loc("Sign In"), textSize = "small" })
 				loginBtn.onRelease = function()
 					signupFlow:push(steps.createLoginStep())
 				end
 
-				createAccountBtn = ui:buttonPositive({ content = "Create Account", textSize = "default", padding = 10 })
+				createAccountBtn =
+					ui:buttonPositive({ content = loc("Create Account"), textSize = "default", padding = 10 })
 
 				createAccountBtn.parentDidResize = function(self)
 					ease:cancel(self)

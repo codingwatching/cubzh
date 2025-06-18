@@ -1,5 +1,6 @@
 bundle = require("bundle")
 time = require("time")
+loc = require("localize")
 
 local CONFIG = {
 	PROFILE_CELL_SIZE = 150,
@@ -1718,7 +1719,7 @@ function home()
 		local categoryCells = {}
 		local categories = {
 			{
-				title = "👥 Friends",
+				title = loc("👥 Friends"),
 				displayNumberOfEntries = true,
 				cellSize = CONFIG.FRIEND_CELL_SIZE,
 				loadCell = function(index, dataFetcher)
@@ -1799,7 +1800,7 @@ function home()
 							image.Height = image.Width * (1.0 / 3.0)
 							image:setParent(addFriendsCell)
 
-							local btn = ui:buttonPositive({ content = "👥 Add Friends", padding = theme.padding })
+							local btn = ui:buttonPositive({ content = loc("👥 Add Friends"), padding = theme.padding })
 							btn:setParent(addFriendsCell)
 
 							btn.parentDidResize = function(self)
@@ -1833,7 +1834,7 @@ function home()
 				end,
 			},
 			{
-				title = "✨ Featured",
+				title = loc("✨ Featured"),
 				cellSize = CONFIG.WORLD_CELL_SIZE,
 				loadCell = function(index, dataFetcher)
 					if index <= dataFetcher.nbEntities then
@@ -1849,7 +1850,7 @@ function home()
 				end,
 			},
 			{
-				title = "😛 Fun with friends",
+				title = loc("😛 Fun with friends"),
 				cellSize = CONFIG.WORLD_CELL_SIZE,
 				loadCell = function(index, dataFetcher)
 					if index <= dataFetcher.nbEntities then
@@ -1865,7 +1866,7 @@ function home()
 				end,
 			},
 			{
-				title = "🤠 Playing solo",
+				title = loc("🤠 Playing solo"),
 				cellSize = CONFIG.WORLD_CELL_SIZE,
 				loadCell = function(index, dataFetcher)
 					if index <= dataFetcher.nbEntities then
@@ -1881,8 +1882,8 @@ function home()
 				end,
 			},
 			{
-				title = "🍏 New Items",
-				buttonLabel = "all items",
+				title = loc("🍏 New Items"),
+				buttonLabel = loc("all items"),
 				buttonAction = function()
 					Menu:ShowItems()
 				end,
@@ -1901,7 +1902,7 @@ function home()
 				end,
 			},
 			{
-				title = "❤️ Top Rated",
+				title = loc("❤️ Top Rated"),
 				cellSize = CONFIG.WORLD_CELL_SIZE,
 				loadCell = function(index, dataFetcher)
 					if index <= dataFetcher.nbEntities then
@@ -1917,8 +1918,8 @@ function home()
 				end,
 			},
 			{
-				title = "⚔️ Popular Items",
-				buttonLabel = "all items",
+				title = loc("⚔️ Popular Items"),
+				buttonLabel = loc("all items"),
 				buttonAction = function()
 					Menu:ShowItems()
 				end,
@@ -2123,7 +2124,7 @@ function home()
 							end)
 						end
 
-						local editAvatarBtn = ui:buttonSecondary({ content = "✏️ Edit avatar", textSize = "default" })
+						local editAvatarBtn = ui:buttonSecondary({ content = loc("✏️ Edit avatar"), textSize = "default" })
 						editAvatarBtn:setParent(profileCell)
 
 						editAvatarBtn.onRelease = function(_)
@@ -2326,10 +2327,10 @@ function home()
 			return btn
 		end
 
-		local btnExplore = createBottomBarButton("Worlds", "images/bottom-bar/worlds.png")
-		local btnProfile = createBottomBarButton("Profile", "images/bottom-bar/profile.png")
-		local btnFriends = createBottomBarButton("Friends", "images/bottom-bar/friends.png")
-		local btnCreate = createBottomBarButton("Creations", "images/bottom-bar/creations.png")
+		local btnExplore = createBottomBarButton(loc("Worlds"), "images/bottom-bar/worlds.png")
+		local btnProfile = createBottomBarButton(loc("Profile"), "images/bottom-bar/profile.png")
+		local btnFriends = createBottomBarButton(loc("Friends"), "images/bottom-bar/friends.png")
+		local btnCreate = createBottomBarButton(loc("Creations"), "images/bottom-bar/creations.png")
 
 		btnExplore.onRelease = function()
 			Menu:sendHomeDebugEvent("User presses EXPLORE button")

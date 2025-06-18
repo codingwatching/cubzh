@@ -2586,6 +2586,7 @@ function createUI(system)
 			slice9 = { 0.5, 0.5 },
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
 			alpha = true,
+			filtering = false,
 		}
 		q.Color = Color.White
 

@@ -1,5 +1,7 @@
 coins = {}
 
+local loc = require("localize")
+
 local STORE_ITEM_HEIGHT = 125
 local STORE_ITEM_WIDTH = 125
 
@@ -41,7 +43,7 @@ coins.createModalContent = function(_, config)
 
 	local content = modal:createContent()
 	content.closeButton = true
-	content.title = "Bank Account"
+	content.title = loc("Bank Account")
 	content.icon = Data:FromBundle("images/icon-blux.png")
 
 	local node = ui:createFrame()
@@ -49,7 +51,7 @@ coins.createModalContent = function(_, config)
 
 	local balanceFrame = ui:frameTextBackground()
 	balanceFrame:setParent(node)
-	local balanceText = ui:createText("Balance", { color = Color.White, size = "small" })
+	local balanceText = ui:createText(loc("Balance"), { color = Color.White, size = "small" })
 	balanceText:setParent(balanceFrame)
 
 	local coinShape = ui:frame()
@@ -80,21 +82,21 @@ coins.createModalContent = function(_, config)
 	})
 	amountText:setParent(balanceFrame)
 
-	local grantedText = ui:createText(string.format("grants: -"), { color = Color(252, 167, 27), size = "small" })
+	local grantedText = ui:createText(string.format(loc("grants: -")), { color = Color(252, 167, 27), size = "small" })
 	grantedText.object.Scale = 0.7
 	grantedText:setParent(balanceFrame)
 
-	local purchasedText = ui:createText(string.format("purchased: -"), { color = Color(252, 167, 27), size = "small" })
+	local purchasedText = ui:createText(string.format(loc("purchased: -")), { color = Color(252, 167, 27), size = "small" })
 	purchasedText.object.Scale = 0.7
 	purchasedText:setParent(balanceFrame)
 
-	local earnedText = ui:createText(string.format("earned: -"), { color = Color(252, 167, 27), size = "small" })
+	local earnedText = ui:createText(string.format(loc("earned: -")), { color = Color(252, 167, 27), size = "small" })
 	earnedText.object.Scale = 0.7
 	earnedText:setParent(balanceFrame)
 
 	local historyFrame = ui:frameTextBackground()
 	historyFrame:setParent(node)
-	local historyText = ui:createText("History", { color = Color.White, size = "small" })
+	local historyText = ui:createText(loc("History"), { color = Color.White, size = "small" })
 	historyText:setParent(historyFrame)
 
 	local loadedTransactions = {}
@@ -492,16 +494,16 @@ coins.createModalContent = function(_, config)
 		local req = api:getBalance(function(err, balance)
 			if err then
 				amountText.Text = "-"
-				grantedText.Text = "grants: -"
-				purchasedText.Text = "purchased: -"
-				earnedText.Text = "earned: -"
+				grantedText.Text = loc("grants: -")
+				purchasedText.Text = loc("purchased: -")
+				earnedText.Text = loc("earned: -")
 				layoutBalanceFrameContent()
 				return
 			end
 			amountText.Text = string.format("%d", balance.totalCoins)
-			grantedText.Text = string.format("grants: %d", balance.grantedCoins)
-			purchasedText.Text = string.format("purchased: %d", balance.purchasedCoins)
-			earnedText.Text = string.format("earned: %d", balance.earnedCoins)
+			grantedText.Text = string.format(loc("grants: %d"), balance.grantedCoins)
+			purchasedText.Text = string.format(loc("purchased: %d"), balance.purchasedCoins)
+			earnedText.Text = string.format(loc("earned: %d"), balance.earnedCoins)
 			layoutBalanceFrameContent()
 		end)
 		table.insert(requests, req)

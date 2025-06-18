@@ -1,5 +1,7 @@
 creations = {}
 
+local loc = require("localize")
+
 creations.createModalContent = function(_, config)
 	local itemGrid = require("item_grid")
 	local itemDetails = require("item_details")
@@ -428,7 +430,7 @@ creations.createModalContent = function(_, config)
 
 	functions.createPickCreationTypeContent = function()
 		local content = modal:createContent()
-		content.title = "Creations"
+		content.title = loc("Creations")
 		content.icon = "🛠️"
 
 		local requests = {}
@@ -437,7 +439,7 @@ creations.createModalContent = function(_, config)
 		local node = ui:frame()
 		content.node = node
 
-		local label = ui:createText("What do you want to create?", { 
+		local label = ui:createText(loc("What do you want to create?"), { 
 			alignment = "center",
 			size = "default", 
 			color = Color.White 
@@ -490,8 +492,8 @@ creations.createModalContent = function(_, config)
 			{
 				type = "voxel-item",
 				previewItem = "shapes/turnip.3zh",
-				title = "Voxel Item",
-				description = "A Voxel Item is a 3D object made out of cubes.",
+				title = loc("Voxel Item"),
+				description = loc("A Voxel Item is a 3D object made out of cubes."),
 				callback = function()
 					local m = content:getModalIfContentIsActive()
 					if m ~= nil then
@@ -500,18 +502,18 @@ creations.createModalContent = function(_, config)
 				end,
 			},
 			{
-				title = "Textured 3D Model",
+				title = loc("Textured 3D Model"),
 				previewItem = "shapes/small-tree.glb",
-				description = "A 3D object with a texture applied to it. Blip only supports .glb file uploads for this category, for now.",
+				description = loc("A 3D object with a texture applied to it. Blip only supports .glb file uploads for this category, for now."),
 				comingSoon = true,
 				callback = function()
 					Menu:ShowAlert({ message = "Coming soon!" }, System)
 				end
 			},
 			{
-				title = "Voxel Avatar Equipment",
+				title = loc("Voxel Avatar Equipment"),
 				previewItem = "shapes/mantle.3zh",
-				description = "An Avatar Equipment made out of cubes (haircut, jacket, pants, boots, etc.)",
+				description = loc("An Avatar Equipment made out of cubes (haircut, jacket, pants, boots, etc.)"),
 				callback = function()
 					local m = content:getModalIfContentIsActive()
 					if m ~= nil then
@@ -520,9 +522,9 @@ creations.createModalContent = function(_, config)
 				end,
 			},
 			{
-				title = "World",
+				title = loc("World"),
 				previewItem = worldIcon,
-				description = "A World is a 3D scene with optional logic. That's what you need to pick if you want to create a game. Templates and AI will help you get started, wether you're a coder or not.",
+				description = loc("A World is a 3D scene with logic. That's what you need to pick if you want to create a game. Templates and AI will help you get started, wether you're a coder or not."),
 				callback = function()
 					local m = content:getModalIfContentIsActive()
 					if m ~= nil then
@@ -531,8 +533,8 @@ creations.createModalContent = function(_, config)
 				end,
 			},
 			{
-				title = "Image",
-				description = "Upload an image (PNG or JPG) that can be used as a texture.",
+				title = loc("Image"),
+				description = loc("Upload an image (PNG or JPG) that can be used as a texture."),
 				comingSoon = true,
 				previewItem = texturesIcon,
 				callback = function()
@@ -669,7 +671,7 @@ creations.createModalContent = function(_, config)
 		if config.title ~= nil then
 			creationsContent.title = config.title
 		elseif config.authorId == Player.UserID then
-			creationsContent.title = "Creations"
+			creationsContent.title = loc("Creations")
 		else
 			creationsContent.title = config.authorName .. "'s Creations"
 		end
@@ -693,7 +695,7 @@ creations.createModalContent = function(_, config)
 
 		if config.authorId == Player.UserID then
 			btnCreate = ui:buttonPositive({ 
-				content = "Create", 
+				content = loc("Create"), 
 				textSize = "default", 
 				padding = {
 					top = theme.paddingTiny,
