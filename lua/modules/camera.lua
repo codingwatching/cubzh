@@ -432,7 +432,7 @@ mod.setBehavior = function(self, config)
 			camera = { "Camera" },
 			positionTarget = { "Object", "Shape", "MutableShape", "Number3", "Player", "Quad", "Mesh" },
 			positionTargetOffset = { "Number3", "table" },
-			rotationTarget = { "Object", "Shape", "MutableShape", "Number3", "Player", "Quad", "Mesh" },
+			rotationTarget = { "Object", "Shape", "MutableShape", "Number3", "Player", "Quad", "Mesh", "Rotation" },
 			rotationTargetOffset = { "Rotation", "Number3", "table" },
 			collidesWithGroups = { "CollisionGroups", "table" },
 		},
