@@ -27,7 +27,6 @@ constructors:
         type: "number"
       - name: "z"
         type: "number"
-    -
 
 properties:
     - name: "PaletteIndex"
