@@ -13,12 +13,11 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
               with:
+                lfs: "false"
                 sparse-checkout: |-
-                    lua
-                    dagger.json
-                    .dagger
-                    dagger
-                    ci
+                  dagger.json
+                  dagger
+                  lua/modules
             - name: scripts/install-dagger.sh
               id: install-dagger
               run: |

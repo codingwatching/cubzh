@@ -13,14 +13,11 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
               with:
-                lfs: "true"
+                lfs: "false"
                 sparse-checkout: |-
-                    core
-                    deps/libz
                     dagger.json
-                    .dagger
                     dagger
-                    ci
+                    core
             - name: scripts/install-dagger.sh
               id: install-dagger
               run: |
