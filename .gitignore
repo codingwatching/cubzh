@@ -32,8 +32,7 @@
 # Xcode
 *.xcuserdatad
 
-deps/xptools/windows/bundle_tar_gz.hpp
-
+# Miscellaneous
+deps/bgfx/bgfx/examples
 deps/bgfx/bgfx/tools/bin/
-
-*.obj
+deps/xptools/windows/bundle_tar_gz.hpp

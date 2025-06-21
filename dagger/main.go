@@ -33,7 +33,7 @@ func (m *Blip) TestCore(
 	ctx context.Context,
 	// Source code
 	// +defaultPath="/"
-	// +ignore=["*", "!core", "!deps/libz", "!deps/bgfx/bgfx/3rdparty/cgltf"]
+	// +ignore=["*", "!core", "!deps/libz/linux-x86_64", "!deps/libz/linux-aarch64", "!deps/bgfx/bgfx/3rdparty/cgltf"]
 	src *dagger.Directory,
 ) error {
 	// create container with source files
