@@ -71,8 +71,9 @@ local mt = {
 	__call = function(_, str, context)
 		if prefLanguages == nil then
 			-- hack to test languages:
-			-- prefLanguages = { "jp" } -- pl, ua
-			prefLanguages = { "fr" }
+			-- prefLanguages = { "ja" } -- pl, ua
+			-- prefLanguages = { "fr" }
+			prefLanguages = { "ua" }
 			-- prefLanguages = Client.PreferredLanguages
 		end
 
