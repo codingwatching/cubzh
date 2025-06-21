@@ -203,10 +203,10 @@ settings.createModalContent = function(_, config)
 
 		hapticFeedbackToggle = ui:buttonNeutral({ content = "ON" })
 		if System.HapticFeedbackEnabled then
-			hapticFeedbackToggle.Text = "ON"
+			hapticFeedbackToggle.Text = loc("ON")
 			hapticFeedbackToggle:setColor(theme.colorPositive)
 		else
-			hapticFeedbackToggle.Text = "OFF"
+			hapticFeedbackToggle.Text = loc("OFF")
 			hapticFeedbackToggle:setColor(theme.colorNegative)
 		end
 
@@ -214,10 +214,10 @@ settings.createModalContent = function(_, config)
 			System.HapticFeedbackEnabled = not System.HapticFeedbackEnabled
 
 			if System.HapticFeedbackEnabled then
-				hapticFeedbackToggle.Text = "ON"
+				hapticFeedbackToggle.Text = loc("ON")
 				hapticFeedbackToggle:setColor(theme.colorPositive)
 			else
-				hapticFeedbackToggle.Text = "OFF"
+				hapticFeedbackToggle.Text = loc("OFF")
 				hapticFeedbackToggle:setColor(theme.colorNegative)
 			end
 		end

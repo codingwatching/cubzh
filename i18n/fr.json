@@ -57,6 +57,8 @@
     "🗑️ Delete account": "🗑️ Supprimer le compte",
     "⚠️ Clearing all cached data from visited experiences, are you sure about this?": "⚠️ Vider le cache des expériences visitées, es-tu sûr de vouloir faire ça ?",
     "Yes, clear cache": "Oui, vider le cache",
+    "ON": "ON",
+    "OFF": "OFF",
     "Bank Account": "Compte bancaire",
     "Balance": "Solde",
     "grants: %d": "offert: %d",

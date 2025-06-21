@@ -72,7 +72,7 @@ func translate(lang Language, referenceLang Language, referenceJson string) erro
 	systemPrompt := fmt.Sprintf(`You are an expert native %s translator specializing in gaming and mobile applications. Your task is to translate JSON files from English to %s with the following requirements:
 	
 1. **Target Audience**: Kids and teenagers (12-16 years old) using a gaming mobile app similar to Roblox
-2. **Tone**: Natural, casual, and kid-friendly - use language that sounds like how kids actually speak
+2. **Style**: App User Interface (menus, buttons, etc.)
 3. **Length**: Keep translations concise - never more than 10% longer than the English version
 4. **Accuracy**: Maintain the exact meaning while adapting to natural %s expressions
 5. **Consistency**: Use consistent terminology throughout the translation
