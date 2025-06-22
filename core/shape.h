@@ -64,6 +64,9 @@ typedef uint8_t ShapeDrawMode;
 #define SHAPE_DRAWMODE_GREY 4
 #define SHAPE_DRAWMODE_GRID 8
 
+#define SHAPE_DEFAULT_MULTIPLICATIVE_COLOR 0xffffffff
+#define SHAPE_DEFAULT_ADDITIVE_COLOR 0x00000000
+
 Shape *shape_new(void);
 Shape *shape_new_2(const bool isMutable);
 Shape *shape_new_copy(Shape *const s);
@@ -308,8 +311,11 @@ bool shape_box_overlap(const Shape *s, const Box *modelBox, const float3 *modelE
 
 bool shape_is_hidden(Shape *s);
 
-void shape_set_draw_mode(Shape *s, ShapeDrawMode m);
-ShapeDrawMode shape_get_draw_mode(const Shape *s);
+void shape_set_draw_mode_deprecated(Shape *s, ShapeDrawMode m);
+ShapeDrawMode shape_get_draw_mode_deprecated(const Shape *s);
+void shape_toggle_drawmodes(Shape *s, bool toggle);
+bool shape_uses_drawmodes(const Shape *s);
+void shape_check_and_clear_drawmodes(Shape *s);
 
 void shape_set_inner_transparent_faces(Shape *s, const bool toggle);
 bool shape_draw_inner_transparent_faces(const Shape *s);
@@ -402,6 +408,13 @@ void shape_set_lua_mutable(Shape *s, const bool value);
 void shape_enableAnimations(Shape *const s);
 void shape_disableAnimations(Shape *const s);
 bool shape_getIgnoreAnimations(Shape *const s);
+
+// MARK: - Draw modes -
+
+void shape_drawmode_set_multiplicative_color(Shape *s, uint32_t rgba);
+uint32_t shape_drawmode_get_multiplicative_color(const Shape *s);
+void shape_drawmode_set_additive_color(Shape *s, uint32_t rgb);
+uint32_t shape_drawmode_get_additive_color(const Shape *s);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -98,8 +98,8 @@
 // shape_point_overlap
 // shape_box_overlap
 // shape_is_hidden
-// shape_set_draw_mode
-// shape_get_draw_mode
+// shape_set_draw_mode_deprecated
+// shape_get_draw_mode_deprecated
 // shape_set_shadow_decal
 // shape_has_shadow_decal
 // shape_set_unlit
@@ -151,7 +151,7 @@ void test_shape_make(void) {
     TEST_CHECK(box_size.y == 0);
     TEST_CHECK(box_size.z == 0);
     TEST_CHECK(shape_get_layers((const Shape *)s) == 1);
-    TEST_CHECK(shape_get_draw_mode((const Shape *)s) == SHAPE_DRAWMODE_DEFAULT);
+    TEST_CHECK(shape_get_draw_mode_deprecated((const Shape *) s) == SHAPE_DRAWMODE_DEFAULT);
     TEST_CHECK(shape_is_lua_mutable(s) == false);
 
     shape_free((Shape *const)s);

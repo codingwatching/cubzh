@@ -86,15 +86,6 @@ void main() {
 	vec4 comp = CLEAR;
 #endif
 
-#if VOXEL_VARIANT_DRAWMODES
-	float aStep = step(1.0, u_alphaOverride);
-	color.w = mix(u_alphaOverride, color.w, aStep);
-	aoValue = mix(0.0, aoValue, aStep);
-
-	color.xyz *= u_multRGB;
-	color.xyz += u_addRGB;
-#endif
-
 	vec3 skybox = mix(u_sunColor.xyz, vec3_splat(1.0), unlit);
 
 #if DEBUG_VERTEX_LIGHTING > 0
@@ -104,6 +95,11 @@ void main() {
 	voxelLight = getVertexDeferredLighting(voxelLight, aoValue);
 #else
 	vec4 vcolor = getVertexLitColor(voxelLight, skybox, aoValue, color, comp.xyz, clip.z, face);
+#endif
+
+#if VOXEL_VARIANT_DRAWMODES
+	vcolor.xyzw *= u_multRGBA;
+	vcolor.xyz += u_addRGB;
 #endif
 
 	gl_Position = clip;

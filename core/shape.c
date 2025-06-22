@@ -42,6 +42,11 @@
 #define SHAPE_LUA_FLAG_HISTORY 2
 #define SHAPE_LUA_FLAG_HISTORY_KEEP_PENDING 4
 
+typedef struct {
+    uint32_t multColor; /* 4 bytes */
+    uint32_t addColor; /* 4 bytes */
+} ShapeDrawmodes;
+
 struct _Shape {
     Weakptr *wptr;
 
@@ -79,6 +84,8 @@ struct _Shape {
 
     // name of the original item <username>.<itemname>, used for baked files
     char *fullname;
+
+    ShapeDrawmodes *drawmodes; /* 8 bytes */
 
     size_t nbChunks;
     size_t nbBlocks;
@@ -245,6 +252,7 @@ Shape *shape_new(void) {
 
     s->history = NULL;
     s->fullname = NULL;
+    s->drawmodes = NULL;
     s->pendingTransaction = NULL;
     s->nbChunks = 0;
     s->nbBlocks = 0;
@@ -281,6 +289,10 @@ Shape *shape_new_copy(Shape *const s) {
     copy->layers = s->layers;
     copy->luaFlags = s->luaFlags;
     copy->fullname = string_new_copy(s->fullname);
+    if (s->drawmodes != NULL) {
+        copy->drawmodes = (ShapeDrawmodes*)malloc(sizeof(ShapeDrawmodes));
+        memcpy(copy->drawmodes, s->drawmodes, sizeof(ShapeDrawmodes));
+    }
     if (s->pivot != NULL) {
         *copy->pivot = *s->pivot;
     }
@@ -474,9 +486,8 @@ void shape_free(Shape *const shape) {
     transaction_free(shape->pendingTransaction);
     shape->pendingTransaction = NULL;
 
-    if (shape->fullname != NULL) {
-        free(shape->fullname);
-    }
+    free(shape->fullname);
+    free(shape->drawmodes);
 
     free(shape);
 }
@@ -2246,18 +2257,43 @@ bool shape_is_hidden(Shape *s) {
     return transform_is_hidden(s->transform);
 }
 
-void shape_set_draw_mode(Shape *s, ShapeDrawMode m) {
+void shape_set_draw_mode_deprecated(Shape *s, ShapeDrawMode m) {
     if (s == NULL) {
         return;
     }
     s->drawMode = m;
 }
 
-ShapeDrawMode shape_get_draw_mode(const Shape *s) {
+ShapeDrawMode shape_get_draw_mode_deprecated(const Shape *s) {
     if (s == NULL) {
         return SHAPE_DRAWMODE_DEFAULT;
     }
     return s->drawMode;
+}
+
+void shape_toggle_drawmodes(Shape *s, bool toggle) {
+    if (toggle && s->drawmodes == NULL) {
+        s->drawmodes = (ShapeDrawmodes*)malloc(sizeof(ShapeDrawmodes));
+        s->drawmodes->multColor = SHAPE_DEFAULT_MULTIPLICATIVE_COLOR;
+        s->drawmodes->addColor = SHAPE_DEFAULT_ADDITIVE_COLOR;
+    } else if (toggle == false && s->drawmodes != NULL) {
+        free(s->drawmodes);
+        s->drawmodes = NULL;
+    }
+}
+
+bool shape_uses_drawmodes(const Shape *s) {
+    return s->drawmodes != NULL;
+}
+
+void shape_check_and_clear_drawmodes(Shape *s) {
+    if (s->drawmodes != NULL
+        && s->drawmodes->multColor == SHAPE_DEFAULT_MULTIPLICATIVE_COLOR
+        && s->drawmodes->addColor == SHAPE_DEFAULT_ADDITIVE_COLOR) {
+
+        free(s->drawmodes);
+        s->drawmodes = NULL;
+    }
 }
 
 void shape_set_inner_transparent_faces(Shape *s, const bool toggle) {
@@ -2923,6 +2959,30 @@ bool shape_getIgnoreAnimations(Shape *const s) {
         return false;
     }
     return transform_is_animations_enabled(s->transform) == false;
+}
+
+// MARK: - Draw modes -
+
+void shape_drawmode_set_multiplicative_color(Shape *s, uint32_t rgba) {
+    if (s->drawmodes == NULL) {
+        shape_toggle_drawmodes(s, true);
+    }
+    s->drawmodes->multColor = rgba;
+}
+
+uint32_t shape_drawmode_get_multiplicative_color(const Shape *s) {
+    return s->drawmodes != NULL ? s->drawmodes->multColor : SHAPE_DEFAULT_MULTIPLICATIVE_COLOR;
+}
+
+void shape_drawmode_set_additive_color(Shape *s, uint32_t rgb) {
+    if (s->drawmodes == NULL) {
+        shape_toggle_drawmodes(s, true);
+    }
+    s->drawmodes->addColor = rgb & 0x00FFFFFF; // force alpha to 0 (unused, make packing easier)
+}
+
+uint32_t shape_drawmode_get_additive_color(const Shape *s) {
+    return s->drawmodes != NULL ? s->drawmodes->addColor : SHAPE_DEFAULT_ADDITIVE_COLOR;
 }
 
 // MARK: - private functions -

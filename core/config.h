@@ -26,18 +26,18 @@ extern "C" {
 #define vx_deprecated(_MSG) __attribute__((deprecated(_MSG)))
 #endif
 
-// GENERAL
+// MARK: - GENERAL -
 
 #define MAP_DEFAULT_SCALE 5.0f
 #define PACK_26_6_PIXEL_FORMAT 64.0f // 26.6 pixel format: float * 64 = int32_t
-
-// FRAMES
-
 #define MAX_TICK_DELTA_MS 50.0
 #define TICK_DELTA_MS_T double
 #define TICK_DELTA_SEC_T double
+#define NB_UNDOABLE_ACTIONS 20
+#define BLENDING_ALPHA 0
+#define BLENDING_ADDITIVE 1
 
-// CAMERA
+// MARK: - CAMERA -
 
 #define CAMERA_DEFAULT_FOV 60.0f
 #define CAMERA_FOV_MIN 1.0f
@@ -55,7 +55,7 @@ extern "C" {
 #define CAMERA_ORDER_MAX 255
 #define CAMERA_ORDER_DEFAULT 127
 
-// PLAYER
+// MARK: - PLAYER -
 
 #define PLAYER_ID_SERVER 255             // ID to represent the server
 #define PLAYER_ID_ALL 254                // ID to represent all players
@@ -64,7 +64,7 @@ extern "C" {
 #define PLAYER_ID_NONE 251               // ID to represent no one
 #define PLAYER_DEFAULT_USERNAME "newbie" // Username displayed by default when not set
 
-// EVENTS
+// MARK: - EVENTS -
 #define EVENT_TYPE_FROM_SCRIPT 1
 #define EVENT_TYPE_SERVER_LOG_INFO 2
 #define EVENT_TYPE_SERVER_LOG_WARNING 3
@@ -72,8 +72,6 @@ extern "C" {
 #define EVENT_TYPE_FROM_SCRIPT_WITH_DEBUG                                                          \
     5 // sent as EVENT_TYPE_FROM_SCRIPT, with attached debug metadata
 
-// UNDO MAXIMUM ACTIONS
-#define NB_UNDOABLE_ACTIONS 20
 
 // MARK: - Maths -
 
