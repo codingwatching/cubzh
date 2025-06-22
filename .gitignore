@@ -33,6 +33,5 @@
 *.xcuserdatad
 
 # Miscellaneous
-deps/bgfx/bgfx/examples
 deps/bgfx/bgfx/tools/bin/
 deps/xptools/windows/bundle_tar_gz.hpp
