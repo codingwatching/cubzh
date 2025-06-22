@@ -113,6 +113,7 @@ void _world_text_void_free(void *o) {
     weakptr_invalidate(wt->wptr);
     // free fields
     free(wt->text);
+    free(wt->drawmodes);
     // free struct
     free(wt);
 }
