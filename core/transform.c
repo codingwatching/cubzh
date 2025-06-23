@@ -51,6 +51,7 @@
 #define TRANSFORM_FLAG_DEBUG 16
 #define TRANSFORM_FLAG_DISPLAY_COLLIDER 32
 #define TRANSFORM_FLAG_DISPLAY_BOX 64
+#define TRANSFORM_FLAG_PRIVATE 128
 
 #if DEBUG_TRANSFORM
 static int debug_transform_refresh_calls = 0;
@@ -360,6 +361,14 @@ bool transform_is_any_dirty(Transform *t) {
     return _transform_get_dirty(t, TRANSFORM_DIRTY_CACHE);
 }
 
+void transform_set_private(Transform *t) {
+    _transform_toggle_flag(t, TRANSFORM_FLAG_PRIVATE, true);
+}
+
+bool transform_is_private(Transform *t) {
+    return _transform_get_flag(t, TRANSFORM_FLAG_PRIVATE);
+}
+
 void transform_set_destroy_callback(pointer_transform_destroyed_func f) {
     transform_destroyed_callback = f;
 }
@@ -511,13 +520,14 @@ RigidBody *transform_get_or_compute_world_aligned_collider(Transform *t,
 // MARK: - Hierarchy -
 
 bool transform_set_parent(Transform *t, Transform *parent, bool keepWorld) {
-
-    // can't set parent on itself
-    if (t == parent) {
-        return false;
+    Transform *sanityCheck = parent;
+    while (sanityCheck != NULL) {
+        if (t == sanityCheck) {
+            return false;
+        }
+        sanityCheck = sanityCheck->parent;
     }
 
-    // parent is already set
     if (t->parent == parent) {
         return true;
     }
@@ -605,34 +615,40 @@ TransformType transform_get_type(const Transform *t) {
     return t->type;
 }
 
-bool transform_recurse(Transform *t, pointer_transform_recurse_func f, void *ptr, bool deepFirst) {
+bool transform_recurse(Transform *t, pointer_transform_recurse_func f, void *ptr, bool deepFirst, bool isPrivate) {
     DoublyLinkedListNode *n = transform_get_children_iterator(t);
     Transform *child = NULL;
     while (n != NULL) {
         child = (Transform *)doubly_linked_list_node_pointer(n);
-        if (deepFirst) {
-            if (transform_recurse(child, f, ptr, deepFirst) || f(child, ptr))
-                return true;
-        } else {
-            if (f(child, ptr) || transform_recurse(child, f, ptr, deepFirst))
-                return true;
+        if (isPrivate || transform_is_private(child) == false) {
+            if (deepFirst) {
+                if (transform_recurse(child, f, ptr, deepFirst, isPrivate) || f(child, ptr))
+                    return true;
+            } else {
+                if (f(child, ptr) || transform_recurse(child, f, ptr, deepFirst, isPrivate))
+                    return true;
+            }
         }
         n = doubly_linked_list_node_next(n);
     }
     return false;
 }
 
-bool transform_recurse_depth(Transform *t, pointer_transform_recurse_depth_func f, void *ptr, bool deepFirst, uint32_t depth) {
+bool transform_recurse_depth(Transform *t, pointer_transform_recurse_depth_func f, void *ptr, bool deepFirst, bool isPrivate, uint32_t depth) {
     DoublyLinkedListNode *n = transform_get_children_iterator(t);
     Transform *child = NULL;
     while (n != NULL) {
         child = (Transform *)doubly_linked_list_node_pointer(n);
-        if (deepFirst) {
-            if (transform_recurse_depth(child, f, ptr, deepFirst, depth + 1) || f(child, ptr, depth + 1))
-                return true;
-        } else {
-            if (f(child, ptr, depth + 1) || transform_recurse_depth(child, f, ptr, deepFirst, depth + 1))
-                return true;
+        if (isPrivate || transform_is_private(child) == false) {
+            if (deepFirst) {
+                if (transform_recurse_depth(child, f, ptr, deepFirst, isPrivate, depth + 1)
+                    || f(child, ptr, depth + 1))
+                    return true;
+            } else {
+                if (f(child, ptr, depth + 1)
+                    || transform_recurse_depth(child, f, ptr, deepFirst, isPrivate, depth + 1))
+                    return true;
+            }
         }
         n = doubly_linked_list_node_next(n);
     }
@@ -1233,7 +1249,13 @@ const float3 *transform_utils_get_acceleration(Transform *t) {
 void transform_utils_box_fit_recurse(Transform *t,
                                      Matrix4x4 mtx,
                                      Box *inout_box,
-                                     bool applyTransaction) {
+                                     bool applyTransaction,
+                                     uint32_t depth,
+                                     uint32_t maxDepth) {
+    if (depth >= maxDepth) {
+        return;
+    }
+
     DoublyLinkedListNode *n = transform_get_children_iterator(t);
     Transform *child = NULL;
     while (n != NULL) {
@@ -1264,7 +1286,7 @@ void transform_utils_box_fit_recurse(Transform *t,
                 box_op_merge(inout_box, &aabb, inout_box);
             }
 
-            transform_utils_box_fit_recurse(child, child_mtx, inout_box, applyTransaction);
+            transform_utils_box_fit_recurse(child, child_mtx, inout_box, applyTransaction, depth, maxDepth);
         }
 
         n = doubly_linked_list_node_next(n);

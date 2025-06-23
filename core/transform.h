@@ -96,9 +96,11 @@ bool transform_is_hierarchy_dirty(Transform *t);
 void transform_refresh(Transform *t, bool hierarchyDirty, bool refreshParents);
 void transform_set_children_dirty(Transform *t);
 void transform_reset_children_dirty(Transform *t);
-void transform_reset_any_dirty(Transform *t);
 /// set, but not reset by transform, can be used internally by higher types as custom flag
+void transform_reset_any_dirty(Transform *t);
 bool transform_is_any_dirty(Transform *t);
+void transform_set_private(Transform *t);
+bool transform_is_private(Transform *t);
 void transform_set_destroy_callback(pointer_transform_destroyed_func f);
 void transform_set_managed_ptr(Transform *t, Weakptr *wptr);
 void transform_unset_managed_ptr(Transform *t);
@@ -129,8 +131,8 @@ Transform_Array transform_get_children_copy(Transform *t, size_t *count);
 size_t transform_get_children_count(Transform *t);
 void *transform_get_ptr(Transform *const t);
 TransformType transform_get_type(const Transform *t);
-bool transform_recurse(Transform *t, pointer_transform_recurse_func f, void *ptr, bool deepFirst);
-bool transform_recurse_depth(Transform *t, pointer_transform_recurse_depth_func f, void *ptr, bool deepFirst, uint32_t depth);
+bool transform_recurse(Transform *t, pointer_transform_recurse_func f, void *ptr, bool deepFirst, bool isPrivate);
+bool transform_recurse_depth(Transform *t, pointer_transform_recurse_depth_func f, void *ptr, bool deepFirst, bool isPrivate, uint32_t depth);
 bool transform_is_hidden_branch(Transform *t);
 void transform_set_hidden_branch(Transform *t, bool value);
 bool transform_is_hidden_self(Transform *t);
@@ -235,7 +237,9 @@ const float3 *transform_utils_get_acceleration(Transform *t);
 void transform_utils_box_fit_recurse(Transform *t,
                                      Matrix4x4 mtx,
                                      Box *inout_box,
-                                     bool applyTransaction);
+                                     bool applyTransaction,
+                                     uint32_t depth,
+                                     uint32_t maxDepth);
 void transform_utils_set_mtx(Transform *t, const Matrix4x4 *mtx);
 bool transform_utils_has_shadow(const Transform *t);
 Transform* transform_utils_copy_recurse(const Transform *t);
