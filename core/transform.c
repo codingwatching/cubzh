@@ -51,6 +51,7 @@
 #define TRANSFORM_FLAG_DEBUG 16
 #define TRANSFORM_FLAG_DISPLAY_COLLIDER 32
 #define TRANSFORM_FLAG_DISPLAY_BOX 64
+#define TRANSFORM_FLAG_PRIVATE 128
 
 #if DEBUG_TRANSFORM
 static int debug_transform_refresh_calls = 0;
@@ -360,6 +361,14 @@ bool transform_is_any_dirty(Transform *t) {
     return _transform_get_dirty(t, TRANSFORM_DIRTY_CACHE);
 }
 
+void transform_set_private(Transform *t) {
+    _transform_toggle_flag(t, TRANSFORM_FLAG_PRIVATE, true);
+}
+
+bool transform_is_private(Transform *t) {
+    return _transform_get_flag(t, TRANSFORM_FLAG_PRIVATE);
+}
+
 void transform_set_destroy_callback(pointer_transform_destroyed_func f) {
     transform_destroyed_callback = f;
 }
@@ -605,34 +614,40 @@ TransformType transform_get_type(const Transform *t) {
     return t->type;
 }
 
-bool transform_recurse(Transform *t, pointer_transform_recurse_func f, void *ptr, bool deepFirst) {
+bool transform_recurse(Transform *t, pointer_transform_recurse_func f, void *ptr, bool deepFirst, bool isPrivate) {
     DoublyLinkedListNode *n = transform_get_children_iterator(t);
     Transform *child = NULL;
     while (n != NULL) {
         child = (Transform *)doubly_linked_list_node_pointer(n);
-        if (deepFirst) {
-            if (transform_recurse(child, f, ptr, deepFirst) || f(child, ptr))
-                return true;
-        } else {
-            if (f(child, ptr) || transform_recurse(child, f, ptr, deepFirst))
-                return true;
+        if (isPrivate || transform_is_private(child) == false) {
+            if (deepFirst) {
+                if (transform_recurse(child, f, ptr, deepFirst, isPrivate) || f(child, ptr))
+                    return true;
+            } else {
+                if (f(child, ptr) || transform_recurse(child, f, ptr, deepFirst, isPrivate))
+                    return true;
+            }
         }
         n = doubly_linked_list_node_next(n);
     }
     return false;
 }
 
-bool transform_recurse_depth(Transform *t, pointer_transform_recurse_depth_func f, void *ptr, bool deepFirst, uint32_t depth) {
+bool transform_recurse_depth(Transform *t, pointer_transform_recurse_depth_func f, void *ptr, bool deepFirst, bool isPrivate, uint32_t depth) {
     DoublyLinkedListNode *n = transform_get_children_iterator(t);
     Transform *child = NULL;
     while (n != NULL) {
         child = (Transform *)doubly_linked_list_node_pointer(n);
-        if (deepFirst) {
-            if (transform_recurse_depth(child, f, ptr, deepFirst, depth + 1) || f(child, ptr, depth + 1))
-                return true;
-        } else {
-            if (f(child, ptr, depth + 1) || transform_recurse_depth(child, f, ptr, deepFirst, depth + 1))
-                return true;
+        if (isPrivate || transform_is_private(child) == false) {
+            if (deepFirst) {
+                if (transform_recurse_depth(child, f, ptr, deepFirst, isPrivate, depth + 1)
+                    || f(child, ptr, depth + 1))
+                    return true;
+            } else {
+                if (f(child, ptr, depth + 1)
+                    || transform_recurse_depth(child, f, ptr, deepFirst, isPrivate, depth + 1))
+                    return true;
+            }
         }
         n = doubly_linked_list_node_next(n);
     }

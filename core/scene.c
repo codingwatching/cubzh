@@ -152,6 +152,7 @@ Scene *scene_new(Weakptr *g) {
         sc->recursionLockCount = 0;
 
         transform_set_parent(sc->system, sc->root, false);
+        transform_set_private(sc->system);
     }
     return sc;
 }
@@ -387,12 +388,12 @@ void scene_refresh(Scene *sc, const TICK_DELTA_SEC_T dt, void *callbackData) {
 }
 
 void scene_standalone_refresh(Scene *sc) {
-    transform_recurse(sc->root, _scene_standalone_refresh_func, NULL, false);
+    transform_recurse(sc->root, _scene_standalone_refresh_func, NULL, false, true);
 }
 
 DoublyLinkedList *scene_new_shapes_iterator(Scene *sc) {
     DoublyLinkedList *list = doubly_linked_list_new();
-    transform_recurse(sc->root, _scene_shapes_iterator_func, list, true);
+    transform_recurse(sc->root, _scene_shapes_iterator_func, list, true, true);
     return list;
 }
 
