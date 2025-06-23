@@ -1248,7 +1248,13 @@ const float3 *transform_utils_get_acceleration(Transform *t) {
 void transform_utils_box_fit_recurse(Transform *t,
                                      Matrix4x4 mtx,
                                      Box *inout_box,
-                                     bool applyTransaction) {
+                                     bool applyTransaction,
+                                     uint32_t depth,
+                                     uint32_t maxDepth) {
+    if (depth >= maxDepth) {
+        return;
+    }
+
     DoublyLinkedListNode *n = transform_get_children_iterator(t);
     Transform *child = NULL;
     while (n != NULL) {
@@ -1279,7 +1285,7 @@ void transform_utils_box_fit_recurse(Transform *t,
                 box_op_merge(inout_box, &aabb, inout_box);
             }
 
-            transform_utils_box_fit_recurse(child, child_mtx, inout_box, applyTransaction);
+            transform_utils_box_fit_recurse(child, child_mtx, inout_box, applyTransaction, depth, maxDepth);
         }
 
         n = doubly_linked_list_node_next(n);

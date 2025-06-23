@@ -237,7 +237,9 @@ const float3 *transform_utils_get_acceleration(Transform *t);
 void transform_utils_box_fit_recurse(Transform *t,
                                      Matrix4x4 mtx,
                                      Box *inout_box,
-                                     bool applyTransaction);
+                                     bool applyTransaction,
+                                     uint32_t depth,
+                                     uint32_t maxDepth);
 void transform_utils_set_mtx(Transform *t, const Matrix4x4 *mtx);
 bool transform_utils_has_shadow(const Transform *t);
 Transform* transform_utils_copy_recurse(const Transform *t);
