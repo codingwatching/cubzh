@@ -73,8 +73,8 @@ local mt = {
 			-- hack to test languages:
 			-- prefLanguages = { "ja" }
 			-- prefLanguages = { "fr" }
-			prefLanguages = { "ua" }
-			-- prefLanguages = Client.PreferredLanguages
+			-- prefLanguages = { "ua" }
+			prefLanguages = Client.PreferredLanguages
 		end
 
 		local v
