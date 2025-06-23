@@ -2,6 +2,8 @@
 
 local friendsWindow = {}
 
+local loc = require("localize")
+
 local mt = {
 	__index = {},
 	__newindex = function()
@@ -28,10 +30,10 @@ local LIST = {
 }
 
 local TITLES = {
-	"Received (%d)",
-	"Sent (%d)",
-	"Friends (%d)",
-	"Search (%d)",
+	loc("Received (%d)"),
+	loc("Sent (%d)"),
+	loc("Friends (%d)"),
+	loc("Search (%d)"),
 }
 
 local CELL_TYPE = {
@@ -45,7 +47,7 @@ local CELL_TYPE = {
 mt.__index.create = function(_, maxWidth, maxHeight, position, uikit)
 	local ui = uikit or require("uikit")
 	local content = modal:createContent()
-	content.title = "Friends"
+	content.title = loc("Friends")
 	content.icon = "👥"
 
 	content.didBecomeActive = function()

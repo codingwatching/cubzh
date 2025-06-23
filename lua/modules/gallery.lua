@@ -2,6 +2,8 @@
 
 local gallery = {}
 
+local loc = require("localize")
+
 gallery.createModalContent = function(_, config)
 	local modal = require("modal")
 	local itemGrid = require("item_grid")
@@ -23,10 +25,10 @@ gallery.createModalContent = function(_, config)
 	local icon = "❌"
 
 	if config.type == "items" then
-		title = "Items"
+		title = loc("Items")
 		icon = "⚔️"
 	elseif config.type == "worlds" then
-		title = "Worlds"
+		title = loc("Worlds")
 		icon = "🌎"
 	end
 

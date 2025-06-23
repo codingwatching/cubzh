@@ -3134,7 +3134,7 @@ menu:OnAuthComplete(function()
 
 	if System.Under13DisclaimerNeedsApproval then
 		showAlert({
-			message = "⚠️ Be safe online! ⚠️\n\nDo NOT share personal details, watch out for phishing, scams and always think about who you're talking to.\n\nIf anything goes wrong, talk to someone you trust. 🙂",
+			message = loc("⚠️ Be safe online! ⚠️\n\nDo NOT share personal details, watch out for phishing, scams and always think about who you're talking to.\n\nIf anything goes wrong, talk to someone you trust. 🙂"),
 			positiveLabel = loc("Yes sure!"),
 			positiveCallback = function()
 				System.ApproveUnder13Disclaimer()

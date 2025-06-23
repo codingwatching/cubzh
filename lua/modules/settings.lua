@@ -1,5 +1,7 @@
 settings = {}
 
+local loc = require("localize")
+
 --- Creates modal content for app settings
 --- config(table): contents "cache" and "logout" keys, set either of these to true to display associated buttons
 --- returns: modal
@@ -42,7 +44,7 @@ settings.createModalContent = function(_, config)
 	local settingsNode = ui:createFrame()
 
 	local content = modal:createContent()
-	content.title = "Settings"
+	content.title = loc("Settings")
 	content.icon = Data:FromBundle("images/icon-settings.png")
 	content.node = settingsNode
 
@@ -53,95 +55,136 @@ settings.createModalContent = function(_, config)
 	local volumeLabel = ui:createText("", {
 		color = Color.White,
 	})
+	local volumeValue = ui:createText("", {
+		color = Color.White,
+		bold = true,
+	})
 	local function refreshVolumeLabel()
-		volumeLabel.Text = string.format("Volume: %.2f ", System.MasterVolume)
+		volumeLabel.Text = string.format(loc("🔈 Volume:"))
+		volumeValue.Text = string.format("%.f%% ", System.MasterVolume * 100)
 	end
 	refreshVolumeLabel()
 
-	local volumeMinus = ui:buttonSecondary({ content = "➖" })
-	volumeMinus.label = volumeLabel
-	volumeMinus.onRelease = function(_)
-		System.MasterVolume = math.max(System.MasterVolume - VOLUME_STEP, MIN_VOLUME)
-		refreshVolumeLabel()
-	end
+	local volumeSlider = ui:slider({
+		min = 0.0,
+		max = 1.0,
+		step = 0.01,
+		defaultValue = System.MasterVolume,
+		hapticFeedback = false,
+		button = ui:buttonNeutral({ content = "  ", padding = theme.padding }),
+		onValueChange = function(v)
+			System.MasterVolume = v
+			refreshVolumeLabel()
+		end,
+	})
+	volumeSlider.isSlider = true
+	volumeSlider.Width = 180
 
-	local volumePlus = ui:buttonSecondary({ content = "➕" })
-	volumePlus.label = volumeLabel
-	volumePlus.onRelease = function(_)
-		System.MasterVolume = math.min(System.MasterVolume + VOLUME_STEP, MAX_VOLUME)
-		refreshVolumeLabel()
-	end
-
-	table.insert(rows, { volumeLabel, volumeMinus, volumePlus })
+	table.insert(rows, { volumeLabel, volumeValue, volumeSlider })
 
 	-- SENSITIVITY
 
 	local sensitivityLabel = ui:createText("", {
 		color = Color.White,
 	})
+	local sensitivityValue = ui:createText("", {
+		color = Color.White,
+		bold = true,
+	})
 	local function refreshSensitivityLabel()
-		sensitivityLabel.Text = string.format("Sensitivity: %.1f ", System.Sensitivity)
+		if Client.IsMobile then
+			sensitivityLabel.Text = string.format(loc("👆 Sensitivity:"))
+		else
+			sensitivityLabel.Text = string.format(loc("🖱️ Sensitivity:"))
+		end
+		sensitivityValue.Text = string.format("%.1f ", System.Sensitivity)
 	end
 	refreshSensitivityLabel()
 
-	local sensitivityMinus = ui:buttonSecondary({ content = "➖" })
-	sensitivityMinus.label = sensitivityLabel
-	sensitivityMinus.onRelease = function(_)
-		System.Sensitivity = math.max(System.Sensitivity - SENSITIVITY_STEP, MIN_SENSITIVITY)
-		refreshSensitivityLabel()
-	end
+	local sensitivitySlider = ui:slider({
+		min = MIN_SENSITIVITY,
+		max = MAX_SENSITIVITY,
+		step = SENSITIVITY_STEP,
+		defaultValue = System.Sensitivity,
+		hapticFeedback = false,
+		button = ui:buttonNeutral({ content = "  ", padding = theme.padding }),
+		onValueChange = function(v)
+			System.Sensitivity = math.max(MIN_SENSITIVITY, math.min(MAX_SENSITIVITY, v))
+			refreshSensitivityLabel()
+		end,
+	})
+	sensitivitySlider.isSlider = true
+	sensitivitySlider.Width = 180
 
-	local sensitivityPlus = ui:buttonSecondary({ content = "➕" })
-	sensitivityPlus.label = sensitivityLabel
-	sensitivityPlus.onRelease = function(_)
-		System.Sensitivity = math.min(System.Sensitivity + SENSITIVITY_STEP, MAX_SENSITIVITY)
-		refreshSensitivityLabel()
-	end
-
-	table.insert(rows, { sensitivityLabel, sensitivityMinus, sensitivityPlus })
+	table.insert(rows, { sensitivityLabel, sensitivityValue, sensitivitySlider })
 
 	-- ZOOM SENSITIVITY
 
 	local zoomSensitivityLabel = ui:createText("", {
 		color = Color.White,
 	})
+	local zoomSensitivityValue = ui:createText("", {
+		color = Color.White,
+		bold = true,
+	})
+
 	local function refreshZoomSensitivityLabel()
-		zoomSensitivityLabel.Text = string.format("Zoom sensitivity: %.1f ", System.ZoomSensitivity)
+		zoomSensitivityLabel.Text = string.format(loc("🔍 Zoom Sensitivity:"))
+		zoomSensitivityValue.Text = string.format("%.1f ", System.ZoomSensitivity)
 	end
 	refreshZoomSensitivityLabel()
 
-	local zoomSensitivityMinus = ui:buttonSecondary({ content = "➖" })
-	zoomSensitivityMinus.label = zoomSensitivityLabel
-	zoomSensitivityMinus.onRelease = function(_)
-		System.ZoomSensitivity = math.max(System.ZoomSensitivity - SENSITIVITY_STEP, MIN_SENSITIVITY)
-		refreshZoomSensitivityLabel()
-	end
+	local zoomSensitivitySlider = ui:slider({
+		min = MIN_SENSITIVITY,
+		max = MAX_SENSITIVITY,
+		step = SENSITIVITY_STEP,
+		defaultValue = System.ZoomSensitivity,
+		hapticFeedback = false,
+		button = ui:buttonNeutral({ content = "  ", padding = theme.padding }),
+		onValueChange = function(v)
+			System.ZoomSensitivity = math.max(MIN_SENSITIVITY, math.min(MAX_SENSITIVITY, v))
+			refreshZoomSensitivityLabel()
+		end,
+	})
+	zoomSensitivitySlider.isSlider = true
+	zoomSensitivitySlider.Width = 180
 
-	local zoomSensitivityPlus = ui:buttonSecondary({ content = "➕" })
-	zoomSensitivityPlus.label = zoomSensitivityLabel
-	zoomSensitivityPlus.onRelease = function(_)
-		System.ZoomSensitivity = math.min(System.ZoomSensitivity + SENSITIVITY_STEP, MAX_SENSITIVITY)
-		refreshZoomSensitivityLabel()
-	end
-
-	table.insert(rows, { zoomSensitivityLabel, zoomSensitivityMinus, zoomSensitivityPlus })
+	table.insert(rows, { zoomSensitivityLabel, zoomSensitivityValue, zoomSensitivitySlider })
 
 	-- RENDER QUALITY
 
-	local renderQualityLabel = ui:createText("", {
+	local renderQualityLabel = ui:createText(loc("✨ Render Quality:"), {
 		color = Color.White,
 	})
-	local rqMinus = ui:buttonSecondary({ content = "➖" })
-	local rqPlus = ui:buttonSecondary({ content = "➕" })
+	local renderQualityValue = ui:createText("", {
+		color = Color.White,
+		bold = true,
+	})
 
-	local function refreshRenderQualityLabel()
+	local refreshRenderQualityLabel
+
+	local renderQualitySlider = ui:slider({
+		min = 1,
+		max = System.MaxRenderQualityTier,
+		step = 1,
+		defaultValue = System.RenderQualityTier,
+		hapticFeedback = true,
+		button = ui:buttonNeutral({ content = "  ", padding = theme.padding }),
+		onValueChange = function(v)
+			System.RenderQualityTier = math.max(System.MinRenderQualityTier, math.min(System.MaxRenderQualityTier, v))
+			refreshRenderQualityLabel()
+		end,
+	})
+	renderQualitySlider.isSlider = true
+	renderQualitySlider.Width = 180
+
+	refreshRenderQualityLabel = function()
 		if System.RenderQualityTiersAvailable then
-			renderQualityLabel.Text =
-				string.format("Render Quality: %d/%d ", System.RenderQualityTier, System.MaxRenderQualityTier)
+			renderQualityValue.Text =
+				string.format("%d/%d ", System.RenderQualityTier, System.MaxRenderQualityTier)
 		else
-			rqMinus:disable()
-			rqPlus:disable()
-			renderQualityLabel.Text = string.format("Render Quality: 1/%d ", System.MaxRenderQualityTier)
+			renderQualitySlider:disable()
+			renderQualityValue.Text = string.format("1/%d ", System.MaxRenderQualityTier)
 		end
 
 		local modal = content:getModalIfContentIsActive()
@@ -149,34 +192,21 @@ settings.createModalContent = function(_, config)
 			modal:refreshContent()
 		end
 	end
-
-	rqMinus.label = sensitivityLabel
-	rqMinus.onRelease = function(_)
-		System.RenderQualityTier = math.max(System.RenderQualityTier - 1, System.MinRenderQualityTier)
-		refreshRenderQualityLabel()
-	end
-
-	rqPlus.label = sensitivityLabel
-	rqPlus.onRelease = function(_)
-		System.RenderQualityTier = math.min(System.RenderQualityTier + 1, System.MaxRenderQualityTier)
-		refreshRenderQualityLabel()
-	end
-
 	refreshRenderQualityLabel()
 
-	table.insert(rows, { renderQualityLabel, rqMinus, rqPlus })
+	table.insert(rows, { renderQualityLabel, renderQualityValue, renderQualitySlider })
 
 	-- HAPTIC FEEDBACK
 	local hapticFeedbackToggle
 	if Client.IsMobile then
-		local hapticFeedbackLabel = ui:createText("Haptic Feedback:", Color.White)
+		local hapticFeedbackLabel = ui:createText(loc("📳 Haptic Feedback:"), Color.White)
 
 		hapticFeedbackToggle = ui:buttonNeutral({ content = "ON" })
 		if System.HapticFeedbackEnabled then
-			hapticFeedbackToggle.Text = "ON"
+			hapticFeedbackToggle.Text = loc("ON")
 			hapticFeedbackToggle:setColor(theme.colorPositive)
 		else
-			hapticFeedbackToggle.Text = "OFF"
+			hapticFeedbackToggle.Text = loc("OFF")
 			hapticFeedbackToggle:setColor(theme.colorNegative)
 		end
 
@@ -184,21 +214,23 @@ settings.createModalContent = function(_, config)
 			System.HapticFeedbackEnabled = not System.HapticFeedbackEnabled
 
 			if System.HapticFeedbackEnabled then
-				hapticFeedbackToggle.Text = "ON"
+				hapticFeedbackToggle.Text = loc("ON")
 				hapticFeedbackToggle:setColor(theme.colorPositive)
 			else
-				hapticFeedbackToggle.Text = "OFF"
+				hapticFeedbackToggle.Text = loc("OFF")
 				hapticFeedbackToggle:setColor(theme.colorNegative)
 			end
 		end
 
-		table.insert(rows, { hapticFeedbackLabel, hapticFeedbackToggle })
+		local r = { hapticFeedbackLabel, hapticFeedbackToggle }
+		r.align = "center"
+		table.insert(rows, r)
 	end
 
 	-- FULLSCREEN
 	local fullscreenToggle
 	if Client.OSName == "Windows" then
-		local fullscreenLabel = ui:createText("Fullscreen:", Color.White)
+		local fullscreenLabel = ui:createText(loc("📺 Fullscreen:"), Color.White)
 
 		fullscreenToggle = ui:buttonNeutral({ content = "ON" })
 		if System.Fullscreen then
@@ -221,7 +253,9 @@ settings.createModalContent = function(_, config)
 			end
 		end
 
-		table.insert(rows, { fullscreenLabel, fullscreenToggle })
+		local r = { fullscreenLabel, fullscreenToggle }
+		r.align = "center"
+		table.insert(rows, r)
 	end
 
 	-- CACHE
@@ -229,28 +263,31 @@ settings.createModalContent = function(_, config)
 	cacheAndLogoutRow = {}
 
 	if _config.account == true then
-		local accountButton = ui:buttonNeutral({ content = "Account settings", textSize = "small" })
+		local accountButton = ui:buttonNeutral({ content = loc("Account"), textSize = "small" })
 		accountButton.onRelease = function(_)
 			local accountContent = modal:createContent()
-			accountContent.title = "Account"
+			accountContent.title = loc("Account")
 			accountContent.icon = Data:FromBundle("images/icon-settings.png")
 
 			local node = ui:createFrame()
 			accountContent.node = node
 
-			local logoutButton = ui:buttonNegative({ content = "Logout", textSize = "small", padding = theme.padding })
+			local logoutButton = ui:buttonNegative({ content = loc("Logout", "button"), textSize = "small", padding = theme.padding })
 			logoutButton:setColor(theme.colorNegative)
 			logoutButton:setParent(node)
 
 			logoutButton.onRelease = function(_)
 				local logoutContent = modal:createContent()
-				logoutContent.title = "Logout"
+				logoutContent.title = loc("Logout", "title")
 				logoutContent.icon = "⚙️"
 
 				local node = ui:createFrame()
 				logoutContent.node = node
 
-				local text = ui:createText("Are you sure you want to logout now?", Color.White)
+				local text = ui:createText(loc("Are you sure you want to logout now?"), {
+					color = Color.White,
+					size = "default",
+				})
 				text:setParent(node)
 
 				text.object.MaxWidth = 300
@@ -266,7 +303,7 @@ settings.createModalContent = function(_, config)
 					text.pos.Y = self.Height - text.Height - theme.padding
 				end
 
-				local yes = ui:buttonNeutral({ content = "Yes! 🙂" })
+				local yes = ui:buttonNeutral({ content = loc("Yes! 🙂") })
 				yes.onRelease = function()
 					local modal = logoutContent:getModalIfContentIsActive()
 					if modal then
@@ -280,7 +317,7 @@ settings.createModalContent = function(_, config)
 			end
 
 			local deleteButton = ui:button({
-				content = "Delete account",
+				content = loc("delete account"),
 				textSize = "small",
 				underline = true,
 				color = Color(0, 0, 0, 0),
@@ -293,23 +330,23 @@ settings.createModalContent = function(_, config)
 
 			deleteButton.onRelease = function(_)
 				local deleteContent = modal:createContent()
-				deleteContent.title = "Account deletion"
+				deleteContent.title = loc("Account Deletion")
 				deleteContent.icon = "⚙️"
 
 				local node = ui:createFrame()
 				deleteContent.node = node
 
 				local text =
-					ui:createText("⚠️ Are you REALLY sure you want to delete your account now?", Color.White)
+					ui:createText(loc("⚠️ Are you REALLY sure you want to delete your account now?"), Color.White)
 				text:setParent(node)
 
-				local text2 = ui:createText("Type your username to confirm:", Color.White)
+				local text2 = ui:createText(loc("Type your username to confirm:"), Color.White)
 				text2:setParent(node)
 
 				text.object.MaxWidth = 300
 				text2.object.MaxWidth = 300
 
-				local input = ui:createTextInput("", "username", { textSize = "default" })
+				local input = ui:createTextInput("", "", { textSize = "default" })
 				input:setParent(node)
 
 				local req
@@ -334,7 +371,7 @@ settings.createModalContent = function(_, config)
 					return Number2(w, h)
 				end
 
-				local yes = ui:button({ content="🗑️ Delete account" })
+				local yes = ui:buttonNeutral({ content=loc("🗑️ Delete account") })
 				yes:disable()
 				yes.onRelease = function()
 					yes:disable()
@@ -392,19 +429,21 @@ settings.createModalContent = function(_, config)
 	end
 
 	if _config.clearCache == true then
-		local cacheButton = ui:buttonNeutral({ content = "Clear cache", textSize = "small" })
+		local cacheButton = ui:buttonNeutral({ content = loc("Clear cache"), textSize = "small" })
 		cacheButton.onRelease = function(_)
 			local clearCacheContent = modal:createContent()
-			clearCacheContent.title = "Settings"
+			clearCacheContent.title = loc("Settings")
 			clearCacheContent.icon = Data:FromBundle("images/icon-settings.png")
 
 			local node = ui:createFrame()
 			clearCacheContent.node = node
 
 			local text = ui:createText(
-				"⚠️ Clearing all cached data from visited experiences, are you sure about this?",
-				Color.White,
-				"default"
+				loc("⚠️ Clearing all cached data from visited experiences, are you sure about this?"), 
+				{
+					color = Color.White,
+					size = "default",
+				}
 			)
 			text.pos.X = theme.padding
 			text.pos.Y = theme.padding
@@ -419,7 +458,7 @@ settings.createModalContent = function(_, config)
 				return Number2(w, h)
 			end
 
-			local yes = ui:buttonNeutral({ content = "Yes, delete cache! 💀" })
+			local yes = ui:buttonNeutral({ content = loc("Yes, delete cache! 💀") })
 			yes.onRelease = function()
 				System.ClearCache()
 				local done = ui:createText("✅ Done!", Color.White)
@@ -431,6 +470,8 @@ settings.createModalContent = function(_, config)
 		end
 		table.insert(cacheAndLogoutRow, cacheButton)
 	end
+
+	cacheAndLogoutRow.align = "center"
 
 	if #cacheAndLogoutRow > 0 then
 		table.insert(rows, cacheAndLogoutRow)
@@ -458,13 +499,9 @@ settings.createModalContent = function(_, config)
 		if fullscreenToggle ~= nil then
 			fullscreenToggle.Width = toggleWidth
 		end
-		sensitivityMinus.Width = oneEmojiWidth
-		sensitivityPlus.Width = oneEmojiWidth
-		zoomSensitivityMinus.Width = oneEmojiWidth
-		zoomSensitivityPlus.Width = oneEmojiWidth
-		rqMinus.Width = oneEmojiWidth
-		rqPlus.Width = oneEmojiWidth
 
+		local maxRowWidth = math.min(400, Screen.Width * 0.8)
+		local sliderWidth = math.min(180, maxRowWidth * 0.4)
 		local totalHeight = 0
 		local totalWidth = 0
 		local rowHeight
@@ -481,8 +518,22 @@ settings.createModalContent = function(_, config)
 
 				for j, element in ipairs(row) do
 					element:show()
+					if element.isSlider then
+						element.Width = sliderWidth
+					end
+					element.object.Scale = 1.0
 					rowHeight = math.max(rowHeight, element.Height)
 					rowWidth = rowWidth + element.Width + (j > 1 and theme.padding or 0)
+				end
+
+				if rowWidth > maxRowWidth then
+					local firstElement = row[1]
+					if firstElement then
+						local overflow = rowWidth - maxRowWidth
+						local w = firstElement.Width
+						firstElement.object.Scale = (w - overflow) / w
+						rowWidth -= overflow
+					end
 				end
 
 				totalHeight = totalHeight + rowHeight + (i > 1 and theme.padding or 0)
@@ -497,15 +548,31 @@ settings.createModalContent = function(_, config)
 		totalHeight = totalHeight + theme.padding * 2
 
 		local vCursor = totalHeight - theme.padding
-		local hCursor
 
 		for _, row in ipairs(rows) do
 			if not row.hidden then
-				hCursor = (totalWidth - row.width) * 0.5
-				for _, element in ipairs(row) do
-					element.pos.X = hCursor
-					element.pos.Y = vCursor - row.height * 0.5 - element.Height * 0.5
-					hCursor = hCursor + element.Width + theme.padding
+				if row.align == "center" then
+					local hCursor = totalWidth * 0.5 - row.width * 0.5
+					for i, element in ipairs(row) do
+						element.pos.Y = vCursor - row.height * 0.5 - element.Height * 0.5
+						element.pos.X = hCursor
+						hCursor = hCursor + element.Width + theme.padding
+					end
+				else
+					local prevElement = nil
+					for i, element in ipairs(row) do
+						if i < 3 then
+							if prevElement == nil then
+								element.pos.X = theme.padding
+							else
+								element.pos.X = prevElement.pos.X + prevElement.Width + theme.padding
+							end
+						else 
+							element.pos.X = totalWidth - element.Width - theme.padding
+						end
+						element.pos.Y = vCursor - row.height * 0.5 - element.Height * 0.5
+						prevElement = element
+					end
 				end
 				vCursor = vCursor - row.height - theme.padding
 			end
