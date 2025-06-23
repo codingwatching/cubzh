@@ -520,13 +520,14 @@ RigidBody *transform_get_or_compute_world_aligned_collider(Transform *t,
 // MARK: - Hierarchy -
 
 bool transform_set_parent(Transform *t, Transform *parent, bool keepWorld) {
-
-    // can't set parent on itself
-    if (t == parent) {
-        return false;
+    Transform *sanityCheck = parent;
+    while (sanityCheck != NULL) {
+        if (t == sanityCheck) {
+            return false;
+        }
+        sanityCheck = sanityCheck->parent;
     }
 
-    // parent is already set
     if (t->parent == parent) {
         return true;
     }
