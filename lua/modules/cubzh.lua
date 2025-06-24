@@ -1158,6 +1158,7 @@ function home()
 
 		local recycledFriendCells = {}
 		local friendAvatarCache = {}
+		local creatorAvatarCache = {}
 
 		local t = 0.0
 		tickListener = LocalEvent:Listen(LocalEvent.Name.Tick, function(dt)
@@ -1668,12 +1669,45 @@ function home()
 			end)
 		end
 
+		local function requestRecentCreators(dataFetcher)
+			if dataFetcher.req then
+				dataFetcher.req:Cancel()
+			end
+
+			dataFetcher.req = api:getRecentCreators({ fields = { "id", "username", "lastSeen" } }, function(friends, err)
+				if err ~= nil then
+					return
+				end
+
+				dataFetcher.entities = friends
+				dataFetcher.nbEntities = #friends
+
+				if dataFetcher.scroll then
+					dataFetcher.scroll:flush()
+					dataFetcher.scroll:refresh()
+				end
+			end)
+		end
+
 		local function getOrCreateFriendCell()
 			local cell = table.remove(recycledFriendCells)
 
 			if cell == nil then
 				cell = ui:frameScrollCell()
 				cell.Width = CONFIG.FRIEND_CELL_SIZE
+
+				local uname = ui:createText("", {
+					color = Color.White,
+					size = "small",
+					outline = 0.4,
+					outlineColor = Color(10, 10, 10),
+					-- bold = false, -- does not work with outline
+					-- weight = "regular", -- does not work with outline
+				})
+				uname:setParent(cell)
+				uname.pos = { theme.paddingTiny, theme.paddingTiny }
+				uname.LocalPosition.Z = ui.kForegroundDepth
+				cell.uname = uname
 
 				local lastSeen = ui:createText("", {
 					color = Color(131, 131, 148),
@@ -1733,20 +1767,6 @@ function home()
 								usernameOrId = friend.id,
 							})
 							friendAvatarCache[index] = avatar
-
-							local usernameFrame = ui:frameTextBackground()
-							usernameFrame:setParent(avatar)
-							usernameFrame.LocalPosition.Z = ui.kForegroundDepth
-
-							local username = ui:createText("", {
-								color = Color.White,
-								size = "small",
-							})
-							username:setParent(usernameFrame)
-							username.pos = { theme.paddingTiny, theme.paddingTiny }
-
-							avatar.username = username
-							avatar.usernameFrame = usernameFrame
 						end
 
 						avatar:setParent(friendCell)
@@ -1754,17 +1774,14 @@ function home()
 						friendCell.userID = friend.id
 						friendCell.username = friend.username
 
-						avatar.username.object.Scale = 1
-						avatar.username.Text = friend.username
+						friendCell.uname.object.Scale = 1
+						friendCell.uname.Text = friend.username
 						-- username text scale to fit in the cell
 						local scale = math.min(
 							1,
-							(CONFIG.FRIEND_CELL_SIZE - theme.paddingTiny * 4) / avatar.username.Width
+							(CONFIG.FRIEND_CELL_SIZE - theme.paddingTiny * 4) / friendCell.uname.Width
 						)
-						avatar.username.object.Scale = scale
-
-						avatar.usernameFrame.Width = avatar.username.Width + theme.paddingTiny * 2
-						avatar.usernameFrame.Height = avatar.username.Height + theme.paddingTiny * 2
+						friendCell.uname.object.Scale = scale
 
 						local osTime = time.iso8601_to_os_time(friend.lastSeen)
 						local t, units = time.ago(osTime, {
@@ -1780,6 +1797,7 @@ function home()
 							CONFIG.FRIEND_CELL_SIZE - friendCell.lastSeen.Width - theme.paddingTiny,
 							CONFIG.FRIEND_CELL_SIZE - friendCell.lastSeen.Height - theme.paddingTiny,
 						}
+						friendCell.lastSeen:show()
 
 						friendCell.avatar = avatar
 
@@ -1863,6 +1881,63 @@ function home()
 				end,
 				extraSetup = function(dataFetcher)
 					requestWorlds(dataFetcher, { category = "fun_with_friends" })
+				end,
+			},
+			{
+				title = loc("👥 Active Creators"),
+				displayNumberOfEntries = true,
+				cellSize = CONFIG.FRIEND_CELL_SIZE,
+				loadCell = function(index, dataFetcher)
+					if index <= dataFetcher.nbEntities then
+						local friend = dataFetcher.entities[index]
+						local friendCell = getOrCreateFriendCell()
+
+						local avatar = creatorAvatarCache[index]
+						if avatar == nil then
+							avatar = uiAvatar:getHeadAndShoulders({
+								usernameOrId = friend.id,
+							})
+							creatorAvatarCache[index] = avatar
+						end
+
+						avatar:setParent(friendCell)
+
+						friendCell.userID = friend.id
+						friendCell.username = friend.username
+
+						friendCell.uname.object.Scale = 1
+						friendCell.uname.Text = friend.username
+						-- username text scale to fit in the cell
+						local scale = math.min(
+							1,
+							(CONFIG.FRIEND_CELL_SIZE - theme.paddingTiny * 4) / friendCell.uname.Width
+						)
+						friendCell.uname.object.Scale = scale
+
+						local osTime = time.iso8601_to_os_time(friend.lastSeen)
+						local t, units = time.ago(osTime, {
+							years = false,
+							months = false,
+							seconds_label = "s",
+							minutes_label = "m",
+							hours_label = "h",
+							days_label = "d",
+						})
+						friendCell.lastSeen:hide()
+						friendCell.avatar = avatar
+
+						return friendCell
+					end
+				end,
+				unloadCell = function(_, cell)
+					if cell == addFriendsCell then
+						cell:setParent(nil)
+					else
+						recycleFriendCell(cell)
+					end
+				end,
+				extraSetup = function(dataFetcher)
+					requestRecentCreators(dataFetcher)
 				end,
 			},
 			{
