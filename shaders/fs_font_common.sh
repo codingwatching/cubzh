@@ -40,12 +40,16 @@ void main() {
 					filtering);
 	base = mix(base.bbbb, base.rgba, colored);
 
-	float totalWeight = clamp(1.0 - weight - outlineWeight, SDF_THRESHOLD + softness, 1.0 - softness);
-	float softnessFlag = step(EPSILON, softness);
-	float alpha = mix(step(totalWeight, base.r), smoothstep(totalWeight - softness, totalWeight + softness, base.r), softnessFlag);
-	float outline = mix(step(1.0 - weight, base.r), smoothstep(1.0 - weight - 2.0 * softness, 1.0 - weight, base.r), softnessFlag);
+	float softnessFlag = step(SDF_EPSILON, softness);
+	float outlineFlag = step(SDF_EPSILON, outlineWeight);
+	float textSoftness = softnessFlag * softness;
+	float outlineSoftness = outlineFlag * min(softness, outlineWeight * 0.5);
 
-	vec3 rgb = mix(unpackFloatToRgb(u_outlineColor), v_color0.rgb, outline);
+	float totalWeight = clamp(1.0 - weight - outlineFlag * outlineWeight, SDF_THRESHOLD + textSoftness, 1.0);
+	float alpha = mix(step(totalWeight, base.r), smoothstep(totalWeight - textSoftness - outlineSoftness, totalWeight + textSoftness + outlineSoftness, base.r), softnessFlag);
+	float outline = outlineFlag * (1.0 - mix(step(1.0 - weight, base.r), smoothstep(1.0 - weight - 2.0 * outlineSoftness, 1.0 - weight, base.r), softnessFlag));
+
+	vec3 rgb = mix(v_color0.rgb, unpackFloatToRgb(u_outlineColor), outline);
 	base = mix(vec4(rgb, alpha), base, colored);
 
 	vec4 color = vec4(base.rgb, v_color0.a * base.a);

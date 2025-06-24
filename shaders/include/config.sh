@@ -183,8 +183,10 @@
 #define GRID_THICKNESS_FACTOR .001745331024
 
 //// TEXT
-// Values below this threshold won't be used, to avoid creating jagged edges
+// Values below this threshold won't be used, to avoid spilling over texels that aren't part of the glyph
 #define SDF_THRESHOLD 0.05
+// Safeguard SDF normalized parameters
+#define SDF_EPSILON 0.001
 
 //// GENERAL
 // UV go from 0 to 1, edge to edge of the texture ; when computing texel index, we need to apply an offset
