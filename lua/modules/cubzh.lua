@@ -8,7 +8,9 @@ local CONFIG = {
 	PROFILE_CELL_AVATAR_HEIGHT = 120,
 	WORLD_CELL_SIZE = 150,
 	ITEM_CELL_SIZE = 150,
-	FRIEND_CELL_SIZE = 100,
+	USER_CELL_WIDTH = 100,
+	USER_CELL_HEIGHT = 140,
+	USER_CELL_HEIGHT_SMALLER = 130, -- used when not displaying "last seen"
 	TINY_PADDING = 2,
 	CELL_PADDING = 10,
 	LOAD_CONTENT_DELAY = 0.3,
@@ -1220,9 +1222,10 @@ function home()
 			end
 
 			if self.avatar then
-				self.avatar.pos = { theme.paddingTiny, theme.paddingTiny }
-				self.avatar.Height = self.Height - theme.paddingTiny * 2
-				self.avatar.Width = self.Width - theme.paddingTiny * 2
+				local padding = theme.paddingTiny
+				self.avatar.Height = self.Height - padding * 2
+				self.avatar.Width = self.Width - padding * 2
+				self.avatar.pos = { padding, self.Height - self.avatar.Height - padding}
 			end
 
 			if self.thumbnail then
@@ -1694,26 +1697,21 @@ function home()
 
 			if cell == nil then
 				cell = ui:frameScrollCell()
-				cell.Width = CONFIG.FRIEND_CELL_SIZE
+				cell.Width = CONFIG.USER_CELL_WIDTH
 
 				local uname = ui:createText("", {
 					color = Color.White,
 					size = "small",
 					outline = 0.4,
 					outlineColor = Color(10, 10, 10),
-					-- bold = false, -- does not work with outline
-					-- weight = "regular", -- does not work with outline
 				})
 				uname:setParent(cell)
-				uname.pos = { theme.paddingTiny, theme.paddingTiny }
 				uname.LocalPosition.Z = ui.kForegroundDepth
 				cell.uname = uname
 
 				local lastSeen = ui:createText("", {
 					color = Color(131, 131, 148),
 					size = "small",
-					outline = 0.3,
-					outlineColor = Color(18, 18, 20),
 				})
 				lastSeen.object.Scale = CONFIG.TINY_FONT_SCALE
 				lastSeen:setParent(cell)
@@ -1755,7 +1753,7 @@ function home()
 			{
 				title = loc("👥 Friends"),
 				displayNumberOfEntries = true,
-				cellSize = CONFIG.FRIEND_CELL_SIZE,
+				cellSize = CONFIG.USER_CELL_HEIGHT,
 				loadCell = function(index, dataFetcher)
 					if index <= dataFetcher.nbEntities then
 						local friend = dataFetcher.entities[index]
@@ -1779,9 +1777,15 @@ function home()
 						-- username text scale to fit in the cell
 						local scale = math.min(
 							1,
-							(CONFIG.FRIEND_CELL_SIZE - theme.paddingTiny * 4) / friendCell.uname.Width
+							(CONFIG.USER_CELL_WIDTH - theme.paddingTiny * 2) / friendCell.uname.Width
 						)
 						friendCell.uname.object.Scale = scale
+
+						local v = (CONFIG.USER_CELL_HEIGHT - CONFIG.USER_CELL_WIDTH) * 0.44
+						friendCell.uname.pos = {
+							CONFIG.USER_CELL_WIDTH * 0.5 - friendCell.uname.Width * 0.5,
+							v
+						}
 
 						local osTime = time.iso8601_to_os_time(friend.lastSeen)
 						local t, units = time.ago(osTime, {
@@ -1794,10 +1798,15 @@ function home()
 						})
 						friendCell.lastSeen.Text = "" .. t .. units .. " ago"
 						friendCell.lastSeen.pos = {
-							CONFIG.FRIEND_CELL_SIZE - friendCell.lastSeen.Width - theme.paddingTiny,
-							CONFIG.FRIEND_CELL_SIZE - friendCell.lastSeen.Height - theme.paddingTiny,
+							CONFIG.USER_CELL_WIDTH - friendCell.lastSeen.Width - theme.paddingTiny,
+							CONFIG.USER_CELL_WIDTH - friendCell.lastSeen.Height - theme.paddingTiny,
 						}
 						friendCell.lastSeen:show()
+
+						friendCell.lastSeen.pos = {
+							CONFIG.USER_CELL_WIDTH * 0.5 - friendCell.lastSeen.Width * 0.5,
+							v - friendCell.lastSeen.Height * 0.8,
+						}
 
 						friendCell.avatar = avatar
 
@@ -1805,7 +1814,7 @@ function home()
 					elseif index == dataFetcher.nbEntities + 1 then
 						if addFriendsCell == nil then
 							addFriendsCell = ui:frameScrollCell()
-							addFriendsCell.Width = CONFIG.FRIEND_CELL_SIZE * 3
+							addFriendsCell.Width = CONFIG.USER_CELL_WIDTH * 3
 							addFriendsCell.parentDidResize = worldCellResizeFn
 
 							local image = ui:frame({
@@ -1814,7 +1823,7 @@ function home()
 									alpha = true,
 								},
 							})
-							image.Width = CONFIG.FRIEND_CELL_SIZE * 3 - padding * 2
+							image.Width = CONFIG.USER_CELL_WIDTH * 3 - padding * 2
 							image.Height = image.Width * (1.0 / 3.0)
 							image:setParent(addFriendsCell)
 
@@ -1886,7 +1895,7 @@ function home()
 			{
 				title = loc("👥 Active Creators"),
 				displayNumberOfEntries = true,
-				cellSize = CONFIG.FRIEND_CELL_SIZE,
+				cellSize = CONFIG.USER_CELL_HEIGHT_SMALLER,
 				loadCell = function(index, dataFetcher)
 					if index <= dataFetcher.nbEntities then
 						local friend = dataFetcher.entities[index]
@@ -1905,24 +1914,24 @@ function home()
 						friendCell.userID = friend.id
 						friendCell.username = friend.username
 
+						friendCell.userID = friend.id
+						friendCell.username = friend.username
+
 						friendCell.uname.object.Scale = 1
 						friendCell.uname.Text = friend.username
 						-- username text scale to fit in the cell
 						local scale = math.min(
 							1,
-							(CONFIG.FRIEND_CELL_SIZE - theme.paddingTiny * 4) / friendCell.uname.Width
+							(CONFIG.USER_CELL_WIDTH - theme.paddingTiny * 2) / friendCell.uname.Width
 						)
 						friendCell.uname.object.Scale = scale
 
-						local osTime = time.iso8601_to_os_time(friend.lastSeen)
-						local t, units = time.ago(osTime, {
-							years = false,
-							months = false,
-							seconds_label = "s",
-							minutes_label = "m",
-							hours_label = "h",
-							days_label = "d",
-						})
+						local v = (CONFIG.USER_CELL_HEIGHT_SMALLER - CONFIG.USER_CELL_WIDTH) * 0.5
+						friendCell.uname.pos = {
+							CONFIG.USER_CELL_WIDTH * 0.5 - friendCell.uname.Width * 0.5,
+							v - friendCell.uname.Height * 0.5,
+						}
+
 						friendCell.lastSeen:hide()
 						friendCell.avatar = avatar
 
@@ -2270,7 +2279,7 @@ function home()
 					local cell = categoryCells[categoryIndex]
 					if cell == nil then
 						if index == 2 then
-							cell = getOrcreateFirstCategoryCell()
+							cell = getOrcreateFirstCategoryCell(category)
 						else
 							cell = table.remove(categoryUnusedCells)
 							if cell == nil then
