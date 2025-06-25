@@ -8,7 +8,8 @@ local CONFIG = {
 	PROFILE_CELL_AVATAR_HEIGHT = 120,
 	WORLD_CELL_WIDTH = 130,
 	WORLD_CELL_HEIGHT = 170,
-	ITEM_CELL_SIZE = 150,
+	ITEM_CELL_WIDTH = 150,
+	ITEM_CELL_HEIGHT = 170,
 	USER_CELL_WIDTH = 100,
 	USER_CELL_HEIGHT = 140,
 	USER_CELL_HEIGHT_WITHOUT_CAPTION = 130, -- used when not displaying "last seen"
@@ -61,6 +62,7 @@ Client.OnStart = function()
 	refCellTitle:setParent(nil)
 	refCellCaption:setParent(nil)
 	CONFIG.WORLD_CELL_HEIGHT = CONFIG.WORLD_CELL_WIDTH + refCellTitle.Height + refCellCaption.Height + theme.paddingTiny * 2
+	CONFIG.ITEM_CELL_HEIGHT = CONFIG.WORLD_CELL_HEIGHT
 	CONFIG.USER_CELL_HEIGHT_WITHOUT_CAPTION = CONFIG.USER_CELL_WIDTH + refCellTitle.Height + theme.paddingTiny * 2
 	CONFIG.USER_CELL_HEIGHT = CONFIG.USER_CELL_HEIGHT_WITHOUT_CAPTION + refCellCaption.Height
 
@@ -1215,9 +1217,9 @@ function home()
 			self.Height = self.parent.Height
 
 			if self.shape then
-				self.shape.pos = { 0, 0 }
-				self.shape.Height = self.Height
 				self.shape.Width = self.Width
+				self.shape.Height = self.shape.Width
+				self.shape.pos = { 0, self.Height - self.shape.Height }
 				self.shape.pivot.LocalRotation:Set(-0.1, 0, -0.2)
 			end
 
@@ -1229,9 +1231,9 @@ function home()
 			end
 
 			if self.itemShape then
-				self.itemShape.pos = { 0, 0 }
-				self.itemShape.Height = self.Height
 				self.itemShape.Width = self.Width
+				self.itemShape.Height = self.itemShape.Width
+				self.itemShape.pos = { 0, self.Height - self.itemShape.Height }
 				self.itemShape.pivot.LocalRotation:Set(-0.1, 0, -0.2)
 			end
 
@@ -1247,45 +1249,26 @@ function home()
 				self.thumbnail.Height = self.Width
 				self.thumbnail.pos = { 0, self.Height - self.thumbnail.Height }
 			end
-
-			if self.likesFrame then
-				self.likesFrame.pos = {
-					self.Width - self.likesFrame.Width - theme.paddingTiny,
-					self.Height - self.likesFrame.Height - theme.paddingTiny,
-				}
-			end
 		end
 
 		local function itemCellResizeFn(self)
 			self.Height = self.parent.Height
 
-			if self.shape then
-				self.shape.pos = { 0, 0 }
-				self.shape.Height = self.Height
-				self.shape.Width = self.Width
-				self.shape.pivot.LocalRotation:Set(-0.1, 0, -0.2)
-			end
-
 			if self.loadingAnimation then
 				self.loadingAnimation.pos = {
 					self.Width * 0.5 - self.loadingAnimation.Width * 0.5,
-					self.Height * 0.5 - self.loadingAnimation.Height * 0.5,
+					self.Height - self.Width * 0.5 - self.loadingAnimation.Height * 0.5,
 				}
 			end
 
 			if self.itemShape then
-				self.itemShape.pos = { 0, 0 }
-				self.itemShape.Height = self.Height
-				self.itemShape.Width = self.Width
-				self.itemShape.pivot.LocalRotation:Set(-0.1, 0, -0.2)
-			end
-
-			if self.likesFrame then
-				self.likesFrame.pos = {
-					self.Width - self.likesFrame.Width - theme.paddingTiny,
-					self.Height - self.likesFrame.Height - theme.paddingTiny,
+				self.itemShape.Width = self.Width - theme.padding * 2
+				self.itemShape.Height = self.itemShape.Width
+				self.itemShape.pos = { 
+					self.Width * 0.5 - self.itemShape.Width * 0.5,
+					self.Height - self.itemShape.Height --  - theme.padding
 				}
-				self.titleFrame.LocalPosition.Z = -500 -- ui.kForegroundDepth
+				self.itemShape.pivot.LocalRotation:Set(-0.1, 0, -0.2)
 			end
 		end
 
@@ -1536,31 +1519,21 @@ function home()
 
 			if cell == nil then
 				cell = ui:frameScrollCell()
-				cell.Width = CONFIG.ITEM_CELL_SIZE
+				cell.Width = CONFIG.ITEM_CELL_WIDTH
 
-				local titleFrame = ui:frameTextBackground()
-				titleFrame:setParent(cell)
-				titleFrame.pos = { padding, padding }
-				titleFrame.LocalPosition.Z = -500 -- ui.kForegroundDepth
-
-				local title = ui:createText("…", Color.White, "small")
-				title:setParent(titleFrame)
-				title.pos = { theme.paddingTiny, theme.paddingTiny }
-
-				cell.titleFrame = titleFrame
+				local title = ui:createText("…", {
+					color = Color.White,
+					size = "small",
+					bold = true,
+				})
+				title:setParent(cell)
 				cell.title = title
 
 				-- LIKES
-				local likesFrame = ui:frameTextBackground()
-				likesFrame:setParent(cell)
-				likesFrame.LocalPosition.Z = -500 -- ui.kForegroundDepth
-
 				local likes = ui:createText("…", Color.White, "small")
 				likes.object.Scale = CONFIG.TINY_FONT_SCALE
-				likes:setParent(likesFrame)
-				likes.pos = { theme.paddingTiny, theme.paddingTiny }
+				likes:setParent(cell)
 
-				cell.likesFrame = likesFrame
 				cell.likes = likes
 
 				cell.parentDidResize = itemCellResizeFn
@@ -1622,28 +1595,40 @@ function home()
 				end
 				if txt ~= "" then
 					cell.likes.Text = txt
-					cell.likesFrame:show()
+					cell.likes:show()
 				else
-					cell.likesFrame:hide()
+					cell.likes:hide()
 				end
 			else
 				cell.title.Text = "…"
 				cell.likes.Text = "…"
 			end
 
-			cell.title.object.MaxWidth = cell.Width - (padding + theme.paddingTiny) * 2
-			cell.titleFrame.Width = cell.title.Width + theme.paddingTiny * 2
-			cell.titleFrame.Height = cell.title.Height + theme.paddingTiny * 2
+			cell.title.object.Scale = 1
+			-- username text scale to fit in the cell
+			local scale = math.min(
+				1,
+				(CONFIG.WORLD_CELL_WIDTH - theme.paddingTiny * 2) / cell.title.Width
+			)
+			cell.title.object.Scale = scale
 
-			cell.likes.object.MaxWidth = (cell.Width - (padding + theme.paddingTiny * 2) * 2)
-				* (1.0 / CONFIG.TINY_FONT_SCALE)
-			cell.likesFrame.Width = cell.likes.Width + theme.paddingTiny * 2
-			cell.likesFrame.Height = cell.likes.Height + theme.paddingTiny * 2
-			cell.likesFrame.pos = {
-				cell.Width - cell.likesFrame.Width - theme.paddingTiny,
-				cell.Height - cell.likesFrame.Height - theme.paddingTiny,
+			local v = (CONFIG.WORLD_CELL_HEIGHT - CONFIG.WORLD_CELL_WIDTH) * 0.5
+			cell.title.pos = {
+				CONFIG.WORLD_CELL_WIDTH * 0.5 - cell.title.Width * 0.5,
+				v,
 			}
-			cell.titleFrame.LocalPosition.Z = -500 -- ui.kForegroundDepth
+
+			cell.likes.object.Scale = 1
+			-- username text scale to fit in the cell
+			local scale = math.min(
+				CONFIG.TINY_FONT_SCALE,
+				(CONFIG.WORLD_CELL_WIDTH - theme.paddingTiny * 2) / cell.likes.Width
+			)
+			cell.likes.object.Scale = scale
+			cell.likes.pos = {
+				CONFIG.WORLD_CELL_WIDTH * 0.5 - cell.likes.Width * 0.5,
+				v - cell.likes.Height,
+			}
 
 			return cell
 		end
@@ -1719,7 +1704,6 @@ function home()
 					outlineColor = Color(10, 10, 10),
 				})
 				uname:setParent(cell)
-				uname.LocalPosition.Z = ui.kForegroundDepth
 				cell.uname = uname
 
 				local lastSeen = ui:createText("", {
@@ -1728,7 +1712,6 @@ function home()
 				})
 				lastSeen.object.Scale = CONFIG.TINY_FONT_SCALE
 				lastSeen:setParent(cell)
-				lastSeen.LocalPosition.Z = ui.kForegroundDepth
 				cell.lastSeen = lastSeen
 
 				cell.parentDidResize = worldCellResizeFn
@@ -1984,7 +1967,7 @@ function home()
 				buttonAction = function()
 					Menu:ShowItems()
 				end,
-				cellSize = CONFIG.ITEM_CELL_SIZE,
+				cellSize = CONFIG.ITEM_CELL_HEIGHT,
 				loadCell = function(index, dataFetcher)
 					if index <= dataFetcher.nbEntities then
 						local item = dataFetcher.entities[index]
@@ -2020,7 +2003,7 @@ function home()
 				buttonAction = function()
 					Menu:ShowItems()
 				end,
-				cellSize = CONFIG.ITEM_CELL_SIZE,
+				cellSize = CONFIG.ITEM_CELL_HEIGHT,
 				loadCell = function(index, dataFetcher)
 					if index <= dataFetcher.nbEntities then
 						local item = dataFetcher.entities[index]
