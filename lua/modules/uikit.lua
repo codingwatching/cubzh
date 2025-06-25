@@ -4201,6 +4201,10 @@ function createUI(system)
 	end
 
 	local btnNeutralDarkQuadData
+	local btnNeutralDarkPressedQuadData
+	local btnNeutralDarkSelectedQuadData
+	local btnNeutralDarkDisabledQuadData
+
 	ui.buttonNeutralDark = function(self, config)
 		config = config or {}
 
@@ -4208,21 +4212,21 @@ function createUI(system)
 			btnNeutralDarkQuadData = Data:FromBundle("images/button_neutral_dark.png")
 		end
 
-		if btnNeutralPressedQuadData == nil then
-			btnNeutralPressedQuadData = Data:FromBundle("images/button_neutral_dark_pressed.png")
+		if btnNeutralDarkPressedQuadData == nil then
+			btnNeutralDarkPressedQuadData = Data:FromBundle("images/button_neutral_dark_pressed.png")
 		end
 
-		if btnNeutralSelectedQuadData == nil then
-			btnNeutralSelectedQuadData = Data:FromBundle("images/button_dark_selected.png")
+		if btnNeutralDarkSelectedQuadData == nil then
+			btnNeutralDarkSelectedQuadData = Data:FromBundle("images/button_neutral_dark_selected.png")
 		end
 
-		if btnNeutralDisabledQuadData == nil then
-			btnNeutralDisabledQuadData = Data:FromBundle("images/button_neutral_dark_disabled.png")
+		if btnNeutralDarkDisabledQuadData == nil then
+			btnNeutralDarkDisabledQuadData = Data:FromBundle("images/button_neutral_dark_disabled.png")
 		end
 
 		config.textColor = Color.White
 		config.textColorPressed = Color.White
-		config.textColorSelected = Color.White
+		config.textColorSelected = Color(42, 42, 48)
 
 		config.backgroundQuad = Quad()
 		config.backgroundQuad.Image = {
@@ -4237,7 +4241,7 @@ function createUI(system)
 
 		config.backgroundQuadPressed = Quad()
 		config.backgroundQuadPressed.Image = {
-			data = btnNeutralPressedQuadData,
+			data = btnNeutralDarkPressedQuadData,
 			slice9 = { 0.5, 0.5 },
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
 			slice9Width = 20,
@@ -4248,7 +4252,7 @@ function createUI(system)
 
 		config.backgroundQuadSelected = Quad()
 		config.backgroundQuadSelected.Image = {
-			data = btnNeutralSelectedQuadData,
+			data = btnNeutralDarkSelectedQuadData,
 			slice9 = { 0.5, 0.5 },
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
 			slice9Width = 20,
@@ -4259,7 +4263,7 @@ function createUI(system)
 
 		config.backgroundQuadDisabled = Quad()
 		config.backgroundQuadDisabled.Image = {
-			data =  btnNeutralDisabledQuadData,
+			data = btnNeutralDarkDisabledQuadData,
 			slice9 = { 0.5, 0.5 },
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
 			slice9Width = 20,
