@@ -1700,8 +1700,8 @@ function home()
 				local uname = ui:createText("", {
 					color = Color.White,
 					size = "small",
-					outline = 0.4,
-					outlineColor = Color(10, 10, 10),
+					-- outline = 0.4,
+					-- outlineColor = Color(10, 10, 10),
 				})
 				uname:setParent(cell)
 				cell.uname = uname
@@ -1751,7 +1751,8 @@ function home()
 				displayNumberOfEntries = true,
 				cellSize = CONFIG.USER_CELL_HEIGHT,
 				loadCell = function(index, dataFetcher)
-					if index <= dataFetcher.nbEntities then
+					if index > 1 and index <= dataFetcher.nbEntities + 1 then
+						index = index - 1
 						local friend = dataFetcher.entities[index]
 						local friendCell = getOrCreateFriendCell()
 
@@ -1807,38 +1808,48 @@ function home()
 						friendCell.avatar = avatar
 
 						return friendCell
-					elseif index == dataFetcher.nbEntities + 1 then
+					elseif index == 1 then
 						if addFriendsCell == nil then
-							addFriendsCell = ui:frameScrollCell()
-							addFriendsCell.Width = CONFIG.USER_CELL_WIDTH * 3
+							addFriendsCell = ui:frameScrollCellWithBevel()
+							addFriendsCell.Width = CONFIG.USER_CELL_WIDTH
 							addFriendsCell.parentDidResize = worldCellResizeFn
 
 							local image = ui:frame({
 								image = {
-									data = Data:FromBundle("images/friends.png"),
+									data = Data:FromBundle("images/icon-plus.png"),
 									alpha = true,
+									filtering = true,
 								},
 							})
-							image.Width = CONFIG.USER_CELL_WIDTH * 3 - padding * 2
-							image.Height = image.Width * (1.0 / 3.0)
+							image.object.Color = Color(180, 180, 180)
+							image.Width = CONFIG.USER_CELL_WIDTH * 0.6
+							image.Height = image.Width
+
+							local label = ui:createText("Add\nFriends", {
+								color = Color(180, 180, 180),
+								size = "small",
+								-- outline = 0.4,
+								-- outlineColor = Color(10, 10, 10),
+								alignment = "center",
+							})
+							label:setParent(addFriendsCell)
+							label.pos = {
+								CONFIG.USER_CELL_WIDTH * 0.5 - label.Width * 0.5,
+								CONFIG.USER_CELL_HEIGHT * 0.5 * 0.5 - label.Height * 0.5,
+							}
+
+							local vSpaceForImage = CONFIG.USER_CELL_HEIGHT - (label.pos.Y + label.Height)
+							image.pos = {
+								CONFIG.USER_CELL_WIDTH * 0.5 - image.Width * 0.5,
+								CONFIG.USER_CELL_HEIGHT - vSpaceForImage * 0.5 - image.Height * 0.5,
+							}
 							image:setParent(addFriendsCell)
 
-							local btn = ui:buttonPositive({ content = loc("👥 Add Friends"), padding = theme.padding })
-							btn:setParent(addFriendsCell)
-
-							btn.parentDidResize = function(self)
-								local parent = self.parent
-								self.pos = {
-									parent.Width * 0.5 - self.Width * 0.5,
-									theme.padding,
-								}
-								image.pos = {
-									parent.Width * 0.5 - image.Width * 0.5,
-									parent.Height * 0.5 - image.Height * 0.5,
-								}
+							addFriendsCell.onPress = function(self)
+								Client:HapticFeedback()
 							end
-
-							btn.onRelease = function()
+			
+							addFriendsCell.onRelease = function(self)
 								Menu:ShowFriends()
 							end
 						end
@@ -2204,7 +2215,9 @@ function home()
 							end)
 						end
 
-						local editAvatarBtn = ui:buttonSecondary({ content = loc("✏️ Edit avatar"), textSize = "default" })
+						-- buttonNeutralDark
+						-- local editAvatarBtn = ui:buttonSecondary({ content = loc("✏️ Edit avatar"), textSize = "default" })
+						local editAvatarBtn = ui:buttonNeutralDark({ content = loc("✏️ Edit avatar"), textSize = "default" })
 						editAvatarBtn:setParent(profileCell)
 
 						editAvatarBtn.onRelease = function(_)

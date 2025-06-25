@@ -1215,6 +1215,28 @@ function createUI(system)
 				slice9Scale = DEFAULT_SLICE_9_SCALE,
 				slice9Width = 20,
 				cutout = true,
+				-- alpha = true,
+				-- filtering = true,
+			},
+			mask = true,
+		})
+	end
+
+	local darkNeutralButtonQuadData
+	ui.frameScrollCellWithBevel = function(self)
+		if self ~= ui then
+			error("ui:frameScrollCell(): use `:`", 2)
+		end
+		if darkNeutralButtonQuadData == nil then
+			darkNeutralButtonQuadData = Data:FromBundle("images/cell_dark_btn.png")
+		end
+		return ui.frame(self, {
+			image = {
+				data = darkNeutralButtonQuadData,
+				slice9 = { 0.5, 0.5 },
+				slice9Scale = DEFAULT_SLICE_9_SCALE,
+				slice9Width = 20,
+				cutout = true,
 			},
 			mask = true,
 		})
@@ -4173,6 +4195,77 @@ function createUI(system)
 			slice9Scale = DEFAULT_SLICE_9_SCALE,
 			alpha = true,
 			filtering = false,
+		}
+
+		return ui.button(self, config)
+	end
+
+	local btnNeutralDarkQuadData
+	ui.buttonNeutralDark = function(self, config)
+		config = config or {}
+
+		if btnNeutralDarkQuadData == nil then
+			btnNeutralDarkQuadData = Data:FromBundle("images/button_neutral_dark.png")
+		end
+
+		if btnNeutralPressedQuadData == nil then
+			btnNeutralPressedQuadData = Data:FromBundle("images/button_neutral_dark_pressed.png")
+		end
+
+		if btnNeutralSelectedQuadData == nil then
+			btnNeutralSelectedQuadData = Data:FromBundle("images/button_dark_selected.png")
+		end
+
+		if btnNeutralDisabledQuadData == nil then
+			btnNeutralDisabledQuadData = Data:FromBundle("images/button_neutral_dark_disabled.png")
+		end
+
+		config.textColor = Color.White
+		config.textColorPressed = Color.White
+		config.textColorSelected = Color.White
+
+		config.backgroundQuad = Quad()
+		config.backgroundQuad.Image = {
+			data = btnNeutralDarkQuadData,
+			slice9 = { 0.5, 0.5 },
+			slice9Scale = DEFAULT_SLICE_9_SCALE,
+			slice9Width = 20,
+			alpha = true,
+			-- cutout = true,
+			filtering = true,
+		}
+
+		config.backgroundQuadPressed = Quad()
+		config.backgroundQuadPressed.Image = {
+			data = btnNeutralPressedQuadData,
+			slice9 = { 0.5, 0.5 },
+			slice9Scale = DEFAULT_SLICE_9_SCALE,
+			slice9Width = 20,
+			alpha = true,
+			-- cutout = true,
+			filtering = true,
+		}
+
+		config.backgroundQuadSelected = Quad()
+		config.backgroundQuadSelected.Image = {
+			data = btnNeutralSelectedQuadData,
+			slice9 = { 0.5, 0.5 },
+			slice9Scale = DEFAULT_SLICE_9_SCALE,
+			slice9Width = 20,
+			alpha = true,
+			-- cutout = true,
+			filtering = true,
+		}
+
+		config.backgroundQuadDisabled = Quad()
+		config.backgroundQuadDisabled.Image = {
+			data =  btnNeutralDisabledQuadData,
+			slice9 = { 0.5, 0.5 },
+			slice9Scale = DEFAULT_SLICE_9_SCALE,
+			slice9Width = 20,
+			alpha = true,
+			-- cutout = true,
+			filtering = true,
 		}
 
 		return ui.button(self, config)
