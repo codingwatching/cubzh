@@ -4,23 +4,26 @@
     "My age is…": "Мой возраст...",
     "Please tell us your age,\nit will not affect gameplay.": "Укажи свой возраст,\nэто не повлияет на игру.",
     "OK": "ОК",
-    "Pick a Username!": "Выбери имя!",
-    "Must start with a letter, followed by letters (a-z) and numbers (0-9) only.": "Должно начинаться с буквы, затем буквы (a-z) и цифры (0-9).",
+    "Pick a Username!": "Выбери ник!",
+    "Must start with a letter, followed by letters (a-z) and numbers (0-9) only.": "Должен начинаться с буквы, затем только буквы (a-z) и цифры (0-9).",
     "⚠️ Choose carefully, you can't change it later!": "⚠️ Выбирай внимательно, изменить нельзя!",
     "Don't use your real name!": "Не используй своё настоящее имя!",
     "This is it!": "Готово!",
-    "✅ username is available": "✅ имя доступно",
-    "❌ username is inappropriate": "❌ имя недопустимо",
-    "❌ username already taken": "❌ имя уже занято",
+    "✅ username is available": "✅ ник доступен",
+    "❌ username is inappropriate": "❌ ник не подходит",
+    "❌ username already taken": "❌ ник уже занят",
     "❌ invalid format": "❌ неверный формат",
-    "❌ failed to validate username": "❌ ошибка проверки имени",
+    "❌ failed to validate username": "❌ ошибка проверки ника",
     "⚠️ Be safe online! ⚠️\n\nDo NOT share personal details, watch out for phishing, scams and always think about who you're talking to.\n\nIf anything goes wrong, talk to someone you trust. 🙂": "⚠️ Будь осторожен в сети! ⚠️\n\nНе делись личной информацией, остерегайся фишинга, мошенничества и всегда думай, с кем общаешься.\n\nЕсли что-то пойдет не так, поговори с кем-то, кому доверяешь. 🙂",
     "Yes sure!": "Да, конечно!",
+    "Done!": {
+        "button to exit avatar editor": "Готово!"
+    },
     "Worlds": "Миры",
     "Profile": "Профиль",
     "Friends": "Друзья",
-    "Creations": "Создания",
-    "🛠️ Creations": "🛠️ Создания",
+    "Creations": "Творения",
+    "🛠️ Creations": "🛠️ Творения",
     "👥 Friends": "👥 Друзья",
     "✨ Featured": "✨ Избранное",
     "⭐️ Featured": "⭐️ Избранное",
@@ -48,7 +51,7 @@
     "🔍 Zoom Sensitivity:": "🔍 Чувствительность зума:",
     "✨ Render Quality:": "✨ Качество рендера:",
     "📳 Haptic Feedback:": "📳 Тактильная отдача:",
-    "📺 Fullscreen:": "📺 Полноэкранный режим:",
+    "📺 Fullscreen:": "📺 Полный экран:",
     "Logout": {
         "button": "Выйти",
         "title": "Выход"
@@ -58,15 +61,15 @@
         "title": "Вход"
     },
     "Who are you? 🙂": "Кто ты? 🙂",
-    "Username or Email": "Имя или Email",
+    "Username or Email": "Ник или Email",
     "delete account": "удалить аккаунт",
     "Account Deletion": "Удаление аккаунта",
     "Are you sure you want to logout now?": "Ты уверен, что хочешь выйти?",
     "Yes! 🙂": "Да! 🙂",
     "⚠️ Are you REALLY sure you want to delete your account now?": "⚠️ Ты действительно уверен, что хочешь удалить аккаунт?",
-    "Type your username to confirm:": "Введите имя для подтверждения:",
+    "Type your username to confirm:": "Введите свой ник для подтверждения:",
     "🗑️ Delete account": "🗑️ Удалить аккаунт",
-    "⚠️ Clearing all cached data from visited experiences, are you sure about this?": "⚠️ Очистка всех данных кэша из посещенных мест, ты уверен?",
+    "⚠️ Clearing all cached data from visited experiences, are you sure about this?": "⚠️ Очистка всех кэшированных данных посещенных мест, ты уверен?",
     "Yes, clear cache": "Да, очистить кэш",
     "ON": "ВКЛ",
     "OFF": "ВЫКЛ",
@@ -89,11 +92,11 @@
     "Voxel Item": "Воксельный предмет",
     "A Voxel Item is a 3D object made out of cubes.": "Воксельный предмет - это 3D объект из кубов.",
     "Textured 3D Model": "Текстурированная 3D модель",
-    "A 3D object with a texture applied to it. Blip only supports .glb file uploads for this category, for now.": "3D объект с текстурой. Blip поддерживает только .glb файлы для этой категории.",
+    "A 3D object with a texture applied to it. Blip only supports .glb file uploads for this category, for now.": "3D объект с текстурой. Blip поддерживает только файлы .glb для этой категории.",
     "Voxel Avatar Equipment": "Воксельное снаряжение",
     "An Avatar Equipment made out of cubes (haircut, jacket, pants, boots, etc.)": "Снаряжение из кубов (прическа, куртка, штаны, ботинки и т.д.)",
     "World": "Мир",
-    "A World is a 3D scene with logic. That's what you need to pick if you want to create a game. Templates and AI will help you get started, wether you're a coder or not.": "Мир - это 3D сцена с логикой. Выбери это, если хочешь создать игру. Шаблоны и ИИ помогут начать, даже если ты не программист.",
+    "A World is a 3D scene with logic. That's what you need to pick if you want to create a game. Templates and AI will help you get started, wether you're a coder or not.": "Мир - это 3D сцена с логикой. Выбирай это, если хочешь создать игру. Шаблоны и ИИ помогут начать, даже если ты не программист.",
     "Image": "Изображение",
     "Upload an image (PNG or JPG) that can be used as a texture.": "Загрузите изображение (PNG или JPG), которое можно использовать как текстуру.",
     "%ds ago": {
@@ -109,5 +112,26 @@
         "time elapsed in days, where %d is the number of days": "%dд назад"
     },
     "✨ Recent": "✨ Недавние",
-    "❤️ Likes": "❤️ Лайки"
+    "❤️ Likes": "❤️ Лайки",
+    "👤 Skin": {
+        "avatar editor category": "👤 Кожа"
+    },
+    "💇 Hair": {
+        "avatar editor category": "💇 Волосы"
+    },
+    "👀 Eyes": {
+        "avatar editor category": "👀 Глаза"
+    },
+    "🐽 Nose": {
+        "avatar editor category": "🐽 Нос"
+    },
+    "🧥 Jacket": {
+        "avatar editor category": "🧥 Куртка"
+    },
+    "👞 Shoes": {
+        "avatar editor category": "👞 Обувь"
+    },
+    "👖 Pants": {
+        "avatar editor category": "👖 Штаны"
+    }
 }

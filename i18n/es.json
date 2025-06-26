@@ -16,6 +16,9 @@
     "❌ failed to validate username": "❌ error al validar nombre de usuario",
     "⚠️ Be safe online! ⚠️\n\nDo NOT share personal details, watch out for phishing, scams and always think about who you're talking to.\n\nIf anything goes wrong, talk to someone you trust. 🙂": "⚠️ ¡Sé seguro en línea! ⚠️\n\nNO compartas detalles personales, cuidado con el phishing, estafas y siempre piensa con quién hablas.\n\nSi algo sale mal, habla con alguien de confianza. 🙂",
     "Yes sure!": "¡Sí, seguro!",
+    "Done!": {
+        "button to exit avatar editor": "¡Listo!"
+    },
     "Worlds": "Mundos",
     "Profile": "Perfil",
     "Friends": "Amigos",
@@ -39,7 +42,7 @@
         "button": "registrarse",
         "title": "registro"
     },
-    "Settings": "Configuración",
+    "Settings": "Ajustes",
     "Clear cache": "Borrar caché",
     "Account": "Cuenta",
     "🔈 Volume:": "🔈 Volumen:",
@@ -61,21 +64,21 @@
     "Username or Email": "Usuario o Email",
     "delete account": "eliminar cuenta",
     "Account Deletion": "Eliminación de cuenta",
-    "Are you sure you want to logout now?": "¿Estás seguro de que quieres cerrar sesión ahora?",
+    "Are you sure you want to logout now?": "¿Estás seguro de que quieres cerrar sesión?",
     "Yes! 🙂": "¡Sí! 🙂",
-    "⚠️ Are you REALLY sure you want to delete your account now?": "⚠️ ¿Estás REALMENTE seguro de que quieres eliminar tu cuenta ahora?",
-    "Type your username to confirm:": "Escribe tu nombre de usuario para confirmar:",
+    "⚠️ Are you REALLY sure you want to delete your account now?": "⚠️ ¿Estás REALMENTE seguro de que quieres eliminar tu cuenta?",
+    "Type your username to confirm:": "Escribe tu usuario para confirmar:",
     "🗑️ Delete account": "🗑️ Eliminar cuenta",
-    "⚠️ Clearing all cached data from visited experiences, are you sure about this?": "⚠️ Borrar todos los datos en caché de las experiencias visitadas, ¿estás seguro de esto?",
+    "⚠️ Clearing all cached data from visited experiences, are you sure about this?": "⚠️ Borrar todos los datos en caché de experiencias visitadas, ¿estás seguro de esto?",
     "Yes, clear cache": "Sí, borrar caché",
     "ON": "ON",
     "OFF": "OFF",
     "Bank Account": "Cuenta bancaria",
     "Balance": "Saldo",
-    "grants: %d": "otorgado: %d",
+    "grants: %d": "concedido: %d",
     "purchased: %d": "comprado: %d",
     "earned: %d": "ganado: %d",
-    "grants: -": "otorgado: -",
+    "grants: -": "concedido: -",
     "purchased: -": "comprado: -",
     "earned: -": "ganado: -",
     "History": "Historial",
@@ -106,8 +109,29 @@
         "time elapsed in hours, where %d is the number of hours": "hace %dh"
     },
     "%dd ago": {
-        "time elapsed in days, where %d is the number of days": "hace %dj"
+        "time elapsed in days, where %d is the number of days": "hace %dd"
     },
     "✨ Recent": "✨ Recientes",
-    "❤️ Likes": "❤️ Me gusta"
+    "❤️ Likes": "❤️ Me gusta",
+    "👤 Skin": {
+        "avatar editor category": "👤 Piel"
+    },
+    "💇 Hair": {
+        "avatar editor category": "💇 Cabello"
+    },
+    "👀 Eyes": {
+        "avatar editor category": "👀 Ojos"
+    },
+    "🐽 Nose": {
+        "avatar editor category": "🐽 Nariz"
+    },
+    "🧥 Jacket": {
+        "avatar editor category": "🧥 Chaqueta"
+    },
+    "👞 Shoes": {
+        "avatar editor category": "👞 Zapatos"
+    },
+    "👖 Pants": {
+        "avatar editor category": "👖 Pantalones"
+    }
 }

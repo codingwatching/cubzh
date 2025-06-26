@@ -2123,8 +2123,9 @@ function home()
 			drawer = require("drawer"):create({ ui = ui })
 
 			local okBtn = ui:buttonPositive({
-				content = "Done!",
+				content = loc("Done!", "button to exit avatar editor"),
 				textSize = "big",
+				textBold = false,
 				unfocuses = false,
 				padding = 5,
 			})

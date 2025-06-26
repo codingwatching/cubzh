@@ -16,6 +16,9 @@
     "❌ failed to validate username": "❌ échec de validation",
     "⚠️ Be safe online! ⚠️\n\nDo NOT share personal details, watch out for phishing, scams and always think about who you're talking to.\n\nIf anything goes wrong, talk to someone you trust. 🙂": "⚠️ Sois prudent en ligne! ⚠️\n\nNe partage PAS tes infos perso, fais attention au phishing, aux arnaques et pense toujours à qui tu parles.\n\nSi quelque chose ne va pas, parle-en à quelqu'un de confiance. 🙂",
     "Yes sure!": "Oui, je valide!",
+    "Done!": {
+        "button to exit avatar editor": "C'est bon!"
+    },
     "Worlds": "Mondes",
     "Profile": "Profil",
     "Friends": "Amis",
@@ -109,5 +112,26 @@
         "time elapsed in days, where %d is the number of days": "il y a %dj"
     },
     "✨ Recent": "✨ Récents",
-    "❤️ Likes": "❤️ Likes"
+    "❤️ Likes": "❤️ Likes",
+    "👤 Skin": {
+        "avatar editor category": "👤 Peau"
+    },
+    "💇 Hair": {
+        "avatar editor category": "💇 Cheveux"
+    },
+    "👀 Eyes": {
+        "avatar editor category": "👀 Yeux"
+    },
+    "🐽 Nose": {
+        "avatar editor category": "🐽 Nez"
+    },
+    "🧥 Jacket": {
+        "avatar editor category": "🧥 Veste"
+    },
+    "👞 Shoes": {
+        "avatar editor category": "👞 Chaussures"
+    },
+    "👖 Pants": {
+        "avatar editor category": "👖 Pantalon"
+    }
 }

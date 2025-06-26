@@ -13,9 +13,12 @@
     "❌ username is inappropriate": "❌ nome utente inappropriato",
     "❌ username already taken": "❌ nome utente già preso",
     "❌ invalid format": "❌ formato non valido",
-    "❌ failed to validate username": "❌ convalida fallita",
+    "❌ failed to validate username": "❌ errore di validazione",
     "⚠️ Be safe online! ⚠️\n\nDo NOT share personal details, watch out for phishing, scams and always think about who you're talking to.\n\nIf anything goes wrong, talk to someone you trust. 🙂": "⚠️ Stai al sicuro online! ⚠️\n\nNON condividere dettagli personali, fai attenzione al phishing, alle truffe e pensa sempre a chi stai parlando.\n\nSe qualcosa va storto, parlane con qualcuno di fiducia. 🙂",
     "Yes sure!": "Sì, certo!",
+    "Done!": {
+        "button to exit avatar editor": "Fatto!"
+    },
     "Worlds": "Mondi",
     "Profile": "Profilo",
     "Friends": "Amici",
@@ -29,9 +32,9 @@
     "🍏 New Items": "🍏 Nuovi oggetti",
     "❤️ Top Rated": "❤️ Più votati",
     "⚔️ Popular Items": "⚔️ Oggetti popolari",
-    "✏️ Edit avatar": "✏️ Modifica avatar",
-    "✏️ Edit bio": "✏️ Modifica bio",
-    "✏️ Edit links": "✏️ Modifica link",
+    "✏️ Edit avatar": "✏️ Avatar",
+    "✏️ Edit bio": "✏️ Bio",
+    "✏️ Edit links": "✏️ Link",
     "🏗️ Active Creators": "🏗️ Creatori attivi",
     "all items": "tutti gli oggetti",
     "👥 Add Friends": "👥 Aggiungi amici",
@@ -40,7 +43,7 @@
         "title": "registrazione"
     },
     "Settings": "Impostazioni",
-    "Clear cache": "Cancella cache",
+    "Clear cache": "Svuota cache",
     "Account": "Account",
     "🔈 Volume:": "🔈 Volume:",
     "👆 Sensitivity:": "👆 Sensibilità:",
@@ -66,8 +69,8 @@
     "⚠️ Are you REALLY sure you want to delete your account now?": "⚠️ Sei davvero sicuro di voler eliminare il tuo account?",
     "Type your username to confirm:": "Digita il tuo nome utente per confermare:",
     "🗑️ Delete account": "🗑️ Elimina account",
-    "⚠️ Clearing all cached data from visited experiences, are you sure about this?": "⚠️ Cancellare tutti i dati memorizzati delle esperienze visitate, sei sicuro?",
-    "Yes, clear cache": "Sì, cancella cache",
+    "⚠️ Clearing all cached data from visited experiences, are you sure about this?": "⚠️ Stai per svuotare la cache delle esperienze visitate, sei sicuro?",
+    "Yes, clear cache": "Sì, svuota cache",
     "ON": "ON",
     "OFF": "OFF",
     "Bank Account": "Conto bancario",
@@ -89,7 +92,7 @@
     "Voxel Item": "Oggetto Voxel",
     "A Voxel Item is a 3D object made out of cubes.": "Un oggetto Voxel è un oggetto 3D fatto di cubi.",
     "Textured 3D Model": "Modello 3D Texturizzato",
-    "A 3D object with a texture applied to it. Blip only supports .glb file uploads for this category, for now.": "Un oggetto 3D con una texture applicata. Blip supporta solo file .glb per questa categoria, per ora.",
+    "A 3D object with a texture applied to it. Blip only supports .glb file uploads for this category, for now.": "Un oggetto 3D con texture applicata. Blip supporta solo file .glb per questa categoria, per ora.",
     "Voxel Avatar Equipment": "Equipaggiamento Voxel",
     "An Avatar Equipment made out of cubes (haircut, jacket, pants, boots, etc.)": "Un equipaggiamento fatto di cubi (taglio di capelli, giacca, pantaloni, stivali, ecc.)",
     "World": "Mondo",
@@ -109,5 +112,26 @@
         "time elapsed in days, where %d is the number of days": "%d giorni fa"
     },
     "✨ Recent": "✨ Recenti",
-    "❤️ Likes": "❤️ Mi piace"
+    "❤️ Likes": "❤️ Mi piace",
+    "👤 Skin": {
+        "avatar editor category": "👤 Pelle"
+    },
+    "💇 Hair": {
+        "avatar editor category": "💇 Capelli"
+    },
+    "👀 Eyes": {
+        "avatar editor category": "👀 Occhi"
+    },
+    "🐽 Nose": {
+        "avatar editor category": "🐽 Naso"
+    },
+    "🧥 Jacket": {
+        "avatar editor category": "🧥 Giacca"
+    },
+    "👞 Shoes": {
+        "avatar editor category": "👞 Scarpe"
+    },
+    "👖 Pants": {
+        "avatar editor category": "👖 Pantaloni"
+    }
 }

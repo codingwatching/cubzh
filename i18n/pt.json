@@ -4,26 +4,29 @@
     "My age is…": "Minha idade é...",
     "Please tell us your age,\nit will not affect gameplay.": "Por favor, diga sua idade,\nela não afetará o jogo.",
     "OK": "OK",
-    "Pick a Username!": "Escolha um Nome!",
+    "Pick a Username!": "Escolha um nome de usuário!",
     "Must start with a letter, followed by letters (a-z) and numbers (0-9) only.": "Deve começar com uma letra, seguido apenas por letras (a-z) e números (0-9).",
     "⚠️ Choose carefully, you can't change it later!": "⚠️ Escolha com cuidado, não poderá mudar depois!",
     "Don't use your real name!": "Não use seu nome real!",
     "This is it!": "É isso!",
-    "✅ username is available": "✅ nome disponível",
-    "❌ username is inappropriate": "❌ nome inapropriado",
-    "❌ username already taken": "❌ nome já em uso",
+    "✅ username is available": "✅ nome de usuário disponível",
+    "❌ username is inappropriate": "❌ nome de usuário inapropriado",
+    "❌ username already taken": "❌ nome de usuário já em uso",
     "❌ invalid format": "❌ formato inválido",
-    "❌ failed to validate username": "❌ falha na validação",
-    "⚠️ Be safe online! ⚠️\n\nDo NOT share personal details, watch out for phishing, scams and always think about who you're talking to.\n\nIf anything goes wrong, talk to someone you trust. 🙂": "⚠️ Fique seguro online! ⚠️\n\nNÃO compartilhe informações pessoais, cuidado com phishing, golpes e sempre pense com quem está falando.\n\nSe algo der errado, fale com alguém de confiança. 🙂",
+    "❌ failed to validate username": "❌ falha ao validar nome de usuário",
+    "⚠️ Be safe online! ⚠️\n\nDo NOT share personal details, watch out for phishing, scams and always think about who you're talking to.\n\nIf anything goes wrong, talk to someone you trust. 🙂": "⚠️ Seja seguro online! ⚠️\n\nNÃO compartilhe detalhes pessoais, cuidado com phishing, golpes e sempre pense com quem está falando.\n\nSe algo der errado, fale com alguém de confiança. 🙂",
     "Yes sure!": "Sim, claro!",
+    "Done!": {
+        "button to exit avatar editor": "Pronto!"
+    },
     "Worlds": "Mundos",
     "Profile": "Perfil",
     "Friends": "Amigos",
     "Creations": "Criações",
     "🛠️ Creations": "🛠️ Criações",
     "👥 Friends": "👥 Amigos",
-    "✨ Featured": "✨ Em destaque",
-    "⭐️ Featured": "⭐️ Em destaque",
+    "✨ Featured": "✨ Destaque",
+    "⭐️ Featured": "⭐️ Destaque",
     "😛 Fun with friends": "😛 Diversão com amigos",
     "🤠 Playing solo": "🤠 Jogando sozinho",
     "🍏 New Items": "🍏 Novos Itens",
@@ -58,13 +61,13 @@
         "title": "Entrar"
     },
     "Who are you? 🙂": "Quem é você? 🙂",
-    "Username or Email": "Nome ou Email",
+    "Username or Email": "Nome de usuário ou Email",
     "delete account": "excluir conta",
     "Account Deletion": "Exclusão de Conta",
     "Are you sure you want to logout now?": "Tem certeza de que deseja sair agora?",
     "Yes! 🙂": "Sim! 🙂",
     "⚠️ Are you REALLY sure you want to delete your account now?": "⚠️ Tem CERTEZA de que deseja excluir sua conta agora?",
-    "Type your username to confirm:": "Digite seu nome para confirmar:",
+    "Type your username to confirm:": "Digite seu nome de usuário para confirmar:",
     "🗑️ Delete account": "🗑️ Excluir conta",
     "⚠️ Clearing all cached data from visited experiences, are you sure about this?": "⚠️ Limpar todos os dados em cache das experiências visitadas, tem certeza disso?",
     "Yes, clear cache": "Sim, limpar cache",
@@ -89,7 +92,7 @@
     "Voxel Item": "Item Voxel",
     "A Voxel Item is a 3D object made out of cubes.": "Um item voxel é um objeto 3D feito de cubos.",
     "Textured 3D Model": "Modelo 3D Texturizado",
-    "A 3D object with a texture applied to it. Blip only supports .glb file uploads for this category, for now.": "Um objeto 3D com textura aplicada. Blip só suporta uploads de arquivos .glb para esta categoria, por enquanto.",
+    "A 3D object with a texture applied to it. Blip only supports .glb file uploads for this category, for now.": "Um objeto 3D com textura aplicada. Blip suporta apenas uploads de arquivos .glb para esta categoria, por enquanto.",
     "Voxel Avatar Equipment": "Equipamento Voxel",
     "An Avatar Equipment made out of cubes (haircut, jacket, pants, boots, etc.)": "Um equipamento de avatar feito de cubos (corte de cabelo, jaqueta, calças, botas, etc.)",
     "World": "Mundo",
@@ -109,5 +112,26 @@
         "time elapsed in days, where %d is the number of days": "há %dj"
     },
     "✨ Recent": "✨ Recentes",
-    "❤️ Likes": "❤️ Curtidas"
+    "❤️ Likes": "❤️ Curtidas",
+    "👤 Skin": {
+        "avatar editor category": "👤 Pele"
+    },
+    "💇 Hair": {
+        "avatar editor category": "💇 Cabelo"
+    },
+    "👀 Eyes": {
+        "avatar editor category": "👀 Olhos"
+    },
+    "🐽 Nose": {
+        "avatar editor category": "🐽 Nariz"
+    },
+    "🧥 Jacket": {
+        "avatar editor category": "🧥 Jaqueta"
+    },
+    "👞 Shoes": {
+        "avatar editor category": "👞 Sapatos"
+    },
+    "👖 Pants": {
+        "avatar editor category": "👖 Calças"
+    }
 }

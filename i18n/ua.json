@@ -4,7 +4,7 @@
     "My age is…": "Мій вік...",
     "Please tell us your age,\nit will not affect gameplay.": "Скажи свій вік,\nце не вплине на гру.",
     "OK": "OK",
-    "Pick a Username!": "Вибери ім'я користувача!",
+    "Pick a Username!": "Вибери ім'я!",
     "Must start with a letter, followed by letters (a-z) and numbers (0-9) only.": "Повинно починатися з літери, далі лише літери (a-z) та цифри (0-9).",
     "⚠️ Choose carefully, you can't change it later!": "⚠️ Обери уважно, змінити не можна!",
     "Don't use your real name!": "Не використовуй своє справжнє ім'я!",
@@ -16,6 +16,9 @@
     "❌ failed to validate username": "❌ не вдалося перевірити ім'я",
     "⚠️ Be safe online! ⚠️\n\nDo NOT share personal details, watch out for phishing, scams and always think about who you're talking to.\n\nIf anything goes wrong, talk to someone you trust. 🙂": "⚠️ Будь обережним онлайн! ⚠️\n\nНе ділись особистими даними, остерігайся фішингу, шахрайства і завжди думай, з ким спілкуєшся.\n\nЯкщо щось піде не так, поговори з кимось, кому довіряєш. 🙂",
     "Yes sure!": "Так, звісно!",
+    "Done!": {
+        "button to exit avatar editor": "Готово!"
+    },
     "Worlds": "Світ",
     "Profile": "Профіль",
     "Friends": "Друзі",
@@ -25,9 +28,9 @@
     "✨ Featured": "✨ Рекомендоване",
     "⭐️ Featured": "⭐️ Рекомендоване",
     "😛 Fun with friends": "😛 Весело з друзями",
-    "🤠 Playing solo": "🤠 Граючи самостійно",
+    "🤠 Playing solo": "🤠 Гра соло",
     "🍏 New Items": "🍏 Нові предмети",
-    "❤️ Top Rated": "❤️ Найкращі оцінки",
+    "❤️ Top Rated": "❤️ Найкращі",
     "⚔️ Popular Items": "⚔️ Популярні предмети",
     "✏️ Edit avatar": "✏️ Аватар",
     "✏️ Edit bio": "✏️ Біо",
@@ -58,18 +61,18 @@
         "title": "Вхід"
     },
     "Who are you? 🙂": "Хто ти? 🙂",
-    "Username or Email": "Ім'я користувача або Email",
+    "Username or Email": "Ім'я або Email",
     "delete account": "видалити акаунт",
     "Account Deletion": "Видалення акаунту",
     "Are you sure you want to logout now?": "Ти впевнений, що хочеш вийти?",
     "Yes! 🙂": "Так! 🙂",
     "⚠️ Are you REALLY sure you want to delete your account now?": "⚠️ Ти дійсно впевнений, що хочеш видалити акаунт?",
-    "Type your username to confirm:": "Введи своє ім'я користувача для підтвердження:",
+    "Type your username to confirm:": "Введи своє ім'я для підтвердження:",
     "🗑️ Delete account": "🗑️ Видалити акаунт",
-    "⚠️ Clearing all cached data from visited experiences, are you sure about this?": "⚠️ Очистити всі кешовані дані відвіданих досвідів, ти впевнений?",
+    "⚠️ Clearing all cached data from visited experiences, are you sure about this?": "⚠️ Очистити кеш відвіданих досвідів, ти впевнений?",
     "Yes, clear cache": "Так, очистити кеш",
-    "ON": "УВІМК",
-    "OFF": "ВИМК",
+    "ON": "ВКЛ",
+    "OFF": "ВИКЛ",
     "Bank Account": "Банківський рахунок",
     "Balance": "Баланс",
     "grants: %d": "надано: %d",
@@ -91,7 +94,7 @@
     "Textured 3D Model": "Текстурована 3D модель",
     "A 3D object with a texture applied to it. Blip only supports .glb file uploads for this category, for now.": "3D об'єкт з текстурою. Blip підтримує лише .glb файли для цієї категорії.",
     "Voxel Avatar Equipment": "Воксельне обладнання аватара",
-    "An Avatar Equipment made out of cubes (haircut, jacket, pants, boots, etc.)": "Обладнання аватара з кубів (зачіска, куртка, штани, чоботи тощо).",
+    "An Avatar Equipment made out of cubes (haircut, jacket, pants, boots, etc.)": "Обладнання аватара з кубів (зачіска, куртка, штани, черевики тощо).",
     "World": "Світ",
     "A World is a 3D scene with logic. That's what you need to pick if you want to create a game. Templates and AI will help you get started, wether you're a coder or not.": "Світ - це 3D сцена з логікою. Це те, що потрібно вибрати, якщо хочеш створити гру. Шаблони та AI допоможуть почати, незалежно від того, чи ти програміст.",
     "Image": "Зображення",
@@ -108,6 +111,27 @@
     "%dd ago": {
         "time elapsed in days, where %d is the number of days": "%d днів тому"
     },
-    "✨ Recent": "✨ Останні",
-    "❤️ Likes": "❤️ Лайки"
+    "✨ Recent": "✨ Недавні",
+    "❤️ Likes": "❤️ Лайки",
+    "👤 Skin": {
+        "avatar editor category": "👤 Шкіра"
+    },
+    "💇 Hair": {
+        "avatar editor category": "💇 Волосся"
+    },
+    "👀 Eyes": {
+        "avatar editor category": "👀 Очі"
+    },
+    "🐽 Nose": {
+        "avatar editor category": "🐽 Ніс"
+    },
+    "🧥 Jacket": {
+        "avatar editor category": "🧥 Куртка"
+    },
+    "👞 Shoes": {
+        "avatar editor category": "👞 Взуття"
+    },
+    "👖 Pants": {
+        "avatar editor category": "👖 Штани"
+    }
 }
