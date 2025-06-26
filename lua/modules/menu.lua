@@ -2537,11 +2537,12 @@ topBar:parentDidResize()
 bottomBar = ui:createFrame(Color(0, 0, 0, 0.6))
 bottomBar:setParent(background)
 
-appVersion =
-	ui:createText("Blip " .. Client.AppVersion .. " (alpha) #" .. Client.BuildNumber, Color(100, 100, 100), "small")
+local bottomBarTextColor = Color(200, 200, 200)
+
+appVersion = ui:createText("Blip " .. Client.AppVersion .. " (alpha) #" .. Client.BuildNumber, bottomBarTextColor, "small")
 appVersion:setParent(bottomBar)
 
-copyright = ui:createText("© Voxowl, Inc.", Color(100, 100, 100), "small")
+copyright = ui:createText("© Voxowl, Inc.", bottomBarTextColor, "small")
 copyright:setParent(bottomBar)
 
 bottomBar.parentDidResize = function(self)

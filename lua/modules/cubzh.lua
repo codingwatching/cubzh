@@ -1793,7 +1793,20 @@ function home()
 							hours_label = "h",
 							days_label = "d",
 						})
-						friendCell.lastSeen.Text = "" .. t .. units .. " ago"
+
+						local format
+						
+						if units == "s" then
+							format = loc("%ds ago", "time elapsed in days, where %d is the number of days")
+						elseif units == "m" then
+							format = loc("%dm ago", "time elapsed in minutes, where %d is the number of minutes")
+						elseif units == "h" then
+							format = loc("%dh ago", "time elapsed in hours, where %d is the number of hours")
+						else
+							format = loc("%dd ago", "time elapsed in days, where %d is the number of days")
+						end
+
+						friendCell.lastSeen.Text = string.format(format, t)
 						friendCell.lastSeen.pos = {
 							CONFIG.USER_CELL_WIDTH - friendCell.lastSeen.Width - theme.paddingTiny,
 							CONFIG.USER_CELL_WIDTH - friendCell.lastSeen.Height - theme.paddingTiny,
@@ -1825,7 +1838,7 @@ function home()
 							image.Width = CONFIG.USER_CELL_WIDTH * 0.6
 							image.Height = image.Width
 
-							local label = ui:createText("Add\nFriends", {
+							local label = ui:createText(loc("Add\nFriends"), {
 								color = Color(180, 180, 180),
 								size = "small",
 								-- outline = 0.4,

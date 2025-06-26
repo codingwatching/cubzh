@@ -3547,6 +3547,7 @@ function createUI(system)
 		local options = {
 			acceptTypes = {
 				textSize = { "number", "string" },
+				textBold = { "boolean" },
 				textColorPressed = { "Color" },
 				content = { "string", "Shape", "MutableShape", "table" },
 				backgroundQuad = { "Quad" },
@@ -3794,6 +3795,7 @@ function createUI(system)
 			local n = ui:createText(content, {
 				size = config.textSize,
 				font = config.textFont,
+				bold = config.textBold ~= nil and config.textBold or false,
 				outline = config.textOutline,
 				outlineColor = config.textOutlineColor,
 			})
@@ -4717,7 +4719,19 @@ function applyVirtualKeyboardOffset()
 			-- local redoBtn = ui:button({ content="↩️", unfocuses = false })
 			-- redoBtn:setParent(keyboardToolbar)
 
-			local closeBtn = ui:buttonSecondary({ content = "⬇️", unfocuses = false })
+			local icon = ui:frame({
+				image = {
+					data = Data:FromBundle("images/icon-hide-virtual-keyboard.png"),
+					alpha = true,
+				},
+			})
+			local textRef = ui:createText("X")
+			local size = math.max(textRef.Width, textRef.Height)
+			textRef:remove()
+			icon.Width = size
+			icon.Height = size
+
+			local closeBtn = ui:buttonSecondary({ content = icon, unfocuses = false })
 			closeBtn:setParent(keyboardToolbar)
 			closeBtn.onRelease = function()
 				focus(nil)

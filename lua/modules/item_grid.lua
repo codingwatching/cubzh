@@ -2,6 +2,8 @@
 
 local itemGrid = {}
 
+local loc = require("localize")
+
 -- MODULES
 local api = require("api")
 local theme = require("uitheme").current
@@ -81,12 +83,12 @@ itemGrid.create = function(_, config)
 		{
 			name = "likes",
 			sortBy = "likes:desc",
-			label = "♥️ Likes",
+			label = loc("❤️ Likes"),
 		},
 		{
 			name = "recent",
 			sortBy = "updatedAt:desc",
-			label = "✨ Recent",
+			label = loc("✨ Recent"),
 		},
 	}
 
@@ -104,7 +106,7 @@ itemGrid.create = function(_, config)
 				table.insert(toggleFilterOptions, {
 					name = "featured",
 					sortBy = "",
-					label = "⭐️ Featured",
+					label = loc("⭐️ Featured"),
 				})
 				currentToggleFilterOption = 3
 

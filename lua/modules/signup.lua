@@ -518,7 +518,7 @@ signup.startFlow = function(self, config)
 				loadingLabel:setParent(frame)
 				loadingLabel:hide()
 
-				local usernameInput = ui:createTextInput("", loc("Username or email"))
+				local usernameInput = ui:createTextInput("", loc("Username or Email"))
 				usernameInput:setParent(frame)
 
 				local didStartTyping = false
@@ -539,7 +539,8 @@ signup.startFlow = function(self, config)
 				end
 
 				local loginButton = ui:buttonPositive({
-					content = "✨ " .. str:upperFirstChar(loc("login", "button")) .. " ✨",
+					content = loc("Login", "button"),
+					textBold = true,
 					padding = 10,
 				})
 				loginButton:setParent(frame)
@@ -1561,7 +1562,7 @@ signup.startFlow = function(self, config)
 				end
 
 				createAccountBtn =
-					ui:buttonPositive({ content = loc("Create Account"), textSize = "default", padding = 10 })
+					ui:buttonPositive({ content = loc("Create Account"), textSize = "default", padding = 10, textBold = true })
 
 				createAccountBtn.parentDidResize = function(self)
 					ease:cancel(self)

@@ -20,14 +20,19 @@
     "Profile": "Profil",
     "Friends": "Amis",
     "Creations": "Créations",
+    "🛠️ Creations": "🛠️ Créations",
     "👥 Friends": "👥 Amis",
     "✨ Featured": "✨ En vedette",
+    "⭐️ Featured": "⭐️ En vedette",
     "😛 Fun with friends": "😛 Fun à plusieurs",
     "🤠 Playing solo": "🤠 Cool en solo",
     "🍏 New Items": "🍏 Nouveaux objets",
     "❤️ Top Rated": "❤️ Les mieux notés",
     "⚔️ Popular Items": "⚔️ Objets populaires",
-    "✏️ Edit avatar": "✏️ Modifier",
+    "✏️ Edit avatar": "✏️ Avatar",
+    "✏️ Edit bio": "✏️ Bio",
+    "✏️ Edit links": "✏️ Liens",
+    "🏗️ Active Creators": "🏗️ Créateurs actifs",
     "all items": "tous les objets",
     "👥 Add Friends": "👥 Ajouter des amis",
     "sign up": {
@@ -48,6 +53,12 @@
         "button": "Se déconnecter",
         "title": "Déconnexion"
     },
+    "Login": {
+        "button": "Se connecter",
+        "title": "Connexion"
+    },
+    "Who are you? 🙂": "Qui es-tu ? 🙂",
+    "Username or Email": "Pseudo ou Email",
     "delete account": "supprimer le compte",
     "Account Deletion": "Suppression de compte",
     "Are you sure you want to logout now?": "Es-tu sûr de vouloir te déconnecter ?",
@@ -71,6 +82,7 @@
     "Received (%d)": "Reçu (%d)",
 	"Sent (%d)": "Envoyé (%d)",
 	"Friends (%d)": "Amis (%d)",
+    "Add\nFriends": "Ajouter\ndes Amis",
 	"Search (%d)": "Recherche (%d)",
     "Create": "Créer",
     "What do you want to create?": "Que veux-tu créer ?",
@@ -83,5 +95,19 @@
     "World": "Monde",
     "A World is a 3D scene with logic. That's what you need to pick if you want to create a game. Templates and AI will help you get started, wether you're a coder or not.": "Un monde est une scène 3D avec de la logique. C'est ce qu'il faut choisir pour créer un jeu. Les modèles et l'IA t'aideront à démarrer, que tu sois un développeur ou non.",
     "Image": "Image",
-    "Upload an image (PNG or JPG) that can be used as a texture.": "Télécharge une image (PNG ou JPG) qui peut être utilisée comme texture."
+    "Upload an image (PNG or JPG) that can be used as a texture.": "Télécharge une image (PNG ou JPG) qui peut être utilisée comme texture.",
+    "%ds ago": {
+        "time elapsed in days, where %d is the number of days": "il y a %ds"
+    },
+    "%dm ago": {
+        "time elapsed in minutes, where %d is the number of minutes": "il y a %dm"
+    },
+    "%dh ago": {
+        "time elapsed in hours, where %d is the number of hours": "il y a %dh"
+    },
+    "%dd ago": {
+        "time elapsed in days, where %d is the number of days": "il y a %dj"
+    },
+    "✨ Recent": "✨ Récents",
+    "❤️ Likes": "❤️ Likes"
 }

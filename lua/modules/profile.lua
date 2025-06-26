@@ -1,5 +1,7 @@
 profile = {}
 
+local loc = require("localize")
+
 -- MODULES
 api = require("api", System)
 systemApi = require("system_api", System)
@@ -242,7 +244,7 @@ profile.create = function(_, config)
 
 		if isLocal then
 			if config.editAvatar ~= nil then
-				editAvatarBtn = ui:buttonSecondary({ content = "✏️ Edit avatar", textSize = "small" })
+				editAvatarBtn = ui:buttonSecondary({ content = loc("✏️ Edit avatar"), textSize = "small" })
 				editAvatarBtn:setParent(node)
 
 				editAvatarBtn.onRelease = function()
@@ -250,7 +252,7 @@ profile.create = function(_, config)
 				end
 			end
 
-			editBioBtn = ui:buttonSecondary({ content = "✏️ Edit bio", textSize = "small" })
+			editBioBtn = ui:buttonSecondary({ content = loc("✏️ Edit bio"), textSize = "small" })
 			editBioBtn:setParent(node)
 
 			editBioBtn.onRelease = function()
@@ -279,7 +281,7 @@ profile.create = function(_, config)
 				ui:turnOff()
 			end
 
-			editLinksBtn = ui:buttonSecondary({ content = "✏️ Edit links", textSize = "small" })
+			editLinksBtn = ui:buttonSecondary({ content = loc("✏️ Edit links"), textSize = "small" })
 			editLinksBtn:setParent(node)
 
 			editLinksBtn.onRelease = function()
@@ -711,7 +713,7 @@ profile.create = function(_, config)
 	local avatarLoadedListener = nil
 
 	-- isLocal
-	creationsBtn = ui:buttonSecondary({ content = "🛠️ Creations", textSize = "small" })
+	creationsBtn = ui:buttonSecondary({ content = loc("🛠️ Creations"), textSize = "small" })
 	creationsBtn.onRelease = function()
 		Menu:ShowCreations()
 
