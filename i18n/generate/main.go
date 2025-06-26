@@ -77,6 +77,8 @@ func translate(lang Language, referenceLang Language, referenceJson string) erro
 4. **Accuracy**: Maintain the exact meaning while adapting to natural %s expressions
 5. **Consistency**: Use consistent terminology throughout the translation
 6. **Cultural Adaptation**: Adapt references to be culturally appropriate for %s-speaking regions
+7. **Shortcuts**: In some cases, it's ok to use shortcuts when the translation is too long, like "✏️ Edit links": "✏️ Liens" in french as "✏️ Modifier les liens" would be too long.
+8. **Formatting placeholders**: Ensure that all formatting placeholders (e.g., %s, %d, %f) are preserved exactly as they appear in the source string, including their position and format, without modification or removal. For example, %d should remain %d in the translated string, even if directly followed by non-space characters.
 
 The JSON structure may contain:
 - Simple key-value pairs: "key": "value"

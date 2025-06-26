@@ -1,5 +1,7 @@
 local mod = {}
 
+local loc = require("localize")
+
 ui = require("uikit")
 theme = require("uitheme").current
 avatar = require("avatar")
@@ -193,7 +195,7 @@ mod.create = function(self, config)
 		padding = SCROLL_PADDING,
 		loadCell = function(index)
 			if index == 1 then
-				local btn = ui:buttonNeutral({ content = "👤 Skin" })
+				local btn = ui:buttonNeutralDark({ content = loc("👤 Skin", "avatar editor category") })
 				btn.index = index
 				btns[btn.index] = btn
 				btn.onRelease = function()
@@ -207,7 +209,7 @@ mod.create = function(self, config)
 				end
 				return btn
 			elseif index == 2 then
-				local btn = ui:buttonNeutral({ content = "💇 Hair" })
+				local btn = ui:buttonNeutralDark({ content = loc("💇 Hair", "avatar editor category") })
 				btn.index = index
 				btns[btn.index] = btn
 				btn.onRelease = function()
@@ -244,7 +246,7 @@ mod.create = function(self, config)
 				end
 				return btn
 			elseif index == 3 then
-				local btn = ui:buttonNeutral({ content = "👀 Eyes" })
+				local btn = ui:buttonNeutralDark({ content = loc("👀 Eyes", "avatar editor category") })
 				btn.index = index
 				btns[btn.index] = btn
 				btn.onRelease = function()
@@ -441,7 +443,7 @@ mod.create = function(self, config)
 			-- 	btn:disable()
 			-- 	return btn
 			elseif index == 4 then
-				local btn = ui:buttonNeutral({ content = "🐽 Nose" })
+				local btn = ui:buttonNeutralDark({ content = loc("🐽 Nose", "avatar editor category") })
 				btn.index = index
 				btns[btn.index] = btn
 				btn.onRelease = function()
@@ -556,7 +558,7 @@ mod.create = function(self, config)
 			-- 	btn:disable()
 			-- 	return btn
 			elseif index == 5 then
-				local btn = ui:buttonNeutral({ content = "🧥 Jacket" })
+				local btn = ui:buttonNeutralDark({ content = loc("🧥 Jacket", "avatar editor category") })
 				btn.index = index
 				btns[btn.index] = btn
 				btn.onRelease = function()
@@ -590,7 +592,7 @@ mod.create = function(self, config)
 				end
 				return btn
 			elseif index == 6 then
-				local btn = ui:buttonNeutral({ content = "👖 Pants" })
+				local btn = ui:buttonNeutralDark({ content = loc("👖 Pants", "avatar editor category") })
 				btn.index = index
 				btns[btn.index] = btn
 				btn.onRelease = function()
@@ -624,7 +626,7 @@ mod.create = function(self, config)
 				end
 				return btn
 			elseif index == 7 then
-				local btn = ui:buttonNeutral({ content = "👞 Shoes" })
+				local btn = ui:buttonNeutralDark({ content = loc("👞 Shoes", "avatar editor category") })
 				btn.index = index
 				btns[btn.index] = btn
 				btn.onRelease = function()

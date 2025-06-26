@@ -696,10 +696,10 @@ creations.createModalContent = function(_, config)
 		if config.authorId == Player.UserID then
 			btnCreate = ui:buttonPositive({ 
 				content = loc("Create"), 
-				textSize = "default", 
+				textSize = "big", 
 				padding = {
-					top = theme.paddingTiny,
-					bottom = theme.paddingTiny,
+					top = theme.padding,
+					bottom = theme.padding,
 					left = theme.paddingBig,
 					right = theme.paddingBig,
 				}

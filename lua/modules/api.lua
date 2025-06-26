@@ -144,6 +144,60 @@ mod.getFriends = function(self, config, callback)
 	return req
 end
 
+-- getRecentCreators
+mod.getRecentCreators = function(self, config, callback)
+	if self ~= mod then
+		error("api:getRecentCreators(config, callback): use `:`", 2)
+	end
+	if type(callback) ~= "function" then
+		error("api:getRecentCreators(config, callback) - callback must be a function", 2)
+	end
+
+	local defaultConfig = {
+		fields = { "id" },
+	}
+
+	ok, err = pcall(function()
+		config = require("config"):merge(defaultConfig, config)
+	end)
+
+	if not ok then
+		error("api:getRecentCreators(config, callback): config error (" .. err .. ")", 2)
+	end
+
+	local u = url:parse(mod.kApiAddr .. "/users")
+	u:addQueryParameter("recentlyPublished", "true")
+
+	for _, field in ipairs(config.fields) do
+		u:addQueryParameter("f", field)
+	end
+
+	local req = HTTP:Get(u:toString(), function(res)
+		if res.StatusCode ~= 200 then
+			callback(nil, mod:error(res.StatusCode, "status code: " .. res.StatusCode))
+			return
+		end
+
+		local creators, err = JSON:Decode(res.Body)
+
+		for _, creator in ipairs(creators) do
+			if creator.created then
+				creator.created = time.iso8601_to_os_time(creator.created)
+			end
+			if creator.updated then
+				creator.updated = time.iso8601_to_os_time(creator.updated)
+			end
+		end
+
+		if err ~= nil then
+			callback(nil, mod:error(res.StatusCode, "getRecentCreators JSON decode error: " .. err))
+			return
+		end
+		callback(creators) -- success
+	end)
+	return req
+end
+
 -- getFriendCount ...
 -- callback(ok, count, errMsg)
 mod.getFriendCount = function(self, callback, config)
