@@ -382,7 +382,7 @@ float float3_angle_between(float3 *v1, float3 *v2) {
     const float dot = v1->x * v2->x + v1->y * v2->y + v1->z * v2->z;
     const float m1 = sqrtf(v1->x * v1->x + v1->y * v1->y + v1->z * v1->z);
     const float m2 = sqrtf(v2->x * v2->x + v2->y * v2->y + v2->z * v2->z);
-    return acosf(dot / m1 * m2);
+    return acosf(CLAMP(dot / (m1 * m2), -1.0f, 1.0f));
 }
 
 /// changes value of a float3
