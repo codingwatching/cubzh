@@ -552,8 +552,8 @@ bool serialization_gltf_load(const void *buffer, const size_t size, const ASSET_
             switch(node->camera->type) {
                 case cgltf_camera_type_orthographic: {
                     camera_set_mode(c, Orthographic);
-                    camera_set_width(c, node->camera->data.orthographic.xmag);
-                    camera_set_height(c, node->camera->data.orthographic.ymag);
+                    camera_set_width(c, node->camera->data.orthographic.xmag, true);
+                    camera_set_height(c, node->camera->data.orthographic.ymag, true);
                     camera_set_near(c, node->camera->data.orthographic.znear);
                     camera_set_far(c, node->camera->data.orthographic.zfar);
                     break;
@@ -561,8 +561,8 @@ bool serialization_gltf_load(const void *buffer, const size_t size, const ASSET_
                 case cgltf_camera_type_perspective: {
                     camera_set_mode(c, Perspective);
                     if (node->camera->data.perspective.has_aspect_ratio) {
-                        camera_set_width(c, node->camera->data.perspective.aspect_ratio);
-                        camera_set_height(c, 1.0f);
+                        camera_set_width(c, node->camera->data.perspective.aspect_ratio, true);
+                        camera_set_height(c, 1.0f, true);
                     }
                     camera_set_fov(c, node->camera->data.perspective.yfov);
                     if (node->camera->data.perspective.has_zfar) {
