@@ -48,9 +48,9 @@ void camera_set_mode(Camera *c, const ProjectionMode value);
 float camera_get_fov(const Camera *c);
 void camera_set_fov(Camera *c, const float value);
 float camera_get_width(const Camera *c);
-void camera_set_width(Camera *c, const float value);
+void camera_set_width(Camera *c, const float value, const bool dirty);
 float camera_get_height(const Camera *c);
-void camera_set_height(Camera *c, const float value);
+void camera_set_height(Camera *c, const float value, const bool dirty);
 float camera_get_near(const Camera *c);
 void camera_set_near(Camera *c, const float value);
 float camera_get_far(const Camera *c);
@@ -67,6 +67,10 @@ bool camera_is_view_dirty(const Camera *c);
 bool camera_is_projection_dirty(const Camera *c);
 bool camera_is_target_dirty(const Camera *c);
 void camera_clear_dirty(Camera *c);
+void camera_toggle_auto_projection_width(Camera *c, const bool value);
+bool camera_uses_auto_projection_width(const Camera *c);
+void camera_toggle_auto_projection_height(Camera *c, const bool value);
+bool camera_uses_auto_projection_height(const Camera *c);
 
 // MARK: - View -
 

@@ -16,9 +16,14 @@
 #include "transform.h"
 #include "light.h"
 
-#define CAMERA_NONE     0
-#define CAMERA_PROJ     1   // camera projection is dirty
-#define CAMERA_TARGET   2   // camera target is dirty
+#define CAMERA_DIRTY_NONE     0
+#define CAMERA_DIRTY_PROJ     1
+#define CAMERA_DIRTY_TARGET   2
+
+#define CAMERA_FLAG_NONE             0
+#define CAMERA_FLAG_ENABLED          1
+#define CAMERA_FLAG_AUTO_PROJ_WIDTH  2
+#define CAMERA_FLAG_AUTO_PROJ_HEIGHT 4
 
 ///  Projection and target dimensions are override values, when zero: default screen size should be used,
 /// when non-zero: values set by coder should be used.
@@ -47,7 +52,7 @@ struct _Camera {
 
     uint16_t layers; /* 2 bytes */
     uint8_t viewOrder; /* 1 byte */
-    bool enabled; /* 1 byte */
+    uint8_t flags; /* 1 byte */
     uint8_t dirty; /* 1 byte */
 
     char pad[7];
@@ -59,6 +64,18 @@ static void _camera_set_dirty(Camera *c, const uint8_t flag) {
 
 static bool _camera_get_dirty(const Camera *c, const uint8_t flag) {
     return flag == (c->dirty & flag);
+}
+
+static void _camera_toggle_flag(Camera *c, const uint8_t flag, const bool toggle) {
+    if (toggle) {
+        c->flags |= flag;
+    } else {
+        c->flags &= ~flag;
+    }
+}
+
+static bool _camera_get_flag(const Camera *c, const uint8_t flag) {
+    return (c->flags & flag) != 0;
 }
 
 void _camera_void_free(void *o) {
@@ -90,8 +107,8 @@ Camera *camera_new(void) {
     c->color = UINT32_MAX;
     c->layers = CAMERA_LAYERS_DEFAULT;
     c->viewOrder = CAMERA_ORDER_DEFAULT;
-    c->enabled = false;
-    c->dirty = CAMERA_NONE;
+    c->flags = CAMERA_FLAG_AUTO_PROJ_WIDTH | CAMERA_FLAG_AUTO_PROJ_HEIGHT;
+    c->dirty = CAMERA_DIRTY_NONE;
 
     return c;
 }
@@ -112,7 +129,7 @@ Camera *camera_new_copy(const Camera *c) {
     copy->color = c->color;
     copy->layers = c->layers;
     copy->viewOrder = c->viewOrder;
-    copy->enabled = c->enabled;
+    copy->flags = c->flags;
 
     return copy;
 }
@@ -204,7 +221,7 @@ ProjectionMode camera_get_mode(const Camera *c) {
 
 void camera_set_mode(Camera *c, const ProjectionMode value) {
     c->mode = value;
-    _camera_set_dirty(c, CAMERA_PROJ);
+    _camera_set_dirty(c, CAMERA_DIRTY_PROJ);
 }
 
 float camera_get_fov(const Camera *c) {
@@ -214,7 +231,7 @@ float camera_get_fov(const Camera *c) {
 void camera_set_fov(Camera *c, const float value) {
     c->fov = CLAMP(value, CAMERA_FOV_MIN, CAMERA_FOV_MAX);
     if (c->mode == Perspective) {
-        _camera_set_dirty(c, CAMERA_PROJ);
+        _camera_set_dirty(c, CAMERA_DIRTY_PROJ);
     }
 }
 
@@ -222,18 +239,22 @@ float camera_get_width(const Camera *c) {
     return c->width;
 }
 
-void camera_set_width(Camera *c, const float value) {
+void camera_set_width(Camera *c, const float value, const bool dirty) {
     c->width = value;
-    _camera_set_dirty(c, CAMERA_PROJ);
+    if (dirty) {
+        _camera_set_dirty(c, CAMERA_DIRTY_PROJ);
+    }
 }
 
 float camera_get_height(const Camera *c) {
     return c->height;
 }
 
-void camera_set_height(Camera *c, const float value) {
+void camera_set_height(Camera *c, const float value, const bool dirty) {
     c->height = value;
-    _camera_set_dirty(c, CAMERA_PROJ);
+    if (dirty) {
+        _camera_set_dirty(c, CAMERA_DIRTY_PROJ);
+    }
 }
 
 float camera_get_near(const Camera *c) {
@@ -242,7 +263,7 @@ float camera_get_near(const Camera *c) {
 
 void camera_set_near(Camera *c, const float value) {
     c->nearPlane = value;
-    _camera_set_dirty(c, CAMERA_PROJ);
+    _camera_set_dirty(c, CAMERA_DIRTY_PROJ);
 }
 
 float camera_get_far(const Camera *c) {
@@ -251,7 +272,7 @@ float camera_get_far(const Camera *c) {
 
 void camera_set_far(Camera *c, const float value) {
     c->farPlane = value;
-    _camera_set_dirty(c, CAMERA_PROJ);
+    _camera_set_dirty(c, CAMERA_DIRTY_PROJ);
 }
 
 float camera_get_target_x(const Camera *c) {
@@ -260,7 +281,7 @@ float camera_get_target_x(const Camera *c) {
 
 void camera_set_target_x(Camera *c, const float value) {
     c->targetX = value;
-    _camera_set_dirty(c, CAMERA_TARGET);
+    _camera_set_dirty(c, CAMERA_DIRTY_TARGET);
 }
 
 float camera_get_target_y(const Camera *c) {
@@ -269,7 +290,7 @@ float camera_get_target_y(const Camera *c) {
 
 void camera_set_target_y(Camera *c, const float value) {
     c->targetY = value;
-    _camera_set_dirty(c, CAMERA_TARGET);
+    _camera_set_dirty(c, CAMERA_DIRTY_TARGET);
 }
 
 float camera_get_target_width(const Camera *c) {
@@ -278,7 +299,7 @@ float camera_get_target_width(const Camera *c) {
 
 void camera_set_target_width(Camera *c, const float value) {
     c->targetWidth = value;
-    _camera_set_dirty(c, CAMERA_TARGET);
+    _camera_set_dirty(c, CAMERA_DIRTY_TARGET);
 }
 
 float camera_get_target_height(const Camera *c) {
@@ -287,7 +308,7 @@ float camera_get_target_height(const Camera *c) {
 
 void camera_set_target_height(Camera *c, const float value) {
     c->targetHeight = value;
-    _camera_set_dirty(c, CAMERA_TARGET);
+    _camera_set_dirty(c, CAMERA_DIRTY_TARGET);
 }
 
 bool camera_is_view_dirty(const Camera *c) {
@@ -295,16 +316,32 @@ bool camera_is_view_dirty(const Camera *c) {
 }
 
 bool camera_is_projection_dirty(const Camera *c) {
-    return _camera_get_dirty(c, CAMERA_PROJ);
+    return _camera_get_dirty(c, CAMERA_DIRTY_PROJ);
 }
 
 bool camera_is_target_dirty(const Camera *c) {
-    return _camera_get_dirty(c, CAMERA_TARGET);
+    return _camera_get_dirty(c, CAMERA_DIRTY_TARGET);
 }
 
 void camera_clear_dirty(Camera *c) {
-    c->dirty = CAMERA_NONE;
+    c->dirty = CAMERA_DIRTY_NONE;
     transform_reset_any_dirty(c->view);
+}
+
+void camera_toggle_auto_projection_width(Camera *c, const bool value) {
+    _camera_toggle_flag(c, CAMERA_FLAG_AUTO_PROJ_WIDTH, value);
+}
+
+bool camera_uses_auto_projection_width(const Camera *c) {
+    return _camera_get_flag(c, CAMERA_FLAG_AUTO_PROJ_WIDTH);
+}
+
+void camera_toggle_auto_projection_height(Camera *c, const bool value) {
+    _camera_toggle_flag(c, CAMERA_FLAG_AUTO_PROJ_HEIGHT, value);
+}
+
+bool camera_uses_auto_projection_height(const Camera *c) {
+    return _camera_get_flag(c, CAMERA_FLAG_AUTO_PROJ_HEIGHT);
 }
 
 // MARK: - View -
@@ -351,11 +388,11 @@ void camera_set_order(Camera *c, const uint8_t value) {
 }
 
 bool camera_is_enabled(const Camera *c) {
-    return c->enabled && c->layers != CAMERA_LAYERS_NONE;
+    return _camera_get_flag(c, CAMERA_FLAG_ENABLED) && c->layers != CAMERA_LAYERS_NONE;
 }
 
 void camera_set_enabled(Camera *c, const bool value) {
-    c->enabled = value;
+    _camera_toggle_flag(c, CAMERA_FLAG_ENABLED, value);
 }
 
 // MARK: - Transform -
@@ -703,8 +740,8 @@ void camera_utils_apply_fit_to_screen(Camera *c, const Box *box, const float cov
     } else {
         const float r = camera_fit_to_screen_box(c, &box->min, &box->max, aspect, coverage, &target, NULL, orientation);
 
-        camera_set_width(c, width * r);
-        camera_set_height(c, height * r);
+        camera_set_width(c, width * r, true);
+        camera_set_height(c, height * r, true);
         transform_set_position(camera_get_view_transform(c), target.x, target.y, target.z);
     }
 }
