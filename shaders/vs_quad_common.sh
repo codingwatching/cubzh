@@ -20,6 +20,7 @@ $output v_color0, v_texcoord0, v_texcoord1
 	#define v_clipZ v_texcoord0.z
 	#define v_cutout v_texcoord0.w
 	#define v_normal v_texcoord1.xyz
+	#define v_greyscale v_texcoord1.w
 #elif QUAD_VARIANT_MRT_LIGHTING || QUAD_VARIANT_TEX
 $output v_color0, v_texcoord0, v_texcoord1
 	#define v_uv v_texcoord0.xy
@@ -68,14 +69,17 @@ void main() {
 
 	vec4 color = a_color0;
 #if QUAD_VARIANT_MRT_LIGHTING == 0
-	float meta[7]; unpackQuadFullMetadata(a_position.w, meta);
+	float meta[8]; unpackQuadFullMetadata(a_position.w, meta);
 	float unlit = meta[0];
 	float cutout = meta[2];
-	vec4 vlighting = vec4(meta[3], meta[4], meta[5], meta[6]);
+	float greyscale = meta[3];
+	vec4 vlighting = vec4(meta[4], meta[5], meta[6], meta[7]);
 
 	color = mix(getNonVoxelVertexLitColor(color, vlighting.x * u_bakedIntensity, vlighting.yzw, u_sunColor.xyz, clip.z), color, unlit);
-#elif QUAD_VARIANT_MRT_TRANSPARENCY && QUAD_VARIANT_CUTOUT
-	float cutout = unpackQuadMetadata_Cutout(a_position.w);
+#elif QUAD_VARIANT_MRT_TRANSPARENCY
+	vec2 meta = unpackQuadMetadata_OIT(a_position.w);
+	float cutout = meta.x;
+	float greyscale = meta.y;
 #endif
 
 	gl_Position = clip;
@@ -88,6 +92,7 @@ void main() {
 #if QUAD_VARIANT_CUTOUT
 	v_cutout = mix(-1.0, u_cutout, cutout);
 #endif // QUAD_VARIANT_CUTOUT
+	v_greyscale = greyscale;
 #elif QUAD_VARIANT_MRT_LIGHTING || QUAD_VARIANT_TEX
 	v_metadata = a_position.w;
 #if QUAD_VARIANT_MRT_LINEAR_DEPTH

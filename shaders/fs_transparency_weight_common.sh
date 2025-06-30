@@ -8,6 +8,7 @@ $input v_color0, v_texcoord0, v_texcoord1
 	#define v_clipZ v_texcoord0.z
 	#define v_cutout v_texcoord0.w
 	#define v_9slice v_texcoord1.xyz
+	#define v_greyscale v_texcoord1.w
 #else
 	#define v_model v_texcoord0.xyz
 	#define v_clipZ v_texcoord0.w
@@ -85,8 +86,13 @@ void main() {
 
 	vec2 uv = vec2(sliceUV(v_uv.x, uBorders, slice.x),
 				   sliceUV(v_uv.y, vBorders, slice.y));
-
-	color *= texture2D(s_fb1, uv);
+	
+	vec4 tex = texture2D(s_fb1, uv);
+#if QUAD_VARIANT_ALPHA
+	color *= mix(tex.xyzw, tex.wwwx, v_greyscale);
+#else
+	color *= mix(tex.xyzw, tex.xxxx, v_greyscale);
+#endif
 
 #if OIT_VARIANT_CUTOUT
 	if (color.a < v_cutout) discard;
