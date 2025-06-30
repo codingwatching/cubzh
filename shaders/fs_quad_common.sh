@@ -37,11 +37,12 @@ void main() {
 #if QUAD_VARIANT_MRT_LIGHTING || QUAD_VARIANT_TEX
 	//vec3 wnormal = normalize(-u_model[0][2].xyz);
 
-	float meta[7]; unpackQuadFullMetadata(v_metadata, meta);
+	float meta[8]; unpackQuadFullMetadata(v_metadata, meta);
 	float unlit = mix(LIGHTING_LIT_FLAG, LIGHTING_UNLIT_FLAG, meta[0]);
 	float unpack9SliceNormal = meta[1];
 	float cutout = meta[2];
-	vec4 vlighting = vec4(meta[3], meta[4], meta[5], meta[6]);
+	float greyscale = meta[3];
+	vec4 vlighting = vec4(meta[4], meta[5], meta[6], meta[7]);
 #endif
 
 #if QUAD_VARIANT_TEX
@@ -52,8 +53,13 @@ void main() {
 	vec2 uv = vec2(sliceUV(v_uv.x, uBorders, slice.x),
 				   sliceUV(v_uv.y, vBorders, slice.y));
 	
-	color *= texture2D(s_fb1, uv);
-#endif
+	vec4 tex = texture2D(s_fb1, uv);
+#if QUAD_VARIANT_ALPHA
+	color *= mix(tex.xyzw, tex.wwwx, greyscale);
+#else
+	color *= mix(tex.xyzw, tex.xxxw, greyscale);
+#endif // QUAD_VARIANT_ALPHA
+#endif // QUAD_VARIANT_TEX
 
 #if QUAD_VARIANT_CUTOUT
 	if (color.a < mix(-1.0, u_cutout, cutout)) discard;
