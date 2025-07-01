@@ -336,6 +336,8 @@ void transform_refresh(Transform *t, bool hierarchyDirty, bool refreshParents) {
     // - intra-frame calculations involving matrices
     if (refreshParents) {
         hierarchyDirty = _transform_check_and_refresh_parents(t) || hierarchyDirty;
+    } else if (t->parent != NULL) {
+        hierarchyDirty |= transform_is_hierarchy_dirty(t->parent);
     }
 
     // refresh local position/rotation if they were dirty
