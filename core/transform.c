@@ -1262,11 +1262,10 @@ void transform_utils_box_fit_recurse(Transform *t,
     while (n != NULL) {
         child = (Transform *)doubly_linked_list_node_pointer(n);
 
+        transform_refresh(child, false, false); // refresh mtx for intra-frame calculations
+
         const TransformType type = transform_get_type(child);
-
         if (type == ShapeTransform || type == MeshTransform) {
-
-            transform_refresh(child, false, false); // refresh mtx for intra-frame calculations
             if (type == ShapeTransform && applyTransaction) {
                 shape_apply_current_transaction((Shape *)child->ptr, true);
             }
