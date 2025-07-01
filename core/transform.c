@@ -32,7 +32,8 @@
 #define TRANSFORM_DIRTY_POS 8
 #define TRANSFORM_DIRTY_ROT 16
 // this transform is up-to-date, but children down the hierarchy need refresh
-#define TRANSFORM_DIRTY_CHILDREN 32
+// or if inside scene refresh, the flag was propagated to this transform from parent
+#define TRANSFORM_DIRTY_HIERARCHY 32
 // collider-relevant transformations (local AND world scale/pos) have been dirty since last
 // end-of-frame
 #define TRANSFORM_DIRTY_PHYSICS 64
@@ -132,7 +133,7 @@ static void _transform_toggle_flag(Transform *const t, const uint8_t flag, const
 static bool _transform_get_flag(Transform *const t, const uint8_t flag);
 static bool _transform_check_and_refresh_parents(Transform *const t);
 static void _transform_refresh_local_position(Transform *t);
-static void _transform_refresh_position(Transform *t);
+static void _transform_refresh_position(Transform *t, bool hierarchyDirty);
 static void _transform_refresh_local_rotation(Transform *t);
 static void _transform_refresh_rotation(Transform *t);
 static void _transform_refresh_matrices(Transform *t, bool hierarchyDirty);
@@ -324,7 +325,7 @@ Weakptr *transform_get_and_retain_weakptr(Transform *t) {
 }
 
 bool transform_is_hierarchy_dirty(Transform *t) {
-    return _transform_get_dirty(t, TRANSFORM_DIRTY_MTX | TRANSFORM_DIRTY_CHILDREN);
+    return _transform_get_dirty(t, TRANSFORM_DIRTY_MTX | TRANSFORM_DIRTY_HIERARCHY);
 }
 
 void transform_refresh(Transform *t, bool hierarchyDirty, bool refreshParents) {
@@ -345,12 +346,12 @@ void transform_refresh(Transform *t, bool hierarchyDirty, bool refreshParents) {
     _transform_refresh_matrices(t, hierarchyDirty);
 }
 
-void transform_set_children_dirty(Transform *t) {
-    _transform_set_dirty(t, TRANSFORM_DIRTY_CHILDREN, false);
+void transform_set_hierarchy_dirty(Transform *t) {
+    _transform_set_dirty(t, TRANSFORM_DIRTY_HIERARCHY, false);
 }
 
-void transform_reset_children_dirty(Transform *t) {
-    _transform_reset_dirty(t, TRANSFORM_DIRTY_CHILDREN);
+void transform_reset_hierarchy_dirty(Transform *t) {
+    _transform_reset_dirty(t, TRANSFORM_DIRTY_HIERARCHY);
 }
 
 void transform_reset_any_dirty(Transform *t) {
@@ -769,10 +770,8 @@ const float3 *transform_get_local_position(Transform *t, const bool refreshParen
 }
 
 const float3 *transform_get_position(Transform *t, const bool refreshParents) {
-    if (refreshParents) {
-        _transform_check_and_refresh_parents(t);
-    }
-    _transform_refresh_position(t);
+    const bool hierarchyDirty = refreshParents ? _transform_check_and_refresh_parents(t) : false;
+    _transform_refresh_position(t, hierarchyDirty);
     return &t->position;
 }
 
@@ -1435,10 +1434,8 @@ static bool _transform_check_and_refresh_parents(Transform *const t) {
     }
     it = doubly_linked_list_pop_last(parents);
     while (it != NULL) {
-        if (hierarchyDirty || _transform_get_dirty(it, TRANSFORM_DIRTY_MTX)) {
-            transform_refresh(it, hierarchyDirty, false);
-            hierarchyDirty = true;
-        }
+        transform_refresh(it, hierarchyDirty, false);
+        hierarchyDirty |= _transform_get_dirty(it, TRANSFORM_DIRTY_HIERARCHY);
         it = doubly_linked_list_pop_last(parents);
     }
     doubly_linked_list_free(parents);
@@ -1462,10 +1459,10 @@ static void _transform_refresh_local_position(Transform *t) {
 /// refreshes world position getter
 /// note: here, parents ltw matrices must be up-to-date, if additionally the transform own matrices
 /// are not dirty, we can use its ltw for a cheaper refresh
-static void _transform_refresh_position(Transform *t) {
+static void _transform_refresh_position(Transform *t, bool hierarchyDirty) {
     if (_transform_get_dirty(t, TRANSFORM_DIRTY_POS)) {
         if (t->parent != NULL) {
-            if (_transform_get_dirty(t, TRANSFORM_DIRTY_MTX)) {
+            if (_transform_get_dirty(t, TRANSFORM_DIRTY_MTX) || hierarchyDirty) {
                 matrix4x4_op_multiply_vec_point(&t->position, &t->localPosition, t->parent->ltw);
             } else {
                 float3_set(&t->position, t->ltw->x4y1, t->ltw->x4y2, t->ltw->x4y3);
@@ -1527,9 +1524,9 @@ static void _transform_refresh_matrices(Transform *t, bool hierarchyDirty) {
 
         _transform_reset_dirty(t, TRANSFORM_DIRTY_MTX);
 
-        // transform's mtx was refreshed, therefore other children down the hierarchy
+        // transform's mtx was refreshed, therefore children down the hierarchy
         // may be refreshed on intra-frame demand, or automatically at next end-of-frame
-        _transform_set_dirty(t, TRANSFORM_DIRTY_CHILDREN, true);
+        _transform_set_dirty(t, TRANSFORM_DIRTY_HIERARCHY, true);
     }
 
     if (dirty || hierarchyDirty) {
@@ -1566,9 +1563,9 @@ static bool _transform_vec_equals(const float3 *f,
 
 /// note: refreshes what is necessary to not lose any prior transformation, then set all dirty
 static void _transform_set_all_dirty(Transform *t, bool keepWorld) {
-    _transform_check_and_refresh_parents(t);
+    const bool hierarchyDirty = _transform_check_and_refresh_parents(t);
     if (keepWorld) {
-        _transform_refresh_position(t);
+        _transform_refresh_position(t, hierarchyDirty);
         _transform_refresh_rotation(t);
         _transform_set_dirty(t, TRANSFORM_DIRTY_LOCAL_POS | TRANSFORM_DIRTY_LOCAL_ROT, true);
     } else {
