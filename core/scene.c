@@ -271,13 +271,13 @@ void scene_refresh(Scene *sc, const TICK_DELTA_SEC_T dt, void *callbackData) {
             child = (Transform *)doubly_linked_list_node_pointer(n);
 
             if (transform_is_hierarchy_dirty(t)) {
-                transform_set_children_dirty(child);
+                transform_set_hierarchy_dirty(child);
             }
 
             fifo_list_push(toExamine, child);
             n = doubly_linked_list_node_next(n);
         }
-        transform_reset_children_dirty(t);
+        transform_reset_hierarchy_dirty(t);
 
         t = (Transform *)fifo_list_pop(toExamine);
     }
