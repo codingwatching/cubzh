@@ -1275,8 +1275,10 @@ void transform_utils_box_fit_recurse(Transform *t,
 
             const Box model = type == ShapeTransform ? shape_get_model_aabb((Shape *)child->ptr) :
                               *mesh_get_model_aabb((Mesh *)child->ptr);
-            const float3 offset = type == ShapeTransform ? shape_get_pivot((Shape *)child->ptr) :
-                                  mesh_get_pivot((Mesh *)child->ptr);
+            const float3 pivot = type == ShapeTransform ? shape_get_pivot((Shape *)child->ptr) :
+                                 mesh_get_pivot((Mesh *)child->ptr);
+            const float3 offset = { -pivot.x, -pivot.y, -pivot.z };
+
             Box aabb;
             box_to_aabox2(&model, &aabb, &child_mtx, &offset, NoSquarify);
 
