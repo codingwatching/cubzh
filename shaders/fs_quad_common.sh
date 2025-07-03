@@ -38,11 +38,12 @@ void main() {
 	//vec3 wnormal = normalize(-u_model[0][2].xyz);
 
 	float meta[8]; unpackQuadFullMetadata(v_metadata, meta);
-	float unlit = mix(LIGHTING_LIT_FLAG, LIGHTING_UNLIT_FLAG, meta[0]);
+	float unlit = mix(LIGHTING_LIT_FLAG, LIGHTING_UNLIT_FLAG, step(0.5, meta[0]));
 	float unpack9SliceNormal = meta[1];
 	float cutout = meta[2];
 	float greyscale = meta[3];
-	vec4 vlighting = vec4(meta[4], meta[5], meta[6], meta[7]);
+	vec4 vlighting = mix(vec4(meta[4], meta[5], meta[6], meta[7]), VOXEL_LIGHT_DEFAULT_RGBS, unlit);
+	float additiveFactor = mix(1.0, meta[4], unlit);
 #endif
 
 #if QUAD_VARIANT_TEX
@@ -55,10 +56,11 @@ void main() {
 	
 	vec4 tex = texture2D(s_fb1, uv);
 #if QUAD_VARIANT_ALPHA
-	color *= mix(tex.xyzw, tex.wwwx, greyscale);
+	color *= mix(tex.rgba, tex.aaar, greyscale);
 #else
-	color *= mix(tex.xyzw, tex.xxxw, greyscale);
+	color *= mix(tex.rgba, tex.rrra, greyscale);
 #endif // QUAD_VARIANT_ALPHA
+	color *= additiveFactor;
 #endif // QUAD_VARIANT_TEX
 
 #if QUAD_VARIANT_CUTOUT

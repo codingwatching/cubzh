@@ -56,8 +56,8 @@ struct _Shape {
     uint32_t *blocksCount;
 
     // points of interest
-    MapStringFloat3 *POIs;          // 8 bytes
-    MapStringFloat3 *pois_rotation; // 8 bytes
+    MapStringFloat3 *POIs;
+    MapStringFloat3 *pois_rotation;
 
     Transform *transform;
     float3 *pivot;
@@ -85,7 +85,7 @@ struct _Shape {
     // name of the original item <username>.<itemname>, used for baked files
     char *fullname;
 
-    ShapeDrawmodes *drawmodes; /* 8 bytes */
+    ShapeDrawmodes *drawmodes;
 
     size_t nbChunks;
     size_t nbBlocks;

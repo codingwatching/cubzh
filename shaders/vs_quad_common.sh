@@ -70,7 +70,7 @@ void main() {
 	vec4 color = a_color0;
 #if QUAD_VARIANT_MRT_LIGHTING == 0
 	float meta[8]; unpackQuadFullMetadata(a_position.w, meta);
-	float unlit = meta[0];
+	float unlit = step(0.5, meta[0]);
 	float cutout = meta[2];
 	float greyscale = meta[3];
 	vec4 vlighting = vec4(meta[4], meta[5], meta[6], meta[7]);

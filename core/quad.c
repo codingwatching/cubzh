@@ -27,10 +27,23 @@
 #define QUAD_DEFAULT_9SLICE_SCALE 1.0f
 #define QUAD_DEFAULT_9SLICE_CORNER_WIDTH -1.0f
 
+#define QUAD_DRAWMODES_FLAG_NONE 0
+#define QUAD_DRAWMODES_FLAG_ADDITIVE 1
+#define QUAD_DRAWMODES_FLAG_BILLBOARD_SHIFT QUAD_DRAWMODES_FLAG_ADDITIVE
+#define QUAD_DRAWMODES_FLAG_BILLBOARD_MASK 14 // 2nd to 4th bit
+
+typedef struct {
+    uint8_t additiveFactor; /* 1 byte */
+    uint8_t flags;          /* 1 byte */
+
+    char pad[3];
+} QuadDrawmodes;
+
 struct _Quad {
     Transform *transform;
     uint32_t *rgba;
     Weakptr *data;
+    QuadDrawmodes *drawmodes;
     uint32_t size;          /* 4 bytes */
     uint32_t hash;          /* 4 bytes */
     float width, height;    /* 2x4 bytes */
@@ -58,6 +71,17 @@ bool _quad_get_flag(const Quad *q, uint8_t flag) {
     return (q->flags & flag) != 0;
 }
 
+void _quad_drawmode_toggle_flag(Quad *q, uint8_t flag, bool toggle) {
+    if (toggle) {
+        if (q->drawmodes == NULL) {
+            quad_toggle_drawmodes(q, true);
+        }
+        q->drawmodes->flags |= flag;
+    } else if (q->drawmodes != NULL) {
+        q->drawmodes->flags &= ~flag;
+    }
+}
+
 void _quad_void_free(void *o) {
     Quad *q = (Quad *)o;
     quad_free(q);
@@ -67,6 +91,7 @@ Quad *quad_new(void) {
     Quad *q = (Quad *)malloc(sizeof(Quad));
     q->transform = transform_new_with_ptr(QuadTransform, q, &_quad_void_free);
     q->data = NULL;
+    q->drawmodes = NULL;
     q->size = 0;
     q->hash = 0;
     q->width = 1.0f;
@@ -92,6 +117,10 @@ Quad *quad_new_copy(const Quad* q) {
     Quad *copy = quad_new();
     transform_copy(copy->transform, q->transform);
     quad_set_data(copy, q->data, q->size); // TODO: use registry (see lua_quad)
+    if (q->drawmodes != NULL) {
+        copy->drawmodes = (QuadDrawmodes*)malloc(sizeof(QuadDrawmodes));
+        memcpy(copy->drawmodes, q->drawmodes, sizeof(QuadDrawmodes));
+    }
     copy->width = q->width;
     copy->height = q->height;
     copy->anchorX = q->anchorX;
@@ -117,6 +146,7 @@ void quad_free(Quad *q) {
     if (q->data != NULL) {
         weakptr_release(q->data);
     }
+    free(q->drawmodes);
     free(q->rgba);
     free(q);
 }
@@ -154,6 +184,30 @@ uint32_t quad_get_data_size(const Quad *q) {
 
 uint32_t quad_get_data_hash(const Quad *q) {
     return q->hash;
+}
+
+void quad_toggle_drawmodes(Quad *q, bool toggle) {
+    if (toggle && q->drawmodes == NULL) {
+        q->drawmodes = (QuadDrawmodes*)malloc(sizeof(QuadDrawmodes));
+        q->drawmodes->additiveFactor = QUAD_ADDITIVE_FACTOR_DEFAULT;
+        q->drawmodes->flags = QUAD_DRAWMODES_FLAG_NONE;
+    } else if (toggle == false && q->drawmodes != NULL) {
+        free(q->drawmodes);
+        q->drawmodes = NULL;
+    }
+}
+
+bool quad_uses_drawmodes(const Quad *q) {
+    return q->drawmodes != NULL;
+}
+
+void quad_check_and_clear_drawmodes(Quad *q) {
+    if (q->drawmodes != NULL
+        && q->drawmodes->flags == QUAD_DRAWMODES_FLAG_NONE) {
+
+        free(q->drawmodes);
+        q->drawmodes = NULL;
+    }
 }
 
 void quad_set_width(Quad *q, float value) {
@@ -409,6 +463,44 @@ float quad_get_9slice_corner_width(const Quad *q) {
     return _quad_get_flag(q, QUAD_FLAG_9SLICE) ? q->offsetV : QUAD_DEFAULT_9SLICE_CORNER_WIDTH;
 }
 
+// MARK: - Draw modes -
+
+void quad_drawmode_set_billboard(Quad *q, BillboardMode mode) {
+    if (mode != BillboardMode_None) {
+        if (q->drawmodes == NULL) {
+            quad_toggle_drawmodes(q, true);
+        }
+        q->drawmodes->flags &= ~QUAD_DRAWMODES_FLAG_BILLBOARD_MASK;
+        q->drawmodes->flags |= (uint8_t)(mode << QUAD_DRAWMODES_FLAG_BILLBOARD_SHIFT);
+    } else if (q->drawmodes != NULL) {
+        q->drawmodes->flags &= ~QUAD_DRAWMODES_FLAG_BILLBOARD_MASK;
+    }
+}
+
+BillboardMode quad_drawmode_get_billboard(const Quad *q) {
+    return q->drawmodes != NULL ? ((BillboardMode)((q->drawmodes->flags & QUAD_DRAWMODES_FLAG_BILLBOARD_MASK) >> QUAD_DRAWMODES_FLAG_BILLBOARD_SHIFT)) : BillboardMode_None;
+}
+
+void quad_drawmode_set_additive(Quad *q, bool toggle) {
+    _quad_drawmode_toggle_flag(q, QUAD_DRAWMODES_FLAG_ADDITIVE, toggle);
+}
+
+bool quad_drawmode_is_additive(const Quad *q) {
+    return q->drawmodes != NULL ? (q->drawmodes->flags & QUAD_DRAWMODES_FLAG_ADDITIVE) != 0 : false;
+}
+
+void quad_drawmode_set_additive_factor(Quad *q, uint8_t value) {
+    if (q->drawmodes == NULL) {
+        quad_toggle_drawmodes(q, true);
+    }
+    q->drawmodes->additiveFactor = value;
+}
+
+uint8_t quad_drawmode_get_additive_factor(const Quad *q) {
+    return q->drawmodes != NULL && (q->drawmodes->flags & QUAD_DRAWMODES_FLAG_ADDITIVE) != 0 ?
+        q->drawmodes->additiveFactor : QUAD_ADDITIVE_FACTOR_DEFAULT;
+}
+
 // MARK: - Utils -
 
 float quad_utils_get_diagonal(const Quad *q) {
@@ -417,14 +509,15 @@ float quad_utils_get_diagonal(const Quad *q) {
 
 bool quad_utils_get_visibility(const Quad *q, bool *isOpaque) {
     const bool transparentTex = q->size > 0 && _quad_get_flag(q, QUAD_FLAG_ALPHABLEND);
+    const bool additive = quad_drawmode_is_additive(q);
     if (_quad_get_flag(q, QUAD_FLAG_VCOLOR)) {
         const uint16_t alpha = (uint16_t)(q->rgba[0] >> 24) + (uint16_t)(q->rgba[1] >> 24) +
                                (uint16_t)(q->rgba[2] >> 24) + (uint16_t)(q->rgba[3] >> 24);
-        *isOpaque = transparentTex == false && alpha == 1020;
+        *isOpaque = additive == false && transparentTex == false && alpha == 1020;
         return alpha > 0;
     } else {
         const uint8_t alpha = (uint8_t)(*q->rgba >> 24);
-        *isOpaque = transparentTex == false && alpha == 255;
+        *isOpaque = additive == false && transparentTex == false && alpha == 255;
         return alpha > 0;
     }
 }

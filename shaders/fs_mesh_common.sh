@@ -50,7 +50,7 @@ void main() {
     vec2 metallicRoughness = mix(vec2(metadata1[MESH_METADATA_METALLIC], metadata1[MESH_METADATA_ROUGHNESS]), texture2D(s_fb3, v_uv).xy, metadata1[MESH_METADATA_METALLICFLAG]);
     vec3 emissive = mix(unpackFloatToRgb(u_emissive), texture2D(s_fb4, v_uv).xyz, metadata1[MESH_METADATA_EMISSIVEFLAG]);
 
-    float unlit = mix(LIGHTING_LIT_FLAG, LIGHTING_UNLIT_FLAG, metadata2.x);
+    float unlit = mix(LIGHTING_LIT_FLAG, LIGHTING_UNLIT_FLAG, step(0.5, metadata2.x));
     vec4 vlighting = unpackVoxelLight(metadata2.y);
 #else
     vec4 albedo = v_albedoFlag ? texture2D(s_fb1, v_uv) : BLACK;

@@ -32,7 +32,7 @@ void main() {
 	vec4 color = v_color0;
 #endif
 #if VOXEL_VARIANT_MRT_LIGHTING
-	float unlit = mix(LIGHTING_LIT_FLAG, LIGHTING_UNLIT_FLAG, u_unlit);
+	float unlit = mix(LIGHTING_LIT_FLAG, LIGHTING_UNLIT_FLAG, step(0.5, u_unlit));
 
 	gl_FragData[0] = color;
 	gl_FragData[1] = vec4(normToUnorm3(v_normal), unlit);
