@@ -54,10 +54,10 @@ end)
 Client.OnStart = function()
 	local ui = require("uikit")
 	local theme = require("uitheme").current
-	
+
 	-- dynamic config fields
-	refCellTitle = ui:createText("A", { color = Color.White, size = "small", bold = true, })
-	refCellCaption = ui:createText("A", { color = Color.White, size = "small", bold = false, })
+	refCellTitle = ui:createText("A", { color = Color.White, size = "small", bold = true })
+	refCellCaption = ui:createText("A", { color = Color.White, size = "small", bold = false })
 	refCellCaption.object.Scale = CONFIG.TINY_FONT_SCALE
 	refCellTitle:setParent(nil)
 	refCellCaption:setParent(nil)
@@ -354,7 +354,7 @@ Client.OnStart = function()
 	local gameGridAlpha = currentGameGridAlpha
 
 	local function startBackgroundLerp(newGradientFrom, newGradientTo, newGameGridAlpha)
-		currentGradientFrom:Lerp(currentGradientFrom, newGradientFrom, colorLerpDt)	
+		currentGradientFrom:Lerp(currentGradientFrom, newGradientFrom, colorLerpDt)
 		currentGradientTo:Lerp(currentGradientTo, newGradientTo, colorLerpDt)
 		currentGameGridAlpha = currentGameGridAlpha + (targetGameGridAlpha - currentGameGridAlpha) * colorLerpDt
 		targetGradientFrom = newGradientFrom
@@ -366,9 +366,9 @@ Client.OnStart = function()
 	end
 
 	function setTitleScreenBackground()
-		startBackgroundLerp(Color(13, 28, 35), Color(44,74,90), 0.5)
+		startBackgroundLerp(Color(13, 28, 35), Color(44, 74, 90), 0.5)
 		Menu.BottomBar:show()
-	end		
+	end
 
 	function setHomeBackground()
 		startBackgroundLerp(Color(18, 18, 20), Color(18, 18, 20), 0.0)
@@ -379,12 +379,12 @@ Client.OnStart = function()
 	LocalEvent:Listen(LocalEvent.Name.Tick, function(dt)
 		if colorLerpDt < 1.0 then
 			colorLerpDt = math.min(1.0, colorLerpDt + dt * 2.0)
-			from:Lerp(currentGradientFrom, targetGradientFrom, colorLerpDt) 
-			to:Lerp(currentGradientTo, targetGradientTo, colorLerpDt) 
-			backgroundQuad.Color = { 
-				gradient = "V", 
+			from:Lerp(currentGradientFrom, targetGradientFrom, colorLerpDt)
+			to:Lerp(currentGradientTo, targetGradientTo, colorLerpDt)
+			backgroundQuad.Color = {
+				gradient = "V",
 				from = from,
-				to = to
+				to = to,
 			}
 			gameGridAlpha = math.max(0.0, math.min(1.0, currentGameGridAlpha + (targetGameGridAlpha - currentGameGridAlpha) * colorLerpDt))
 			gameGridQuad.Color = { Color(255, 255, 255, gameGridAlpha), alpha = true }
@@ -1188,18 +1188,18 @@ function home()
 
 		local function cellResizeFn(self)
 			self.Width = self.parent.Width
-			self.title.pos = { 
-				padding * 2, 
-				self.Height - self.title.Height - CONFIG.SPACE_ABOVE_CATEGORY_TITLE 
+			self.title.pos = {
+				padding * 2,
+				self.Height - self.title.Height - CONFIG.SPACE_ABOVE_CATEGORY_TITLE,
 			}
 
 			if self.scroll then
 				self.scroll.pos = { padding, CONFIG.SPACE_BELLOW_CATEGORY_CONTENT }
-				self.scroll.Height = self.Height 
-				- self.title.Height 
-				- CONFIG.SPACE_ABOVE_CATEGORY_TITLE 
-				- CONFIG.SPACE_BELLOW_CATEGORY_TITLE 
-				- CONFIG.SPACE_BELLOW_CATEGORY_CONTENT
+				self.scroll.Height = self.Height
+					- self.title.Height
+					- CONFIG.SPACE_ABOVE_CATEGORY_TITLE
+					- CONFIG.SPACE_BELLOW_CATEGORY_TITLE
+					- CONFIG.SPACE_BELLOW_CATEGORY_CONTENT
 				self.scroll.Width = self.Width - padding * 2
 			end
 
@@ -1241,7 +1241,7 @@ function home()
 				local padding = theme.paddingTiny
 				self.avatar.Height = self.Height - padding * 2
 				self.avatar.Width = self.Width - padding * 2
-				self.avatar.pos = { padding, self.Height - self.avatar.Height - padding}
+				self.avatar.pos = { padding, self.Height - self.avatar.Height - padding }
 			end
 
 			if self.thumbnail then
@@ -1264,9 +1264,9 @@ function home()
 			if self.itemShape then
 				self.itemShape.Width = self.Width - theme.padding * 2
 				self.itemShape.Height = self.itemShape.Width
-				self.itemShape.pos = { 
+				self.itemShape.pos = {
 					self.Width * 0.5 - self.itemShape.Width * 0.5,
-					self.Height - self.itemShape.Height --  - theme.padding
+					self.Height - self.itemShape.Height, --  - theme.padding
 				}
 				self.itemShape.pivot.LocalRotation:Set(-0.1, 0, -0.2)
 			end
@@ -1381,7 +1381,7 @@ function home()
 					cell.loadingAnimation = loadingAnimation
 
 					cell.loadThumbnailTimer = Timer(CONFIG.LOAD_CONTENT_DELAY, function()
-						cell.req = api:getWorldThumbnail({ 
+						cell.req = api:getWorldThumbnail({
 							worldID = world.id,
 							width = 250,
 							callback = function(img, err)
@@ -1395,7 +1395,7 @@ function home()
 								cell.thumbnail = thumbnail
 								worldThumbnails[cell.category .. "_" .. world.id] = thumbnail
 								worldCellResizeFn(cell)
-							end
+							end,
 						})
 						table.insert(httpRequests, cell.req)
 					end)
@@ -1675,19 +1675,22 @@ function home()
 				dataFetcher.req:Cancel()
 			end
 
-			dataFetcher.req = api:getRecentCreators({ fields = { "id", "username", "lastSeen" } }, function(friends, err)
-				if err ~= nil then
-					return
-				end
+			dataFetcher.req = api:getRecentCreators(
+				{ fields = { "id", "username", "lastSeen" } },
+				function(friends, err)
+					if err ~= nil then
+						return
+					end
 
-				dataFetcher.entities = friends
-				dataFetcher.nbEntities = #friends
+					dataFetcher.entities = friends
+					dataFetcher.nbEntities = #friends
 
-				if dataFetcher.scroll then
-					dataFetcher.scroll:flush()
-					dataFetcher.scroll:refresh()
+					if dataFetcher.scroll then
+						dataFetcher.scroll:flush()
+						dataFetcher.scroll:refresh()
+					end
 				end
-			end)
+			)
 		end
 
 		local function getOrCreateFriendCell()
@@ -1781,7 +1784,7 @@ function home()
 						local v = (CONFIG.USER_CELL_HEIGHT - CONFIG.USER_CELL_WIDTH) * 0.5
 						friendCell.uname.pos = {
 							CONFIG.USER_CELL_WIDTH * 0.5 - friendCell.uname.Width * 0.5,
-							v
+							v,
 						}
 
 						local osTime = time.iso8601_to_os_time(friend.lastSeen)
@@ -1795,7 +1798,7 @@ function home()
 						})
 
 						local format
-						
+
 						if units == "s" then
 							format = loc("%ds ago", "time elapsed in days, where %d is the number of days")
 						elseif units == "m" then
@@ -1861,7 +1864,7 @@ function home()
 							addFriendsCell.onPress = function(self)
 								Client:HapticFeedback()
 							end
-			
+
 							addFriendsCell.onRelease = function(self)
 								Menu:ShowFriends()
 							end
@@ -2069,11 +2072,11 @@ function home()
 			})
 			title:setParent(cell)
 
-			cell.Height = title.Height 
-			+ (category.cellSize or 100) 
-			+ CONFIG.SPACE_ABOVE_CATEGORY_TITLE 
-			+ CONFIG.SPACE_BELLOW_CATEGORY_TITLE
-			+ CONFIG.SPACE_BELLOW_CATEGORY_CONTENT
+			cell.Height = title.Height
+				+ (category.cellSize or 100)
+				+ CONFIG.SPACE_ABOVE_CATEGORY_TITLE
+				+ CONFIG.SPACE_BELLOW_CATEGORY_TITLE
+				+ CONFIG.SPACE_BELLOW_CATEGORY_CONTENT
 
 			cell.title = title
 
@@ -2095,11 +2098,11 @@ function home()
 			})
 			title:setParent(cell)
 
-			cell.Height = title.Height 
-			+ (category.cellSize or 100) 
-			+ CONFIG.SPACE_ABOVE_CATEGORY_TITLE 
-			+ CONFIG.SPACE_BELLOW_CATEGORY_TITLE
-			+ CONFIG.SPACE_BELLOW_CATEGORY_CONTENT
+			cell.Height = title.Height
+				+ (category.cellSize or 100)
+				+ CONFIG.SPACE_ABOVE_CATEGORY_TITLE
+				+ CONFIG.SPACE_BELLOW_CATEGORY_TITLE
+				+ CONFIG.SPACE_BELLOW_CATEGORY_CONTENT
 
 			cell.title = title
 
@@ -2256,8 +2259,7 @@ function home()
 
 							local infoWidth = math.max(usernameWidth, editAvatarBtn.Width)
 
-							local infoHeight =
-								math.max(usernameHeight + editAvatarBtn.Height + padding)
+							local infoHeight = math.max(usernameHeight + editAvatarBtn.Height + padding)
 
 							local avatarWidth = CONFIG.PROFILE_CELL_AVATAR_WIDTH
 
@@ -2272,14 +2274,14 @@ function home()
 							local previousAvatarCameraX = avatarCameraX
 							avatarCameraX = padding + avatarWidth * 0.5
 
-							editAvatarBtn.pos = { 
+							editAvatarBtn.pos = {
 								avatarTransparentFrame.pos.X - editAvatarBtn.Width,
-								padding * 3
+								padding * 3,
 							}
 
-							usernameFrame.pos = { 
-								avatarTransparentFrame.pos.X - usernameFrame.Width - padding, 
-								editAvatarBtn.pos.Y + editAvatarBtn.Height + theme.paddingTiny
+							usernameFrame.pos = {
+								avatarTransparentFrame.pos.X - usernameFrame.Width - padding,
+								editAvatarBtn.pos.Y + editAvatarBtn.Height + theme.paddingTiny,
 							}
 
 							if editUsernameBtn then
@@ -2401,11 +2403,13 @@ function home()
 			local content = ui:frame({ color = Color(0, 0, 0) })
 
 			local iconSize = 36
-			icon = ui:frame({ image = {
-				data = Data:FromBundle(icon or "images/blip-logo.png"),
-				alpha = true,
-				filtering = true,
-			} })
+			icon = ui:frame({
+				image = {
+					data = Data:FromBundle(icon or "images/blip-logo.png"),
+					alpha = true,
+					filtering = true,
+				},
+			})
 			icon.Width = iconSize
 			icon.Height = iconSize
 			icon:setParent(content)
