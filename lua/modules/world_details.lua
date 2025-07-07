@@ -4,6 +4,7 @@ local TEXT_COLOR = Color(200, 200, 200)
 
 mod.createModalContent = function(_, config)
 	local api = require("api")
+	local badgeModal = require("badge_modal")
 	local loc = require("localize")
 	local modal = require("modal")
 	local theme = require("uitheme").current
@@ -122,6 +123,17 @@ mod.createModalContent = function(_, config)
 
 				badges.createCell.onRelease = function(_)
 					-- show badge creation form in the world details modal
+					badgeModalContent = badgeModal:createModalContent({
+						uikit = ui,
+						mode = "create",
+						worldId = world.id,
+					})
+					local m = content:getModalIfContentIsActive()
+					if m ~= nil then
+						m:push(badgeModalContent)
+					else
+						print("❌ no modal found")
+					end
 				end
 			end
 			return badges.createCell
