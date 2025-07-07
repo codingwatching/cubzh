@@ -471,8 +471,12 @@ mod.getCreations = function(self, config, callback)
 		-- print(res.Body:ToString())
 
 		for _, v in ipairs(items.creations) do
-			if v.created then v.created = time.iso8601_to_os_time(v.created) end
-			if v.updated then v.updated = time.iso8601_to_os_time(v.updated) end
+			if v.created then
+				v.created = time.iso8601_to_os_time(v.created)
+			end
+			if v.updated then
+				v.updated = time.iso8601_to_os_time(v.updated)
+			end
 			if v.likes ~= nil then
 				v.likes = math.floor(v.likes)
 			else
