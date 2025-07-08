@@ -439,6 +439,448 @@ creations.createModalContent = function(_, config)
 		return newContent
 	end
 
+	-- step that's used to adjust scale and rotation of imported model
+	functions.setupModelContent = function(what, model)
+		local content = modal:createContent()
+		content.title = "New 3D Model"
+		content.icon = "✨"
+
+		local node = ui:frame()
+		content.node = node
+
+		local btnNext = ui:buttonPositive({ content = "It looks good!", padding = theme.padding })
+		content.bottomCenter = { btnNext }
+
+		local modelAndAvatar = Object()
+
+		local callbacks = {}
+
+		local avatarObject = require("avatar"):get({ usernameOrId = Player.UserID, didLoad = function()
+			if callbacks.refreshPreview ~= nil then
+				callbacks.refreshPreview()
+			end
+		end })
+
+		-- adding a delay to make sure model is loaded before refreshing preview
+		Timer(0.3, function()
+			if callbacks.refreshPreview ~= nil then
+				callbacks.refreshPreview()
+			end
+		end)
+
+		-- this is used to occupy the space that's going to be taken by the model when rotating,
+		-- it's basically the same bounding box with a squarified base.
+		local modelCubeContainer = MutableShape()
+		modelCubeContainer:AddBlock(Color(255,255,255,0.3), 0, 0, 0)
+		modelCubeContainer.Pivot:Set(0.5, 0.5, 0.5)
+		modelCubeContainer.IsHidden = true
+
+		avatarObject:SetParent(modelAndAvatar)
+		model:SetParent(modelAndAvatar)
+		modelCubeContainer:SetParent(modelAndAvatar)
+
+		local modelOffsetRotation = Rotation(0, 0, 0)
+		model.Scale = 1
+		
+		local box = Box()
+		box:Fit(model, { recurse = true, localBox = true })
+		if model.Pivot ~= nil then
+			model.Pivot = Number3(box.Center.X, box.Center.Y, box.Center.Z)
+		end
+
+		model.Scale = 10
+
+		local preview = ui:createShape(modelAndAvatar, { spherized = false, enforceRatio = true })
+		preview:setParent(node)
+
+		callbacks.updatePositions = function()
+			local box = Box()
+			box:Fit(model, { recurse = true, localBox = true })
+			local modelDiameter = math.sqrt(box.Size.X * box.Size.X + box.Size.Z * box.Size.Z)
+			local modelRadius = modelDiameter * 0.5
+			local modelHeight = box.Size.Y
+
+			modelCubeContainer.Scale = {
+				math.max(box.Size.X, box.Size.Z),
+				box.Size.Y,
+				math.max(box.Size.X, box.Size.Z),
+			}
+
+			box:Fit(avatarObject, { recurse = true, localBox = true})
+			local avatarDiameter = math.sqrt(box.Size.X * box.Size.X + box.Size.Z * box.Size.Z)
+			local avatarRadius = avatarDiameter * 0.5
+
+			local totalWidth = modelDiameter + avatarDiameter
+			
+			avatarObject.LocalPosition:Set(totalWidth * 0.5 - avatarRadius, 0, 0)
+			model.LocalPosition:Set(-totalWidth * 0.5 + modelRadius, modelHeight * 0.5, 0)
+			modelCubeContainer.LocalPosition:Set(model.LocalPosition)
+		end
+		
+		callbacks.updatePositions()
+
+		callbacks.refreshPreview = function()
+			local r = model.LocalRotation:Copy()
+			model.LocalRotation:Set(modelOffsetRotation)
+			callbacks.updatePositions()
+			preview:refresh()
+			model.LocalRotation = r
+			node:refresh()
+		end
+
+		local scaleInput = ui:createTextInput(
+			string.format("%.1f", model.Scale.X),
+			"", { textSize = "small", }
+		)
+		scaleInput:setParent(node)
+		scaleInput.Width = 70
+
+		local scaleInputLabel = ui:createText("Adjust scale for model to look as it should next to the avatar:", {
+			size = "small",
+			color = theme.textColor,
+			alignment = "center",
+		})
+		scaleInputLabel:setParent(node)
+
+		local scaleMin = 0.1
+		local scaleMax = 100
+		local scaleSlider = ui:slider({
+			min = scaleMin,
+			max = scaleMax,
+			step = 0.1,
+			defaultValue = model.Scale.X,
+			hapticFeedback = false,
+			button = ui:buttonNeutral({ content = "  ", padding = theme.padding }),
+			onValueChange = function(v)
+				model.Scale = v
+				scaleInput.Text = string.format("%.1f", v)
+				callbacks.refreshPreview()
+			end,
+		})
+		scaleSlider:setParent(node)
+
+		scaleInput.onSubmit = function(self)
+			local oldScale = model.Scale.X
+			local newScale
+			local ok = pcall(function()
+				newScale = tonumber(self.Text)
+			end)
+			if ok and type(newScale) == "number" then
+				newScale = math.max(0, newScale)
+				scaleSlider:setValue(math.min(scaleMax, math.max(scaleMin, newScale)))
+				model.Scale = newScale
+				self.Text = string.format("%.1f", newScale)
+			else
+				self.Text = string.format("%.1f", oldScale)
+			end
+			callbacks.refreshPreview()
+		end
+
+		local rotationInputLabel = ui:createText("Adjust rotation for model to face same direction as avatar:", {
+			size = "small",
+			color = theme.textColor,
+			alignment = "center",
+		})
+		rotationInputLabel:setParent(node)
+
+		local rXSlider = ui:slider({ min = 0, max = 270, step = 90, defaultValue = 0, hapticFeedback = true,
+			button = ui:buttonNeutral({ content = "X", padding = theme.padding }),
+			onValueChange = function(v)
+				modelOffsetRotation.X = math.rad(v)
+				callbacks.refreshPreview()
+			end,
+		})
+		rXSlider:setParent(node)
+
+		local rYSlider = ui:slider({ min = 0, max = 270, step = 90, defaultValue = 0, hapticFeedback = true,
+			button = ui:buttonNeutral({ content = "Y", padding = theme.padding }),
+			onValueChange = function(v)
+				modelOffsetRotation.Y = math.rad(v)
+				callbacks.refreshPreview()
+			end,
+		})
+		rYSlider:setParent(node)
+
+		local rZSlider = ui:slider({ min = 0, max = 270, step = 90, defaultValue = 0, hapticFeedback = true,
+			button = ui:buttonNeutral({ content = "Z", padding = theme.padding }),
+			onValueChange = function(v)
+				modelOffsetRotation.Z = math.rad(v)
+				callbacks.refreshPreview()
+			end,
+		})
+		rZSlider:setParent(node)
+
+		node.refresh = function(self)
+			local previewHeight = 200
+			scaleInputLabel.object.MaxWidth = (self.Width - theme.padding * 2)
+			rotationInputLabel.object.MaxWidth = (self.Width - theme.padding * 2)
+
+			local scaleControlsHeight = math.max(scaleSlider.Height, scaleInput.Height)
+
+			local modalPadding = theme.paddingBig
+			
+			self.Height = previewHeight 
+			+ scaleInputLabel.Height 
+			+ scaleSlider.Height 
+			+ rotationInputLabel.Height 
+			+ rXSlider.Height 
+			+ theme.padding * 4
+			+ modalPadding * 3
+
+			local w = self.Width - modalPadding * 2
+
+			scaleSlider.Width = w - scaleInput.Width - modalPadding
+
+			preview.Height = previewHeight
+			if preview.Width > w  then
+				preview.Width = w 
+			end
+
+			rXSlider.Width = w * 0.3
+			rYSlider.Width = w * 0.3
+			rZSlider.Width = w * 0.3
+
+			local y = theme.padding
+			
+			rXSlider.pos = { modalPadding, y }
+			rYSlider.pos = { self.Width * 0.5 - rYSlider.Width * 0.5, y }
+			rZSlider.pos = { self.Width - modalPadding - rZSlider.Width, y }
+			y += rXSlider.Height + theme.padding
+
+			rotationInputLabel.pos = { modalPadding, y } 
+			y += rotationInputLabel.Height + theme.padding
+
+			scaleSlider.pos = { modalPadding, y + scaleControlsHeight * 0.5 - scaleSlider.Height * 0.5 }
+			scaleInput.pos = { scaleSlider.pos.X + scaleSlider.Width + theme.padding, y + scaleControlsHeight * 0.5 - scaleInput.Height * 0.5 }
+			y += scaleControlsHeight + theme.padding
+
+			scaleInputLabel.pos = { modalPadding, y }
+			y += scaleInputLabel.Height + modalPadding
+
+			preview.pos = { self.Width * 0.5 - preview.Width * 0.5, y + previewHeight * 0.5 - preview.Height * 0.5 }
+		end
+
+		content.idealReducedContentSize = function(content, width, height)
+			content.Width = math.min(600, width)
+			content.Height = math.min(500, height)
+			content:refresh()
+			return Number2(content.Width, content.Height)
+		end
+
+		local r = Rotation(0, 0, 0)
+		model.Tick = function(self, dt)
+			r = r * Rotation(0, dt, 0)
+			model.LocalRotation =  r * modelOffsetRotation
+			avatarObject.LocalRotation = r
+		end
+
+		content.willResignActive = function(self)
+			model.Tick = nil
+		end
+
+		return content
+	end
+
+
+	functions.uploadFileForNewContent = function(what, grid)
+		local newContent = modal:createContent()
+
+		local maxFileSizeInMB = 10
+
+		local btnUploadText = "Upload"
+		local primaryText = ""
+		local secondaryText = ""
+
+		if what == "model" then
+			newContent.title = "New 3D Model"
+			primaryText = "Upload a .glb file to create a 3D model."
+			secondaryText = "⚠️ Please ensure you have the rights to use the model you upload. Do not upload copyrighted content without permission. Content may be removed upon claim received from rightful owner of file or IP."
+		else
+			error("unknown file upload content type")
+		end
+
+		newContent.icon = "✨"
+
+		local node = ui:createNode()
+
+		local btnUpload = ui:buttonNeutral({ content = btnUploadText, padding = theme.padding })
+		newContent.bottomCenter = { btnUpload }
+
+		local loadingAnimation = require("ui_loading_animation"):create({ ui = ui })
+		loadingAnimation:setParent(node)
+		loadingAnimation:hide()
+
+		local errMessage = ui:createText("Sample error message that's using\nthree\nlines.", {
+			color = theme.colorNegative,
+			alignment = "center",
+			size = "small",
+		})
+		errMessage:setParent(node)
+		errMessage:hide()
+
+		local primary
+		if primaryText ~= "" then
+			primary = ui:createText(primaryText, {
+				color = theme.textColor,
+				alignment = "center",
+			})
+			primary:setParent(node)
+		end
+
+		local secondary
+		if secondaryText ~= "" then
+			secondary = ui:createText(secondaryText, {
+				color = theme.textColor,
+				alignment = "center",
+				size = "small",
+			})
+			secondary:setParent(node)
+		end
+
+		local function showError(errMsg)
+			errMessage.Text = errMsg
+			errMessage:show()
+			if primary ~= nil then primary:hide() end
+			if secondary ~= nil then secondary:hide() end
+			loadingAnimation:hide()
+			btnUpload:enable()
+			node:refresh()
+		end
+
+		local function showLoading()
+			errMessage:hide()
+			if primary ~= nil then primary:hide() end
+			if secondary ~= nil then secondary:hide() end
+			loadingAnimation:show()
+			btnUpload:disable()
+			node:refresh()
+		end
+
+		local function showTexts()
+			if primary ~= nil then primary:show() end
+			if secondary ~= nil then secondary:show() end
+			errMessage:hide()
+			loadingAnimation:hide()
+			btnUpload:enable()
+			node:refresh()
+		end
+
+		btnUpload.onRelease = function()
+			btnUpload:disable()
+			File:OpenAndReadAll(function(success, fileData)
+				local errMsg = ""
+				if success and fileData ~= nil then
+					local mb = fileData.Length / 1000000
+					if mb > maxFileSizeInMB then
+						errMsg = string.format("File size is too large (%.2fMB).\n(max size is %dMB)", mb, maxFileSizeInMB)
+					end
+				end
+
+				if errMsg ~= "" then
+					showError(errMsg)
+					return
+				end
+
+				if fileData == nil then
+					-- no error, user cancelled file selection
+					showTexts()
+					return
+				end
+
+				showLoading()
+
+				local function upload()
+					api:uploadItemFile(what, fileData, function(err, response)
+						if err ~= nil then
+							showError(err.message .. " CODE: " ..err.statusCode)
+							return
+						end
+						-- print("FILE UPLOADED:", response.filename)
+						showTexts()
+					end)
+				end
+
+				if what == "model" then
+					Object:Load(fileData, function(o)
+						if o == nil then
+							showError("can't load model file")
+							return
+						end
+
+						if typeof(o) ~= "Mesh" and typeof(o) ~= "Object" then
+							showError("can't load Mesh from file")
+							return
+						end
+						-- print("MODEL LOADED LOCALLY")
+
+						-- upload()
+						local m = newContent:getModalIfContentIsActive()
+						if m ~= nil then
+							newContent:pushAndRemoveSelf(functions.setupModelContent(what, o))
+						end
+					end)
+				else
+					showError("item type not supported")
+					return
+				end
+			end)
+		end
+
+		node._w = 300
+		node._h = 300
+		node._width = function(self) return self._w end
+		node._height = function(self) return self._h end
+		node._setWidth = function(self, v) self._w = v end
+		node._setHeight = function(self, v) self._h = v end
+		newContent.node = node
+
+		node.refresh = function(self)
+			self.Height = theme.padding
+			errMessage.object.MaxWidth = (self.Width - theme.padding * 2)
+			
+			if primary ~= nil then
+				primary.object.MaxWidth = (self.Width - theme.padding * 2)
+				self.Height = self.Height + primary.Height + theme.padding
+			end
+
+			if secondary ~= nil then
+				secondary.object.MaxWidth = (self.Width - theme.padding * 2)
+				self.Height = self.Height + secondary.Height + theme.padding
+			end
+
+			self.Height = math.max(self.Height, errMessage.Height + theme.padding * 2, loadingAnimation.Height + theme.padding * 2)
+
+			errMessage.pos = { 
+				self.Width * 0.5 - errMessage.Width * 0.5,
+				self.Height * 0.5 - errMessage.Height * 0.5
+			}
+
+			loadingAnimation.pos = { 
+				self.Width * 0.5 - loadingAnimation.Width * 0.5,
+				self.Height * 0.5 - loadingAnimation.Height * 0.5
+			}
+			
+			local y = self.Height
+			if primary ~= nil then
+				y -= primary.Height + theme.padding
+				primary.pos = {  self.Width * 0.5 - primary.Width * 0.5, y }
+			end
+
+			if secondary ~= nil then
+				y -= secondary.Height + theme.padding
+				secondary.pos = {  self.Width * 0.5 - secondary.Width * 0.5, y }
+			end
+		end
+
+		newContent.idealReducedContentSize = function(content, width, height)
+			content.Width = math.min(600, width)
+			content.Height = math.min(500, height)
+			content:refresh()
+			return Number2(content.Width, content.Height)
+		end
+
+		return newContent
+	end
 
 	functions.createPickCreationTypeContent = function()
 		local content = modal:createContent()
@@ -519,7 +961,10 @@ creations.createModalContent = function(_, config)
 				description = loc("A 3D object with a texture applied to it. Blip only supports .glb file uploads for this category, for now."),
 				comingSoon = true,
 				callback = function()
-					Menu:ShowAlert({ message = "Coming soon!" }, System)
+					local m = content:getModalIfContentIsActive()
+					if m ~= nil then
+						m:push(functions.uploadFileForNewContent("model", grid))
+					end
 				end
 			},
 			{

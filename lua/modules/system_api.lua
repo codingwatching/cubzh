@@ -707,6 +707,23 @@ moduleMT.createItem = function(self, data, callback)
 	return req
 end
 
+moduleMT.uploadItemFile = function(self, fileType, fileData, callback)
+	local url = self.kApiAddr .. "/items/file/" .. fileType
+	-- print("UPLOADING FILE TO:", url)
+	local req = System:HttpPost(url, fileData, function(res)
+		if res.StatusCode ~= 200 then
+			callback(api:error(res.StatusCode, "could not upload item file"))
+			return
+		end
+		local response, err = JSON:Decode(res.Body)
+		if err ~= nil then
+			callback(api:error(res.StatusCode, "could not decode response"), nil)
+			return
+		end
+		callback(nil, response) -- success
+	end)
+end
+
 -- api:patchItem("item-id", {description = "banana"}, function(err, item))
 moduleMT.patchItem = function(self, itemID, data, callback)
 	local url = self.kApiAddr .. "/itemdrafts/" .. itemID
