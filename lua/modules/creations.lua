@@ -44,11 +44,17 @@ creations.createModalContent = function(_, config)
 	functions.createNewContent = function(what, original, grid, originalCategory)
 		local newContent = modal:createContent()
 
-		if what == "item" or what == "wearable" then
+		if what == "item" then
 			if original then
 				newContent.title = "Duplicate Item"
 			else
 				newContent.title = "New Item"
+			end
+		elseif what == "wearable" then
+			if original then
+				newContent.title = "Duplicate Equipment"
+			else
+				newContent.title = "New Equipment"
 			end
 		else
 			newContent.title = "New World"
@@ -121,14 +127,17 @@ creations.createModalContent = function(_, config)
 		local nextTemplateBtn
 		local previousTemplateBtn
 
-		local input = ui:createTextInput("", inputLabel)
-		input:setParent(node)
-
 		local text = ui:createText(textWithEmptyInput, theme.textColor)
 		text:setParent(node)
 
+		local input = ui:createTextInput("", inputLabel, {
+			-- add margin to see text and button below
+			bottomMargin = btnCreate.Height + text.Height + theme.padding * 3,
+		})
+		input:setParent(node)
+
 		if #categories > 1 then
-			nextTemplateBtn = ui:buttonNeutral({ content = "➡️" })
+			nextTemplateBtn = ui:buttonSecondary({ content = "➡️" })
 			nextTemplateBtn:setParent(node)
 			nextTemplateBtn.onRelease = function()
 				currentCategory = currentCategory + 1
@@ -145,7 +154,7 @@ creations.createModalContent = function(_, config)
 				templatePreview:setShape(bundle:Shape(categoryShapes[currentCategory]))
 			end
 
-			previousTemplateBtn = ui:buttonNeutral({ content = "⬅️" })
+			previousTemplateBtn = ui:buttonSecondary({ content = "⬅️" })
 			previousTemplateBtn:setParent(node)
 			previousTemplateBtn.onRelease = function()
 				currentCategory = currentCategory - 1
@@ -378,26 +387,26 @@ creations.createModalContent = function(_, config)
 		newContent.node = node
 
 		node.refresh = function(self)
-			local extraBottomPadding = input.Height
 			text.object.MaxWidth = (self.Width - theme.padding * 2)
 			input.Width = self.Width
+
+			input:setBottomMargin(btnCreate.Height + text.Height + theme.padding * 3)
 
 			local availableHeightForPreview = self.Height
 				- text.Height
 				- input.Height
-				- theme.padding * 2
-				- extraBottomPadding
+				- theme.padding * 3
 			local availableWidthForPreview = self.Width
 			if #categories > 1 then
 				availableWidthForPreview = availableWidthForPreview
 					- previousTemplateBtn.Width
 					- nextTemplateBtn.Width
-					- theme.padding * 2
+					- theme.padding * 3
 			end
 
 			local availableSizeForPreview = math.min(200, availableHeightForPreview, availableWidthForPreview)
 
-			self.Height = availableSizeForPreview + input.Height + text.Height + theme.padding * 2 + extraBottomPadding
+			self.Height = availableSizeForPreview + input.Height + text.Height + theme.padding * 2
 
 			templatePreview.Height = availableSizeForPreview
 			templatePreview.pos =
@@ -423,10 +432,13 @@ creations.createModalContent = function(_, config)
 			return Number2(content.Width, content.Height)
 		end
 
-		input:focus()
+		if not Client.IsMobile then
+			input:focus()
+		end
 
 		return newContent
 	end
+
 
 	functions.createPickCreationTypeContent = function()
 		local content = modal:createContent()
