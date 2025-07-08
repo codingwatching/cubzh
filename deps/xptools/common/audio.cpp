@@ -352,10 +352,16 @@ bool Sound::init(AudioEngine * const engine, const std::string& soundName) {
         return false;
     }
 
-    ma_uint64 nbFrames;
-    result = ma_data_source_get_length_in_pcm_frames(&_ma_sound, &nbFrames);
-    if (result != MA_SUCCESS) {
+    ma_uint64 nbFrames = 0;
+
+    if (isOgg()) {
         nbFrames = static_cast<ma_uint64>(this->getNbSamplesFromOggFile());
+    } else {
+        result = ma_data_source_get_length_in_pcm_frames(&_ma_sound, &nbFrames);
+        if (result != MA_SUCCESS) {
+            vxlog_error("[vx::audio::Sound] failed to read number of sound frames.");
+            return false;
+        }
     }
 
     _originalDuration = static_cast<float>(nbFrames) / static_cast<float>(_sampleRate);
@@ -660,25 +666,64 @@ void Sound::setPosition(const float x, const float y, const float z) {
     ma_sound_set_position(&_ma_sound, x, y, z);
 }
 
-ma_uint32 Sound::getNbSamplesFromOggFile() {
+bool Sound::isOgg() {
     bool inCache = false;
 
-    if (_soundName.rfind("cache/_audio_", 0) == 0) {
+    std::string soundName = _soundName;
+    if (soundName.rfind("cache/_audio_", 0) == 0) {
         inCache = true;
     } else {
-        _soundName = "audio/" + _soundName;
+        soundName = "audio/" + _soundName;
     }
 
     FILE *fd;
 
     if (inCache) {
-        fd = ::vx::fs::openStorageFile(_soundName.c_str());
+        fd = ::vx::fs::openStorageFile(soundName.c_str());
     } else {
-        fd = ::vx::fs::openBundleFile(_soundName.c_str());
+        fd = ::vx::fs::openBundleFile(soundName.c_str());
     }
 
     if (fd == nullptr) {
-        return 0.0f;
+        return false;
+    }
+
+    unsigned char header[4];
+    size_t bytes_read = fread(header, 1, 4, fd);
+    fclose(fd);
+
+    if (bytes_read != 4) {
+        return false;
+    }
+
+    // Check for "OggS" magic bytes
+    if (memcmp(header, "OggS", 4) == 0) {
+        return true;
+    }
+
+    return false;
+}
+
+ma_uint32 Sound::getNbSamplesFromOggFile() {
+    bool inCache = false;
+
+    std::string soundName = _soundName;
+    if (soundName.rfind("cache/_audio_", 0) == 0) {
+        inCache = true;
+    } else {
+        soundName = "audio/" + _soundName;
+    }
+
+    FILE *fd;
+
+    if (inCache) {
+        fd = ::vx::fs::openStorageFile(soundName.c_str());
+    } else {
+        fd = ::vx::fs::openBundleFile(soundName.c_str());
+    }
+
+    if (fd == nullptr) {
+        return 0;
     }
 
     const size_t headerSize = 27;

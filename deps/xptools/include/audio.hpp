@@ -218,7 +218,10 @@ public:
     
     ///
     void setPosition(const float x, const float y, const float z);
-    
+
+    ///
+    bool isOgg();
+
 private:
     /// reads the file and returns the number of samples
     /// /!\ only works with ogg files
