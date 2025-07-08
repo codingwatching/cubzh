@@ -19,7 +19,7 @@ SCROLL_DEFAULT_RIGIDITY = 0.99
 SCROLL_DRAG_EPSILON = 10
 SCROLL_LOAD_MARGIN = 50
 SCROLL_OUT_OF_BOUNDS_COUNTER_SPEED = 20
-SCROLL_SPEED_EPSILON = 1
+SCROLL_SPEED_EPSILON = 5 -- scroll stops moving below this value
 SCROLL_TIME_TO_DEFUSE_SPEED = 0.05
 SCROLL_UNLOAD_MARGIN = 100
 UI_ALERT_DEPTH = -950
@@ -3392,7 +3392,7 @@ function createUI(system)
 
 					setScrollPosition(p)
 					refresh = true
-				else
+				elseif cappedPosition ~= scrollPosition then
 					cappedPosition = node:capPosition(scrollPosition)
 					if cappedPosition ~= scrollPosition then
 						local speed = (cappedPosition - scrollPosition) * SCROLL_OUT_OF_BOUNDS_COUNTER_SPEED
@@ -3404,6 +3404,9 @@ function createUI(system)
 				if refresh then
 					node:refresh()
 					refresh = false
+					if math.abs(cappedPosition - scrollPosition) < 0.1 then
+						scrollPosition = cappedPosition
+					end
 				end
 			end
 		end, { system = system == true and System or nil, topPriority = true })
