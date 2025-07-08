@@ -19,7 +19,7 @@ SCROLL_DEFAULT_RIGIDITY = 0.99
 SCROLL_DRAG_EPSILON = 10
 SCROLL_LOAD_MARGIN = 50
 SCROLL_OUT_OF_BOUNDS_COUNTER_SPEED = 20
-SCROLL_SPEED_EPSILON = 1
+SCROLL_SPEED_EPSILON = 5 -- scroll stops moving below this value
 SCROLL_TIME_TO_DEFUSE_SPEED = 0.05
 SCROLL_UNLOAD_MARGIN = 100
 UI_ALERT_DEPTH = -950
@@ -1030,42 +1030,101 @@ function createUI(system)
 		return node
 	end
 
+	-- local function setDebugBox(object, box, thickness, color)
+	-- 	if object == nil then return end
+
+	-- 	if thickness == nil then
+	-- 		thickness = 0.2
+	-- 	end
+
+	-- 	if object.debugBoxLines == nil then
+	-- 		object.debugBoxLines = {}
+	-- 		print("object.debugBoxLines", object.debugBoxLines)
+	-- 	end
+
+	-- 	local lines = object.debugBoxLines
+	
+	-- 	if #lines == 0 then
+	-- 		local oneBlock = MutableShape()
+	-- 		oneBlock:AddBlock(Color.White, 0, 0, 0)
+	-- 		_setupUIObject(oneBlock)
+	-- 		for i=1,12 do
+	-- 			lines[i] = Shape(oneBlock)
+	-- 			lines[i].Pivot = {0,0,0}
+	-- 			lines[i].Scale = thickness
+	-- 			lines[i].Physics = PhysicsMode.Disabled
+	-- 		end
+	-- 	end
+	-- 	for i=1,12,3 do
+	-- 		lines[i]:SetParent(object)
+	-- 		lines[i + 1]:SetParent(object)
+	-- 		lines[i + 2]:SetParent(object)
+	
+	-- 		lines[i].LocalScale.X = box.Max.X - box.Min.X
+	-- 		lines[i + 1].LocalScale.Y = box.Max.Y - box.Min.Y
+	-- 		lines[i + 2].LocalScale.Z = box.Max.Z - box.Min.Z
+	
+	-- 		if color ~= nil then
+	-- 			lines[i].Palette[1].Color = color
+	-- 			lines[i + 1].Palette[1].Color = color
+	-- 			lines[i + 2].Palette[1].Color = color
+	-- 		end
+	-- 	end
+		
+	-- 	lines[1].LocalPosition = box.Min
+	-- 	lines[2].LocalPosition = box.Min
+	-- 	lines[3].LocalPosition = box.Min
+	
+	-- 	lines[4].LocalPosition = { box.Min.X, box.Max.Y, box.Min.Z }
+	-- 	lines[5].LocalPosition = { box.Max.X, box.Min.Y, box.Min.Z }
+	-- 	lines[6].LocalPosition = { box.Max.X, box.Min.Y, box.Min.Z }
+	
+	-- 	lines[7].LocalPosition = { box.Min.X, box.Min.Y, box.Max.Z }
+	-- 	lines[8].LocalPosition = { box.Min.X, box.Min.Y, box.Max.Z }
+	-- 	lines[9].LocalPosition = { box.Min.X, box.Max.Y, box.Min.Z }
+	
+	-- 	lines[10].LocalPosition = { box.Min.X, box.Max.Y, box.Max.Z }
+	-- 	lines[11].LocalPosition = { box.Max.X, box.Min.Y, box.Max.Z }
+	-- 	lines[12].LocalPosition = { box.Max.X, box.Max.Y, box.Min.Z }
+	-- end
+
 	local function _refreshShapeNode(node)
 		if node.shape == nil then
 			return
 		end
+		local zero = Number3.Zero
 
-		if node.shape:GetParent() == nil then
-			node.pivot:AddChild(node.shape)
+		node.shape:SetParent(node.pivot)
+
+		node.shape.Scale = 1
+		node.pivot.Scale = 1
+
+		if node.shape.Pivot ~= nil then
+			node.shape.Pivot:Set(0,0,0)
 		end
-		node.shape.LocalScale = 1
-
-		-- reset values for intermediary calculations, to use world AABB
-		local backupScale = node.object.LocalScale:Copy()
-		node.object.LocalScale = 1 -- node scale applied from node.Width/Height/Depth setters
-		node.shape.Position = Number3.Zero
-		node.shape.Rotation = Number3.Zero
-		node.pivot.LocalPosition = Number3.Zero
-		node.pivot.LocalRotation = Number3.Zero
+		node.shape.LocalRotation:Set(zero)
+		node.shape.LocalPosition:Set(zero)
 
 		local aabb = Box()
-		aabb:Fit(node.shape, { recurse = true })
+		aabb:Fit(node.shape, { recurse = true, localBox = true })
 
-		node.object.LocalScale = backupScale -- restore node scale
+		-- if node.pivot.debugObject == nil then
+		-- 	node.pivot.debugObject = Object()
+		-- 	_setupUIObject(node.pivot.debugObject)
+		-- 	node.pivot.debugObject:SetParent(node.pivot)
+		-- end
+		-- setDebugBox(node.pivot.debugObject, aabb, 0.5, Color.Green)
 
 		node._aabbWidth = aabb.Size.X
 		node._aabbHeight = aabb.Size.Y
 		node._aabbDepth = aabb.Size.Z
 
 		if node._config.spherized then
-			node._diameter = math.sqrt(node._aabbWidth ^ 2 + node._aabbHeight ^ 2 + node._aabbDepth ^ 2)
+			node._diameter = aabb.Size.Length
 		end
 
-		-- center Shape within node.pivot, w/o modifying shape.Pivot,
-		-- as it could be important for shape's children placement.
-
 		if node._config.doNotFlip then
-			node.pivot.LocalRotation:Set(0, 0, 0)
+			node.pivot.LocalRotation:Set(zero)
 		else
 			node.pivot.LocalRotation:Set(0, math.pi, 0) -- shape's front facing camera
 		end
@@ -1075,9 +1134,11 @@ function createUI(system)
 		else
 			node.pivot.LocalPosition:Set(node._aabbWidth * 0.5, node._aabbHeight * 0.5, node._aabbDepth * 0.5)
 		end
-
+		
 		node.shape.LocalPosition:Set(-aabb.Center + node._config.offset)
-		node.shape.LocalRotation:Set(Number3.Zero)
+		if node.pivot.debugObject ~= nil then
+			node.pivot.debugObject.LocalPosition:Set(-aabb.Center)
+		end
 	end
 
 	local function _textInputRefreshColor(node)
@@ -1550,6 +1611,7 @@ function createUI(system)
 			doNotFlip = false,
 			offset = Number3.Zero,
 			perBlockCollisions = false,
+			enforceRatio = false, -- when not spherized, keeps ratio between width and height
 		}
 
 		config = conf:merge(defaultConfig, config)
@@ -1622,7 +1684,11 @@ function createUI(system)
 				if self._aabbWidth == 0 then
 					return
 				end
-				self.object.LocalScale.X = newWidth / self._aabbWidth
+				if config.enforceRatio then
+					self.object.LocalScale = newWidth / self._aabbWidth
+				else
+					self.object.LocalScale.X = newWidth / self._aabbWidth
+				end
 			end
 		end
 
@@ -1639,7 +1705,11 @@ function createUI(system)
 				if self._aabbHeight == 0 then
 					return
 				end
-				self.object.LocalScale.Y = newHeight / self._aabbHeight
+				if config.enforceRatio then
+					self.object.LocalScale = newHeight / self._aabbHeight
+				else
+					self.object.LocalScale.Y = newHeight / self._aabbHeight
+				end
 			end
 		end
 
@@ -1675,7 +1745,7 @@ function createUI(system)
 			shape._node = self
 
 			node.pivot:AddChild(shape)
-			shape.LocalPosition = Number3.Zero
+			shape.LocalPosition:Set(0, 0, 0)
 
 			if doNotRefresh ~= true then
 				self:refresh()
@@ -2319,6 +2389,10 @@ function createUI(system)
 		end
 		node.onUp = nil
 		node.onDown = nil
+
+		node.setBottomMargin = function(self, margin)
+			config.bottomMargin = margin
+		end
 
 		node.focus = function(self)
 			if self.state == State.Focused then
@@ -3392,7 +3466,7 @@ function createUI(system)
 
 					setScrollPosition(p)
 					refresh = true
-				else
+				elseif cappedPosition ~= scrollPosition then
 					cappedPosition = node:capPosition(scrollPosition)
 					if cappedPosition ~= scrollPosition then
 						local speed = (cappedPosition - scrollPosition) * SCROLL_OUT_OF_BOUNDS_COUNTER_SPEED
@@ -3404,6 +3478,9 @@ function createUI(system)
 				if refresh then
 					node:refresh()
 					refresh = false
+					if math.abs(cappedPosition - scrollPosition) < 0.1 then
+						scrollPosition = cappedPosition
+					end
 				end
 			end
 		end, { system = system == true and System or nil, topPriority = true })

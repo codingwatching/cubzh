@@ -1263,20 +1263,20 @@ void transform_utils_box_fit_recurse(Transform *t,
         child = (Transform *)doubly_linked_list_node_pointer(n);
 
         transform_refresh(child, false, false); // refresh mtx for intra-frame calculations
+        Matrix4x4 child_mtx = mtx;
+        matrix4x4_op_multiply(&child_mtx, child->mtx);
 
         const TransformType type = transform_get_type(child);
+
         if (type == ShapeTransform || type == MeshTransform) {
             if (type == ShapeTransform && applyTransaction) {
                 shape_apply_current_transaction((Shape *)child->ptr, true);
             }
 
-            Matrix4x4 child_mtx = mtx;
-            matrix4x4_op_multiply(&child_mtx, child->mtx);
-
             const Box model = type == ShapeTransform ? shape_get_model_aabb((Shape *)child->ptr) :
-                              *mesh_get_model_aabb((Mesh *)child->ptr);
+            *mesh_get_model_aabb((Mesh *)child->ptr);
             const float3 pivot = type == ShapeTransform ? shape_get_pivot((Shape *)child->ptr) :
-                                 mesh_get_pivot((Mesh *)child->ptr);
+            mesh_get_pivot((Mesh *)child->ptr);
             const float3 offset = { -pivot.x, -pivot.y, -pivot.z };
 
             Box aabb;
@@ -1287,10 +1287,9 @@ void transform_utils_box_fit_recurse(Transform *t,
             } else {
                 box_op_merge(inout_box, &aabb, inout_box);
             }
-
-            transform_utils_box_fit_recurse(child, child_mtx, inout_box, applyTransaction, depth, maxDepth);
         }
 
+        transform_utils_box_fit_recurse(child, child_mtx, inout_box, applyTransaction, depth, maxDepth);
         n = doubly_linked_list_node_next(n);
     }
 }
