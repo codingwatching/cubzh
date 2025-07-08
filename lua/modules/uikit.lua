@@ -2320,6 +2320,10 @@ function createUI(system)
 		node.onUp = nil
 		node.onDown = nil
 
+		node.setBottomMargin = function(self, margin)
+			config.bottomMargin = margin
+		end
+
 		node.focus = function(self)
 			if self.state == State.Focused then
 				return
