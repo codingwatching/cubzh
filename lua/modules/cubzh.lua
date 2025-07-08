@@ -2356,7 +2356,7 @@ function home()
 								loadCell = category.loadCell,
 								unloadCell = category.unloadCell,
 								userdata = dataFetcher,
-								centerContent = true,
+								-- centerContent = true,
 							})
 
 							dataFetcher.scroll = scroll
