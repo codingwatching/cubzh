@@ -21,6 +21,8 @@ _statusCode(0),
 _headers(),
 _bytes(),
 _bytesLock(),
+_contentLoaded(0),
+_contentLength(0),
 _useLocalCache(false) {}
 
 HttpResponse::~HttpResponse() {}
@@ -88,12 +90,21 @@ HTTPStatus HttpResponse::getStatus() const {
     return HTTPStatus::UNKNOWN;
 }
 
+void HttpResponse::_parseHeaders() {
+    std::unordered_map<std::string, std::string>::iterator it = _headers.find("content-length");
+    if (it != _headers.end()) {
+        _contentLength = std::atoi(it->second.c_str());
+    }
+}
+
 void HttpResponse::setHeaders(std::unordered_map<std::string, std::string>&& value) {
     _headers = std::move(value);
+    _parseHeaders();
 }
 
 void HttpResponse::setHeaders(const std::unordered_map<std::string, std::string>& value) {
     _headers = value;
+    _parseHeaders();
 }
 
 const std::unordered_map<std::string, std::string>& HttpResponse::getHeaders() const {
@@ -102,6 +113,7 @@ const std::unordered_map<std::string, std::string>& HttpResponse::getHeaders() c
 
 void HttpResponse::appendBytes(const std::string& bytes) {
     std::lock_guard<std::mutex> lock(_bytesLock);
+    _contentLoaded += _bytes.size();
     _bytes.append(bytes);
 }
 
