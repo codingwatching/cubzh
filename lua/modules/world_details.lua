@@ -122,18 +122,21 @@ mod.createModalContent = function(_, config)
 				end
 
 				badges.createCell.onRelease = function(_)
-					-- show badge creation form in the world details modal
-					badgeModalContent = badgeModal:createModalContent({
-						uikit = ui,
-						mode = "create",
-						worldId = world.id,
-					})
-					local m = content:getModalIfContentIsActive()
-					if m ~= nil then
-						m:push(badgeModalContent)
-					else
-						print("❌ no modal found")
-					end
+					-- Temporary: display a "coming soon" modal
+					Menu:ShowAlert({ message = "Coming soon!" }, System)
+
+					-- -- show badge creation form in the world details modal
+					-- badgeModalContent = badgeModal:createModalContent({
+					-- 	uikit = ui,
+					-- 	mode = "create",
+					-- 	worldId = world.id,
+					-- })
+					-- local m = content:getModalIfContentIsActive()
+					-- if m ~= nil then
+					-- 	m:push(badgeModalContent)
+					-- else
+					-- 	print("❌ no modal found")
+					-- end
 				end
 			end
 			return badges.createCell
@@ -354,8 +357,6 @@ mod.createModalContent = function(_, config)
 						print("could not set world icon")
 						return
 					end
-
-					print("icon set!")
 
 					-- refresh the world's thumbnail in the UI
 					local req = api:getWorldThumbnail({

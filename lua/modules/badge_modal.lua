@@ -7,6 +7,8 @@ local mod = {}
 mod.createModalContent = function(_, config)
 	local modal = require("modal")
 	local theme = require("uitheme")
+	local loc = require("localize")
+	local system_api = require("system_api", System)
 
 	-- default config
 	local defaultConfig = {
@@ -43,7 +45,12 @@ mod.createModalContent = function(_, config)
 		constructNode = function()
 			local node = ui:createNode()
 
-			local privateFields = {}
+			local privateFields = {
+				-- badge creation form fields
+				iconData = nil,
+				tag = nil,
+				name = nil,
+			}
 
 			privateFields.scheduleRefresh = function()
 				if refreshTimer ~= nil then
@@ -120,26 +127,71 @@ mod.createModalContent = function(_, config)
 			iconMask:setParent(cell)
 			local iconArea = ui:frame({ color = Color(20, 20, 22) })
 			iconArea:setParent(iconMask)
-			local editIconBtn = ui:buttonSecondary({ content = "✏️ edit icon" })
+			local editIconBtn = ui:buttonSecondary({ content = "✏️" })
 			editIconBtn:setParent(cell)
 
-			-- Name
-			local nameEdit = ui:createTextInput(config.world.title, "Badge Name")
-			nameEdit:setParent(cell)
-			local editNameBtn = ui:buttonSecondary({ content = "✏️" })
-			editNameBtn:setParent(cell)
-
 			-- Tag
-			local tagEdit = ui:createTextInput(config.world.title, "Badge Tag")
+			local tagEdit = ui:createTextInput("", "Badge Tag")
 			tagEdit:setParent(cell)
-			local editTagBtn = ui:buttonSecondary({ content = "✏️" })
-			editTagBtn:setParent(cell)
+			local tagStatus = ui:createText("⚠️", theme.textColor)
+			tagStatus:setParent(cell)
+
+			-- Name
+			local nameEdit = ui:createTextInput("", "Badge Name")
+			nameEdit:setParent(cell)
 
 			-- Create Badge Button
-			local createBadgeBtn = ui:createButton("Create Badge")
+			local createBadgeBtn = ui:buttonPositive({ content = loc("Create Badge") })
 			createBadgeBtn:setParent(cell)
 
+			-- update tag status icon based on the tag value
+			privateFields.refreshTagStatusIcon = function()
+				if privateFields.tag ~= nil and privateFields.tag ~= "" then
+					tagStatus.Text = "✅"
+				else
+					tagStatus.Text = "⚠️"
+				end
+			end
+
+			-- Tag value has changed
+			tagEdit.onTextChange = function(self)
+				-- TODO: gaetan: should we prohibit spaces and special characters
+
+				-- store new value
+				privateFields.tag = self.Text
+
+				-- update tag status icon
+				privateFields:refreshTagStatusIcon()
+
+				-- update create button
+				node:refreshCreateButton()
+			end
+
+			-- Name value has changed
+			nameEdit.onTextChange = function(self)
+				privateFields.name = self.Text
+				node:refreshCreateButton()
+			end
+
+			node.refreshCreateButton = function()
+				-- refresh create button state
+				if privateFields.iconData ~= nil and privateFields.tag ~= nil and privateFields.tag ~= "" then
+					-- make button active
+					createBadgeBtn.disabled = false
+					-- TODO: update button color
+				else
+					-- make button inactive
+					createBadgeBtn.disabled = true -- not clickable
+					-- TODO: update button color
+				end
+			end
+
 			node.refresh = function(self)
+				-- update tag status icon
+				privateFields:refreshTagStatusIcon()
+
+				-- recompute the layout
+
 				-- scroll fills the entire modal content
 				scroll.Width = self.Width
 				scroll.Height = self.Height
@@ -155,9 +207,9 @@ mod.createModalContent = function(_, config)
 				local contentHeight = theme.padding
 					+ iconMask.Height
 					+ theme.padding
-					+ nameEdit.Height
-					+ theme.padding
 					+ tagEdit.Height
+					+ theme.padding
+					+ nameEdit.Height
 					+ theme.padding
 					+ createBadgeBtn.Height
 					+ theme.padding
@@ -165,33 +217,81 @@ mod.createModalContent = function(_, config)
 				cell.Width = scroll.Width - theme.padding * 2
 				cell.Height = contentHeight
 
+				-- compute width values
+				tagEdit.Width = cell.Width - tagStatus.Width - theme.padding * 2
+				nameEdit.Width = tagEdit.Width
+
 				local y = contentHeight
 
-				-- icon + button
+				-- icon + edit button
 				y = y - theme.padding - iconMask.Height
 				iconMask.pos = { theme.padding, y }
-				editIconBtn.pos = { theme.padding + iconMask.Width + theme.padding, y }
-
-				-- name edit + button
-				y = y - theme.padding - nameEdit.Height
-				nameEdit.pos = { theme.padding, y }
-				editNameBtn.pos = { theme.padding + nameEdit.Width + theme.padding, y }
+				editIconBtn.pos = iconMask.pos -- + (iconMask.size * 0.5) - (editIconBtn.size * 0.5) -- wrong arithmetic operation (*0.5)
 
 				-- tag edit + button
 				y = y - theme.padding - tagEdit.Height
 				tagEdit.pos = { theme.padding, y }
-				editTagBtn.pos = { theme.padding + tagEdit.Width + theme.padding, y }
+				tagStatus.pos = tagEdit.pos
+					+ { tagEdit.Width + theme.padding, tagEdit.Height * 0.5 - tagStatus.Height * 0.5 }
+
+				-- name edit + button
+				y = y - theme.padding - nameEdit.Height
+				nameEdit.pos = { theme.padding, y }
 
 				-- create badge button
 				y = y - theme.padding - createBadgeBtn.Height
 				createBadgeBtn.pos = { (cell.Width - createBadgeBtn.Width) / 2, y }
 
+				-- Update create button state
+				self:refreshCreateButton()
+
+				-- TODO: gaetan: is this really necessary?
 				scroll:flush()
 				scroll:refresh()
 			end
 
+			-- Import icon button callback
+			editIconBtn.onRelease = function()
+				File:OpenAndReadAll(function(success, data)
+					if not success then -- TODO: handle error
+						privateFields.iconData = nil -- reset icon data
+						return
+					end
+
+					if data == nil then -- TODO: handle error
+						privateFields.iconData = nil -- reset icon data
+						return
+					end
+
+					-- store icon data in a variable
+					privateFields.iconData = data
+
+					-- update icon in the UI
+					iconArea:setImage(privateFields.iconData)
+
+					-- refresh create button state
+					node:refreshCreateButton()
+				end)
+			end
+
+			-- Create badge button callback
 			createBadgeBtn.onRelease = function()
-				print("create badge!")
+				system_api:createBadge({
+					worldID = config.worldId,
+					icon = privateFields.iconData,
+					tag = privateFields.tag,
+					name = privateFields.name,
+					-- description = privateFields.description,
+				}, function(err)
+					if err then
+						print("error creating badge:", err)
+						-- TODO: display error somewhere
+					else
+						print("badge created successfully")
+						-- go back to the previous modal content
+						-- TODO: !!!
+					end
+				end)
 			end
 
 			node:refresh()
