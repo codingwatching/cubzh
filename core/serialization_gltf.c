@@ -272,12 +272,12 @@ bool serialization_gltf_load(const void *buffer, const size_t size, const ASSET_
                     for (size_t k = 0; k < vertexCount; ++k) {
                         // position (float3)
                         cgltf_accessor_read_float(posAccessor, k, &vertices[k].x, 3);
-                        vertices[k].x *= -1.0f; // swap to left-handed coordinates
-                        
+                        vertices[k].x *= -1.0f; // swap to left-handed coordinates (*)
+
                         // normal (uint8 normalized)
                         if (normalAccessor != NULL) {
                             float normal[3]; cgltf_accessor_read_float(normalAccessor, k, normal, 3);
-                            vertices[k].nx = utils_pack_norm_to_uint8(normal[0]);
+                            vertices[k].nx = utils_pack_norm_to_uint8(-normal[0]); // (*)
                             vertices[k].ny = utils_pack_norm_to_uint8(normal[1]);
                             vertices[k].nz = utils_pack_norm_to_uint8(normal[2]);
                         } else {
@@ -289,11 +289,11 @@ bool serialization_gltf_load(const void *buffer, const size_t size, const ASSET_
                         // tangent (uint8 normalized, pre-apply handedness)
                         if (tangentAccessor != NULL) {
                             float tangent[4]; cgltf_accessor_read_float(tangentAccessor, k, tangent, 4);
-                            vertices[k].tx = utils_pack_norm_to_uint8(tangent[0] * tangent[3]);
+                            vertices[k].tx = utils_pack_norm_to_uint8(-tangent[0] * tangent[3]); // (*)
                             vertices[k].ty = utils_pack_norm_to_uint8(tangent[1] * tangent[3]);
                             vertices[k].tz = utils_pack_norm_to_uint8(tangent[2] * tangent[3]);
                         } else {
-                            vertices[k].tx = utils_pack_norm_to_uint8(1.0f); // default to right
+                            vertices[k].tx = utils_pack_norm_to_uint8(-1.0f); // default to right (*)
                             vertices[k].ty = utils_pack_norm_to_uint8(0.0f);
                             vertices[k].tz = utils_pack_norm_to_uint8(0.0f);
                         }
