@@ -91,7 +91,8 @@ HTTPStatus HttpResponse::getStatus() const {
 }
 
 void HttpResponse::_parseHeaders() {
-    std::unordered_map<std::string, std::string>::iterator it = _headers.find("content-length");
+    // special header providing uncompressed data size
+    std::unordered_map<std::string, std::string>::iterator it = _headers.find("vx-content-length");
     if (it != _headers.end()) {
         _contentLength = std::atoi(it->second.c_str());
     }
@@ -113,7 +114,7 @@ const std::unordered_map<std::string, std::string>& HttpResponse::getHeaders() c
 
 void HttpResponse::appendBytes(const std::string& bytes) {
     std::lock_guard<std::mutex> lock(_bytesLock);
-    _contentLoaded += _bytes.size();
+    _contentLoaded += bytes.size();
     _bytes.append(bytes);
 }
 
