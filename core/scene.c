@@ -175,6 +175,9 @@ void scene_free(Scene *sc) {
         dr = (_DelayedRemoval *)fifo_list_pop(sc->recursionLocked);
     }
 
+    if (sc->map != NULL) {
+        transform_release(sc->map);
+    }
     transform_release(sc->system);
     transform_release(sc->root); // triggers release cascade in the hierarchy
     rtree_free(sc->rtree);
@@ -403,10 +406,12 @@ void scene_add_map(Scene *sc, Shape *map) {
 
     if (sc->map != NULL) {
         transform_remove_parent(sc->map, true);
+        transform_release(sc->map);
     }
 
     sc->map = shape_get_transform(map);
     transform_set_parent(sc->map, sc->root, true);
+    transform_retain(sc->map); // keep ownership
 
 #if DEBUG_SCENE_EXTRALOG
     cclog_debug("🏞 map %p (id: %d) added to scene %p", sc->map, transform_get_id(sc->map), sc);
