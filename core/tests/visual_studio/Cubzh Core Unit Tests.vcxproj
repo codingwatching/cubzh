@@ -48,9 +48,10 @@
     <ClInclude Include="..\..\inputs.h" />
     <ClInclude Include="..\..\int3.h" />
     <ClInclude Include="..\..\light.h" />
-    <ClInclude Include="..\..\magicavoxel.h" />
     <ClInclude Include="..\..\map_string_float3.h" />
+    <ClInclude Include="..\..\material.h" />
     <ClInclude Include="..\..\matrix4x4.h" />
+    <ClInclude Include="..\..\mesh.h" />
     <ClInclude Include="..\..\mutex.h" />
     <ClInclude Include="..\..\octree.h" />
     <ClInclude Include="..\..\quad.h" />
@@ -60,10 +61,13 @@
     <ClInclude Include="..\..\rtree.h" />
     <ClInclude Include="..\..\scene.h" />
     <ClInclude Include="..\..\serialization.h" />
+    <ClInclude Include="..\..\serialization_gltf.h" />
     <ClInclude Include="..\..\serialization_v5.h" />
     <ClInclude Include="..\..\serialization_v6.h" />
+    <ClInclude Include="..\..\serialization_vox.h" />
     <ClInclude Include="..\..\shape.h" />
     <ClInclude Include="..\..\stream.h" />
+    <ClInclude Include="..\..\texture.h" />
     <ClInclude Include="..\..\transaction.h" />
     <ClInclude Include="..\..\transform.h" />
     <ClInclude Include="..\..\utils.h" />
@@ -130,9 +134,10 @@
     <ClCompile Include="..\..\inputs.c" />
     <ClCompile Include="..\..\int3.c" />
     <ClCompile Include="..\..\light.c" />
-    <ClCompile Include="..\..\magicavoxel.c" />
     <ClCompile Include="..\..\map_string_float3.c" />
+    <ClCompile Include="..\..\material.c" />
     <ClCompile Include="..\..\matrix4x4.c" />
+    <ClCompile Include="..\..\mesh.c" />
     <ClCompile Include="..\..\mutex.c" />
     <ClCompile Include="..\..\octree.c" />
     <ClCompile Include="..\..\quad.c" />
@@ -142,10 +147,13 @@
     <ClCompile Include="..\..\rtree.c" />
     <ClCompile Include="..\..\scene.c" />
     <ClCompile Include="..\..\serialization.c" />
+    <ClCompile Include="..\..\serialization_gltf.c" />
     <ClCompile Include="..\..\serialization_v5.c" />
     <ClCompile Include="..\..\serialization_v6.c" />
+    <ClCompile Include="..\..\serialization_vox.c" />
     <ClCompile Include="..\..\shape.c" />
     <ClCompile Include="..\..\stream.c" />
+    <ClCompile Include="..\..\texture.c" />
     <ClCompile Include="..\..\transaction.c" />
     <ClCompile Include="..\..\transform.c" />
     <ClCompile Include="..\..\utils.c" />
@@ -244,7 +252,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>__VX_PLATFORM_WINDOWS;DEBUG;_DEBUG;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\..\..\core;..\..\..\core\tests;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\core;..\..\..\core\tests;..\..\..\deps\bgfx\bgfx\3rdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp14</LanguageStandard>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
     </ClCompile>
@@ -261,7 +269,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>__VX_PLATFORM_WINDOWS;NDEBUG;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\..\..\core;..\..\..\core\tests;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\core;..\..\..\core\tests;..\..\..\deps\bgfx\bgfx\3rdparty;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
       <LanguageStandard>stdcpp14</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>

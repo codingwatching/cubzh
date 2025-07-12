@@ -82,9 +82,6 @@
     <ClCompile Include="..\..\int3.c">
       <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\magicavoxel.c">
-      <Filter>core</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\map_string_float3.c">
       <Filter>core</Filter>
     </ClCompile>
@@ -152,6 +149,21 @@
       <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="..\..\world_text.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\serialization_gltf.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\serialization_vox.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\material.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\mesh.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\texture.c">
       <Filter>core</Filter>
     </ClCompile>
   </ItemGroup>
@@ -315,9 +327,6 @@
     <ClInclude Include="..\..\int3.h">
       <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\magicavoxel.h">
-      <Filter>core</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\map_string_float3.h">
       <Filter>core</Filter>
     </ClInclude>
@@ -397,6 +406,21 @@
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="..\..\world_text.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\serialization_gltf.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\serialization_vox.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\material.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\mesh.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\texture.h">
       <Filter>core</Filter>
     </ClInclude>
   </ItemGroup>
