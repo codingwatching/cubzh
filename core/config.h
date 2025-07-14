@@ -149,7 +149,7 @@ extern unsigned long upper_power_of_two(unsigned long v);
 #define PHYSICS_MAX_VELOCITY 400.0f
 #define PHYSICS_MAX_SQR_VELOCITY 160000.0f
 /// Threshold under which bounce is muffled
-#define PHYSICS_BOUNCE_SQR_THRESHOLD 100.0f
+#define PHYSICS_BOUNCE_SQR_THRESHOLD 1.0f
 /// Threshold of mass push ratio under which it is ignored
 #define PHYSICS_MASS_PUSH_THRESHOLD                                                                \
     0.01f // if pushing object mass is 1% or less of pushed object mass
