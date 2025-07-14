@@ -211,8 +211,6 @@ mod.createModalContent = function(_, config)
 	cell:setParent(nil)
 
 	local title
-	local name
-	local editNameBtn
 	local by
 	local authorBtn
 	local author
@@ -220,15 +218,12 @@ mod.createModalContent = function(_, config)
 	local reportBtn
 	local editDescriptionBtn
 	local editIconBtn
-	local nameArea
 	local description
 	local views
 	local creationDate
 	local updateDate
 	local serverSizeText
 	local serverSizeSlider
-
-	local iconRatio = 1 -- 16 / 9
 
 	local iconMask = ui:frame({
 		image = {
@@ -515,10 +510,6 @@ mod.createModalContent = function(_, config)
 	privateFields.refreshWorld = function()
 		if world.thumbnail ~= nil then
 			iconArea:setImage(world.thumbnail)
-		end
-
-		if name ~= nil then
-			name.Text = world.title or ""
 		end
 
 		if config.mode == "create" then
