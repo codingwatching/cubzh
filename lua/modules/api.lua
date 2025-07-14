@@ -1103,4 +1103,59 @@ mod.listBadgesForWorld = function(_, worldId, cb)
 	return req
 end
 
+-- Get badge thumbnail by badgeId
+-- cb(thumbnail, error)
+mod.getBadgeThumbnail = function(self, config)
+	print("🐞 [badges] getBadgeThumbnail - 1")
+	if self ~= mod then
+		error("api:getBadgeThumbnail(config): use `:`", 2)
+	end
+
+	print("🐞 [badges] getBadgeThumbnail - 2")
+
+	local defaultConfig = {
+		badgeID = "",
+		width = nil,
+		callback = nil,
+		-- validateCache = false, -- TODO: do we want to expose "forceCacheRevalidation" in Luau?
+	}
+
+	print("🐞 [badges] getBadgeThumbnail - 3")
+
+	ok, err = pcall(function()
+		config = require("config"):merge(defaultConfig, config, {
+			acceptTypes = {
+				width = { "number" },
+				callback = { "function" },
+			},
+		})
+	end)
+
+	if not ok then
+		error("api:getWorldThumbnail(config): config error (" .. err .. ")", 2)
+	end
+
+	if config.worldID == "" then
+		error("api:getWorldThumbnail(config): config.worldID should not be empty", 2)
+	end
+	if config.callback == nil then
+		error("api:getWorldThumbnail(config): config.callback should be a function", 2)
+	end
+
+	print("🐞 [badges] getBadgeThumbnail - 4", config.badgeID, "|", config.width)
+
+	local urlStr = self:getBadgeThumbnailUrl(config.badgeID, config.width)
+
+	local req = HTTP:Get(urlStr, function(res)
+		print("🐞 [badges] getBadgeThumbnail - 5", res.StatusCode, res.Body)
+		if res.StatusCode == 200 then
+			config.callback(res.Body)
+		else
+			config.callback(nil, mod:error(res.StatusCode, "status code: " .. res.StatusCode))
+		end
+	end)
+
+	return req
+end
+
 return mod

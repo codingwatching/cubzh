@@ -53,6 +53,8 @@ mod.createModalContent = function(_, config)
 	local likeRequest
 	local refreshTimer
 	local listeners = {}
+	-- array of badges fetched from the server
+	local badgesFetched = {}
 
 	badges = {
 		createCell = nil, -- first cell: button to create a new badge
@@ -137,8 +139,84 @@ mod.createModalContent = function(_, config)
 				end
 			end
 			return badges.createCell
-		else
-			-- TODO: display a badge cell
+		else -- display a badge cell
+			local fetchedBadgeIndex = index + 1 - firstIndexOfContent
+			if fetchedBadgeIndex <= #badgesFetched then
+				-- display a badge cell
+				local badge = badgesFetched[fetchedBadgeIndex]
+
+				print("🐞 [badges] badge", badge.id, badge.name, badge.tag)
+				for k, v in pairs(badge) do
+					print("🐞 [badges] badge to render:", k, v)
+				end
+
+				local cell = ui:frameScrollCellWithBevel()
+				cell.Width = CONFIG.BADGE_CELL_WIDTH
+				cell.parentDidResize = badgeCellResizeFn
+
+				print("🐞 [badges] badge name --->", badge.name)
+
+				local y = CONFIG.BADGE_CELL_HEIGHT
+
+				local iconImage = ui:frame({
+					image = {
+						data = Data:FromBundle("images/icon-plus.png"),
+						alpha = true,
+						filtering = true,
+					},
+				})
+				iconImage.object.Color = Color(180, 180, 180)
+				iconImage.Width = CONFIG.BADGE_CELL_WIDTH * 0.6
+				iconImage.Height = iconImage.Width
+				iconImage:setParent(cell)
+				y = y - theme.padding - iconImage.Height
+				iconImage.pos = {
+					CONFIG.BADGE_CELL_WIDTH * 0.5 - iconImage.Width * 0.5,
+					y,
+				}
+
+				local nameLabel = ui:createText(badge.name, {
+					color = Color.White,
+					size = "small",
+					outline = 0.4,
+					outlineColor = Color(10, 10, 10),
+					alignment = "center",
+				})
+				nameLabel:setParent(cell)
+				y = y - theme.padding - nameLabel.Height
+				nameLabel.pos = {
+					CONFIG.BADGE_CELL_WIDTH * 0.5 - nameLabel.Width * 0.5,
+					y,
+				}
+
+				local tagLabel = ui:createText(badge.tag, {
+					color = Color.White,
+					size = "small",
+					outline = 0.4,
+					outlineColor = Color(10, 10, 10),
+					alignment = "center",
+				})
+				tagLabel:setParent(cell)
+				y = y - theme.padding - tagLabel.Height
+				tagLabel.pos = {
+					CONFIG.BADGE_CELL_WIDTH * 0.5 - tagLabel.Width * 0.5,
+					y,
+				}
+
+				-- -- Download badge icon
+				api:getBadgeThumbnail({
+					badgeID = badge.badgeID,
+					callback = function(icon, err)
+						print("🐞 [badges] getBadgeThumbnail callback", icon, err)
+						if err ~= nil then
+							return
+						end
+						iconImage:setImage(icon)
+					end,
+				})
+
+				return cell
+			end
 		end
 		return nil -- no cell for index (this line may not be needed)
 	end
@@ -296,19 +374,17 @@ mod.createModalContent = function(_, config)
 	local badgesTitle = ui:createText("Badges", { color = Color.White, size = "default" })
 	badgesTitle:setParent(cell)
 
-	local badgesDataFetcher = {
-		entities = {},
-		nbEntities = 0,
-		row = cell,
-		title = "Badges",
-		displayNumberOfEntries = 0, -- 1
-	}
+	-- local badgesDataFetcher = {
+	-- 	entities = {},
+	-- 	nbEntities = 0,
+	-- 	row = cell,
+	-- 	title = "Badges",
+	-- 	displayNumberOfEntries = 0, -- 1
+	-- }
 
+	-- create scroll to display badges
 	local badgesScroll = ui:scroll({
-		-- backgroundColor = Color(255, 255, 255),
-		-- backgroundColor = Color(43, 45, 49),
 		backgroundColor = Color(26, 26, 30),
-		-- backgroundColor = theme.buttonTextColor,
 		padding = {
 			top = 0,
 			bottom = 0,
@@ -319,10 +395,34 @@ mod.createModalContent = function(_, config)
 		direction = "right",
 		loadCell = badgesScrollLoadCell,
 		unloadCell = badgesScrollUnloadCell,
-		userdata = badgesDataFetcher,
-		centerContent = true,
+		-- userdata = badgesDataFetcher,
 	})
 	badgesScroll:setParent(cell)
+
+	fetchBadgesAndUpdateUI = function()
+		print("🐞 [badges] listing badges for world", world.id)
+		api:listBadgesForWorld(world.id, function(err, badges)
+			print("🐞 [badges] ERROR:", err)
+			print("🐞 [badges] BADGES:", badges)
+			if err ~= nil or badges == nil then
+				print("🐞 [badges] could not list badges for world", world.id, err)
+				return
+			end
+
+			print("🐞 [badges] BADGES COUNT:", #badges)
+
+			badgesFetched = badges
+
+			for _, badge in ipairs(badgesFetched) do
+				print("🐞 [badges] BADGE:", badge.id, badge.tag, badge.name)
+			end
+
+			badgesScroll:flush()
+			badgesScroll:refresh()
+		end)
+	end
+
+	-- TODO: gaetan: should this be done this way?
 	badgesScroll.parentDidResize = function(self)
 		self.Width = self.parent.Width - theme.padding * 2
 		self.Height = CONFIG.BADGE_CELL_HEIGHT -- + CONFIG.BADGES_CELL_PADDING * 2
@@ -664,6 +764,8 @@ mod.createModalContent = function(_, config)
 			})
 			table.insert(requests, req)
 		end
+
+		fetchBadgesAndUpdateUI()
 	end
 
 	local w = 400
@@ -882,6 +984,7 @@ mod.createModalContent = function(_, config)
 			scroll.pos.Y = 0
 		end
 
+		-- TODO: gaetan: check if this is really needed
 		scroll:flush()
 		scroll:refresh()
 	end
