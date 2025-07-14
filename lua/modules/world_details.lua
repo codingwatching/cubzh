@@ -3,10 +3,13 @@ mod = {}
 local TEXT_COLOR = Color(200, 200, 200)
 
 mod.createModalContent = function(_, config)
-	local time = require("time")
-	local theme = require("uitheme").current
-	local systemApi = require("system_api", System)
 	local api = require("api")
+	local badgeModal = require("badge_modal")
+	local loc = require("localize")
+	local modal = require("modal")
+	local theme = require("uitheme").current
+	local time = require("time")
+	local systemApi = require("system_api", System)
 
 	local defaultConfig = {
 		world = {
@@ -38,9 +41,10 @@ mod.createModalContent = function(_, config)
 	end
 
 	local ui = config.uikit
-
 	local world = config.world
+	local content = modal:createContent() -- world details content
 
+	-- whether the world is displayed in create mode (the user must be the author)
 	local createMode = config.mode == "create"
 
 	local worldDetails = ui:createNode()
@@ -49,6 +53,100 @@ mod.createModalContent = function(_, config)
 	local likeRequest
 	local refreshTimer
 	local listeners = {}
+
+	badges = {
+		createCell = nil, -- first cell: button to create a new badge
+	}
+
+	-- Constants for badges list
+	-- (similar to friends list in cubzh.lua)
+	local CONFIG = {
+		BADGE_CELL_WIDTH = 80,
+		BADGE_CELL_HEIGHT = 120,
+		BADGES_CELL_PADDING = 10,
+	}
+
+	local function badgeCellResizeFn(self)
+		if self.parent.Height == nil then
+			return
+		end
+		self.Height = self.parent.Height
+	end
+
+	local function badgesScrollLoadCell(index)
+		local firstIndexOfContent = 1
+		if createMode then
+			firstIndexOfContent = 2
+		end
+
+		-- index of the "Create badge" cell
+		if index < firstIndexOfContent then
+			if badges.createCell == nil then
+				badges.createCell = ui:frameScrollCellWithBevel()
+				badges.createCell.Width = CONFIG.BADGE_CELL_WIDTH
+				badges.createCell.parentDidResize = badgeCellResizeFn
+
+				local image = ui:frame({
+					image = {
+						data = Data:FromBundle("images/icon-plus.png"),
+						alpha = true,
+						filtering = true,
+					},
+				})
+				image.object.Color = Color(180, 180, 180)
+				image.Width = CONFIG.BADGE_CELL_WIDTH * 0.6
+				image.Height = image.Width
+
+				local label = ui:createText(loc("New\nBadge"), {
+					color = Color(180, 180, 180),
+					size = "small",
+					outline = 0.4,
+					outlineColor = Color(10, 10, 10),
+					alignment = "center",
+				})
+				label:setParent(badges.createCell)
+				label.pos = {
+					CONFIG.BADGE_CELL_WIDTH * 0.5 - label.Width * 0.5,
+					CONFIG.BADGE_CELL_HEIGHT * 0.5 * 0.5 - label.Height * 0.5,
+				}
+
+				local vSpaceForImage = CONFIG.BADGE_CELL_HEIGHT - (label.pos.Y + label.Height)
+				image.pos = {
+					CONFIG.BADGE_CELL_WIDTH * 0.5 - image.Width * 0.5,
+					CONFIG.BADGE_CELL_HEIGHT - vSpaceForImage * 0.5 - image.Height * 0.5,
+				}
+				image:setParent(badges.createCell)
+
+				badges.createCell.onPress = function(_)
+					Client:HapticFeedback()
+				end
+
+				badges.createCell.onRelease = function(_)
+					-- Temporary: display a "coming soon" modal
+					Menu:ShowAlert({ message = "Coming soon!" }, System)
+
+					-- -- show badge creation form in the world details modal
+					-- badgeModalContent = badgeModal:createModalContent({
+					-- 	uikit = ui,
+					-- 	mode = "create",
+					-- 	worldId = world.id,
+					-- })
+					-- local m = content:getModalIfContentIsActive()
+					-- if m ~= nil then
+					-- 	m:push(badgeModalContent)
+					-- else
+					-- 	print("❌ no modal found")
+					-- end
+				end
+			end
+			return badges.createCell
+		else
+			-- TODO: display a badge cell
+		end
+		return nil -- no cell for index (this line may not be needed)
+	end
+
+	local badgesScrollUnloadCell = function(_, _) end
 
 	local privateFields = {}
 
@@ -72,8 +170,6 @@ mod.createModalContent = function(_, config)
 	worldDetails.onRemove = function(_)
 		cancelRequestsTimersAndListeners()
 	end
-
-	local content = require("modal"):createContent()
 
 	content.title = ""
 	content.icon = "🌎"
@@ -208,8 +304,37 @@ mod.createModalContent = function(_, config)
 	local badgesTitle = ui:createText("Badges", { color = Color.White, size = "default" })
 	badgesTitle:setParent(cell)
 
-	local badgesComingSoon = ui:createText("Coming soon", { color = TEXT_COLOR, size = "small" })
-	badgesComingSoon:setParent(cell)
+	local badgesDataFetcher = {
+		entities = {},
+		nbEntities = 0,
+		row = cell,
+		title = "Badges",
+		displayNumberOfEntries = 0, -- 1
+	}
+
+	local badgesScroll = ui:scroll({
+		-- backgroundColor = Color(255, 255, 255),
+		-- backgroundColor = Color(43, 45, 49),
+		backgroundColor = Color(26, 26, 30),
+		-- backgroundColor = theme.buttonTextColor,
+		padding = {
+			top = 0,
+			bottom = 0,
+			left = CONFIG.BADGES_CELL_PADDING,
+			right = CONFIG.BADGES_CELL_PADDING,
+		},
+		cellPadding = CONFIG.BADGES_CELL_PADDING,
+		direction = "right",
+		loadCell = badgesScrollLoadCell,
+		unloadCell = badgesScrollUnloadCell,
+		userdata = badgesDataFetcher,
+		centerContent = true,
+	})
+	badgesScroll:setParent(cell)
+	badgesScroll.parentDidResize = function(self)
+		self.Width = self.parent.Width - theme.padding * 2
+		self.Height = CONFIG.BADGE_CELL_HEIGHT -- + CONFIG.BADGES_CELL_PADDING * 2
+	end
 
 	if createMode then
 		editIconBtn = ui:buttonSecondary({ content = "✏️ Edit icon", textSize = "small" })
@@ -232,8 +357,6 @@ mod.createModalContent = function(_, config)
 						print("could not set world icon")
 						return
 					end
-
-					print("icon set!")
 
 					-- refresh the world's thumbnail in the UI
 					local req = api:getWorldThumbnail({
@@ -653,7 +776,7 @@ mod.createModalContent = function(_, config)
 			+ theme.paddingBig
 			+ badgesTitle.Height
 			+ padding
-			+ badgesComingSoon.Height
+			+ badgesScroll.Height
 			+ theme.paddingBig
 			+ singleLineHeight -- publication date
 			+ padding
@@ -741,8 +864,8 @@ mod.createModalContent = function(_, config)
 		-- badges
 		y = y - theme.paddingBig - badgesTitle.Height
 		badgesTitle.pos = { padding, y }
-		y = y - padding - badgesComingSoon.Height
-		badgesComingSoon.pos = { padding, y }
+		y = y - padding - badgesScroll.Height
+		badgesScroll.pos = { padding, y }
 
 		-- info
 		y = y - theme.paddingBig - singleLineHeight * 0.5

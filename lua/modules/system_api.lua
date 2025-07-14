@@ -1070,4 +1070,58 @@ mod.report = function(self, config)
 	return req
 end
 
+-- ----------------------------------------------
+-- Badges
+-- ----------------------------------------------
+
+-- badgeInfo: {
+-- 	worldID = "",
+-- 	icon = Data(),
+-- 	tag = "",
+-- 	name = "",        -- optional
+-- 	description = "", -- optional
+-- }
+-- callback(err)
+mod.createBadge = function(self, badgeInfo, callback)
+	if self ~= mod then
+		error("api:createBadge(config): use `:`", 2)
+	end
+
+	if badgeInfo == nil or type(badgeInfo) ~= "table" then
+		error("api:createBadge(badgeInfo, callback): badgeInfo must be a table", 2)
+	end
+	if callback == nil or type(callback) ~= "function" then
+		error("api:createBadge(badgeInfo, callback): callback must be a function", 2)
+	end
+
+	-- validate badgeInfo
+	if badgeInfo.worldID == nil or type(badgeInfo.worldID) ~= "string" then
+		error("api:createBadge(badgeInfo, callback): worldID must be a string", 2)
+	end
+	-- ...
+
+	-- construct JSON payload
+	local payloadJson = JSON:Encode({
+		worldID = badgeInfo.worldID,
+		imageBase64 = badgeInfo.icon:ToString({ format = "base64" }),
+		tag = badgeInfo.tag,
+		name = badgeInfo.name,
+		description = badgeInfo.description,
+	})
+
+	-- send request
+	local u = url:parse(mod.kApiAddr .. "/badges")
+	local req = System:HttpPost(u:toString(), payloadJson, function(res)
+		if res.StatusCode ~= 200 then
+			if callback ~= nil then
+				callback(api:error(res.StatusCode, res.Body))
+			end
+			return
+		end
+
+		callback(nil) -- success
+	end)
+	return req
+end
+
 return mod

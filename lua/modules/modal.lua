@@ -693,7 +693,7 @@ modal.create = function(_, content, maxWidth, maxHeight, position, uikit)
 			end
 
 			if modalContent.verified == true and self._title ~= nil then
-				local verifiedBadge =  ui:frame({
+				local verifiedBadge = ui:frame({
 					image = {
 						data = Data:FromBundle("images/icon-verified.png"),
 						alpha = true,
