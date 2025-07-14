@@ -122,21 +122,18 @@ mod.createModalContent = function(_, config)
 				end
 
 				badges.createCell.onRelease = function(_)
-					-- Temporary: display a "coming soon" modal
-					Menu:ShowAlert({ message = "Coming soon!" }, System)
-
-					-- -- show badge creation form in the world details modal
-					-- badgeModalContent = badgeModal:createModalContent({
-					-- 	uikit = ui,
-					-- 	mode = "create",
-					-- 	worldId = world.id,
-					-- })
-					-- local m = content:getModalIfContentIsActive()
-					-- if m ~= nil then
-					-- 	m:push(badgeModalContent)
-					-- else
-					-- 	print("❌ no modal found")
-					-- end
+					-- show badge creation form in the world details modal
+					badgeModalContent = badgeModal:createModalContent({
+						uikit = ui,
+						mode = "create",
+						worldId = world.id,
+					})
+					local m = content:getModalIfContentIsActive()
+					if m ~= nil then
+						m:push(badgeModalContent)
+					else
+						print("❌ no modal found")
+					end
 				end
 			end
 			return badges.createCell
