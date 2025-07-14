@@ -625,7 +625,7 @@ bool _rigidbody_dynamic_tick(Scene *scene,
 
             if (float3_isZero(rb->velocity, EPSILON_ZERO) == false) {
                 push3 = tangential;
-                // float3_op_scale(&push3, 1.0f - friction);
+                float3_op_scale(&push3, 1.0f - friction);
             } else {
                 push3 = float3_zero;
             }
