@@ -183,19 +183,19 @@ coins.createModalContent = function(_, config)
 
 	local packs = {
 		{
-			price = 0.99,
+			price = "-",
 			coins = 160,
 			icon = "images/coins-pack-1.png",
             productID = "blip.coins.1",
 		},
 		{
-			price = 4.99,
+			price = "-",
 			coins = 800,
 			icon = "images/coins-pack-2.png",
 			productID = "blip.coins.2",
 		},
 		{
-			price = 9.99,
+			price = "-",
 			coins = 1600,
 			icon = "images/coins-pack-3.png",
 			productID = "blip.coins.3",
@@ -207,25 +207,25 @@ coins.createModalContent = function(_, config)
 		-- 	icon = "images/coins-pack-premium.png",
 		-- },
 		{
-			price = 19.99,
+			price = "-",
 			coins = 3200,
 			icon = "images/coins-pack-4.png",
 			productID = "blip.coins.4",
 		},
 		{
-			price = 49.99,
+			price = "-",
 			coins = 8000,
 			icon = "images/coins-pack-5.png",
 			productID = "blip.coins.5",
 		},
 		{
-			price = 99.99,
+			price = "-",
 			coins = 16000,
 			icon = "images/coins-pack-6.png",
 			productID = "blip.coins.6",	
 		},
 		{
-			price = 199.99,
+			price = "-",
 			coins = 32000,
 			icon = "images/coins-pack-7.png",
 			productID = "blip.coins.7",
@@ -236,6 +236,27 @@ coins.createModalContent = function(_, config)
 	local packsScroll = nil
 
 	if System.IAPIsAvailable then
+
+		-- retrieve prices from App Store and update cells
+		System:IAPProducts(function(products)
+			for i, p in ipairs(packs) do
+				local product = products[p.productID]
+				if product then
+					p.price = product.displayPrice
+					local cell = packCells[i]
+					if cell then
+						local txt
+						if p.subscription then
+							txt = string.format("%s/mo", p.price)
+						else
+							txt = string.format("%s", p.price)
+						end
+						cell.price.Text = txt
+						cell.price.pos.X = STORE_ITEM_WIDTH * 0.5 - cell.price.Width * 0.5
+					end
+				end
+			end
+		end)
 
 		packsScroll = ui:scroll({
 			padding = {
@@ -309,13 +330,14 @@ coins.createModalContent = function(_, config)
 						icon.pos = { topBackground.Width * 0.5 - icon.Width * 0.5, topBackground.Height * 0.5 - icon.Height * 0.5 }
 						icon:setParent(topBackground)
 
-						local txt = string.format("$%.2f", packs[index].price)
+						local txt = string.format("%s", packs[index].price)
 						if packs[index].subscription then
-							txt = string.format("$%.2f/mo", packs[index].price)
+							txt = string.format("%s/mo", packs[index].price)
 						end
 						local price = ui:createText(txt, { color = Color.White, size = "small" })
 						price:setParent(bottomBackground)
 						price.pos = { bottomBackground.Width * 0.5 - price.Width * 0.5, bottomBackground.Height * 0.5 - price.Height * 0.5 }
+						c.price = price
 
 						local txt = string.format("%d", packs[index].coins)
 						if packs[index].subscription then

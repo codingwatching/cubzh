@@ -17,7 +17,8 @@ local mt = {
 		local recycled
 		local pool = sfxPool[name]
 		if pool == nil then
-			sfxPool[name] = {}
+			pool = {}
+			sfxPool[name] = pool
 		else
 			recycled = table.remove(pool)
 		end
@@ -35,7 +36,7 @@ local mt = {
 			recycled.Pitch = config.Pitch or self.defaultConfig.Pitch
 			recycled:Play()
 			Timer(recycled.Length + 0.1, function()
-				table.insert(sfxPool[name], recycled)
+				table.insert(pool, recycled)
 			end)
 			return
 		end
@@ -56,7 +57,7 @@ local mt = {
 		as:Play()
 
 		Timer(as.Length + 0.1, function()
-			table.insert(sfxPool[name], as)
+			table.insert(pool, as)
 		end)
 	end,
 }

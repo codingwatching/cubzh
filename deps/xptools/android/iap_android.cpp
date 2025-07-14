@@ -19,3 +19,8 @@ vx::IAP::Purchase_SharedPtr vx::IAP::purchase(std::string productID,
                                               std::function<void(const Purchase_SharedPtr&)> callback) {
     return nullptr;
 }
+
+void vx::IAP::getProducts(const std::vector<std::string>& productIDs, std::function<void(std::unordered_map<std::string, Product> products)> callback) {
+    std::unordered_map<std::string, vx::IAP::Product> products;
+    callback(products);
+}

@@ -62,6 +62,9 @@ public:
     void setUseLocalCache(const bool& value);
     const bool& getUseLocalCache() const;
 
+    inline int getContentLength() { return _contentLength; }
+    inline int getContentLoaded() { return _contentLoaded; }
+
 private:
 
     /// indicates whether the connection was successful
@@ -80,9 +83,14 @@ private:
     std::string _bytes;
     mutable std::mutex _bytesLock;
 
+    int _contentLoaded;
+    int _contentLength; // 0: server didn't provide it
+
     /// Indicates whether the response content is from local cache
     /// Note: if HttpRequest.opts.streamResponse == true, cache is never used for now.
     bool _useLocalCache;
+
+    void _parseHeaders();
 };
 
 }

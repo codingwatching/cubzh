@@ -38,11 +38,11 @@ local set = function(self, ...)
 
 	-- validation
 	if (argCount - 1) % 2 > 0 then
-		error("a key or value might be missing")
+		error("kvs:set(k1, v1, ..., callback) - key/value pairs and callback expected")
 	end
 	-- check callback is a function
 	if type(callback) ~= "function" then
-		error("callback should be a function")
+		error("kvs:set(k1, v1, ..., callback) - key/value pairs and callback expected")
 	end
 	keyValueMap = {}
 	for i, v in ipairs(keyValueList) do

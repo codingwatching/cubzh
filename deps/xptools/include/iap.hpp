@@ -17,6 +17,16 @@
 namespace vx {
 namespace IAP {
 
+typedef struct Product {
+    std::string id;
+    std::string title;
+    std::string description;
+    float price;
+    std::string currency;
+    std::string currencySymbol;
+    std::string displayPrice;
+} Product;
+
 class Purchase;
 typedef std::shared_ptr<Purchase> Purchase_SharedPtr;
 typedef std::weak_ptr<Purchase> Purchase_WeakPtr;
@@ -68,6 +78,8 @@ Purchase_SharedPtr purchase(std::string productID,
                             std::string verifyURL,
                             const std::unordered_map<std::string, std::string>& headers,
                             std::function<void(const Purchase_SharedPtr&)> callback);
+
+void getProducts(const std::vector<std::string>& productIDs, std::function<void(std::unordered_map<std::string, Product> products)> callback);
 
 } // namespace IAP
 } // namespace vx
