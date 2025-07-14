@@ -1376,10 +1376,12 @@ float rigidbody_get_combined_friction(const RigidBody *rb1,
                                       const FACE_INDEX_INT_T face1,
                                       const FACE_INDEX_INT_T face2) {
 #if PHYSICS_COMBINE_FRICTION_FUNC == 0
-    return maximum(minimum(rb1->friction[face1], rb2->friction[face2]), 0.0f);
+    return rb1->friction[face1];
 #elif PHYSICS_COMBINE_FRICTION_FUNC == 1
-    return maximum(maximum(rb1->friction[face1], rb2->friction[face2]), 0.0f);
+    return maximum(minimum(rb1->friction[face1], rb2->friction[face2]), 0.0f);
 #elif PHYSICS_COMBINE_FRICTION_FUNC == 2
+    return maximum(maximum(rb1->friction[face1], rb2->friction[face2]), 0.0f);
+#elif PHYSICS_COMBINE_FRICTION_FUNC == 3
     return maximum((rb1->friction[face1] + rb2->friction[face2]) * .5f, 0.0f);
 #endif
 }
@@ -1389,10 +1391,12 @@ float rigidbody_get_combined_bounciness(const RigidBody *rb1,
                                         const FACE_INDEX_INT_T face1,
                                         const FACE_INDEX_INT_T face2) {
 #if PHYSICS_COMBINE_BOUNCINESS_FUNC == 0
-    return minimum(rb1->bounciness[face1], rb2->bounciness[face2]);
+    return rb1->bounciness[face1];
 #elif PHYSICS_COMBINE_BOUNCINESS_FUNC == 1
-    return maximum(rb1->bounciness[face1], rb2->bounciness[face2]);
+    return minimum(rb1->bounciness[face1], rb2->bounciness[face2]);
 #elif PHYSICS_COMBINE_BOUNCINESS_FUNC == 2
+    return maximum(rb1->bounciness[face1], rb2->bounciness[face2]);
+#elif PHYSICS_COMBINE_BOUNCINESS_FUNC == 3
     return (rb1->bounciness[face1] + rb2->bounciness[face2]) * .5f;
 #endif
 }

@@ -155,9 +155,10 @@ extern unsigned long upper_power_of_two(unsigned long v);
     0.01f // if pushing object mass is 1% or less of pushed object mass
 /// Multiple collision responses may fall within the same simulation frame, up to max iterations
 #define PHYSICS_MAX_SOLVER_ITERATIONS 4
-/// How to combine friction/bounciness of 2 rigidbodies in contact, min (0), max (1), or average (2)
-#define PHYSICS_COMBINE_FRICTION_FUNC 2
-#define PHYSICS_COMBINE_BOUNCINESS_FUNC 1
+/// How to combine friction/bounciness of 2 rigidbodies in contact,
+/// only self (0) , min (1), max (2), or average (3)
+#define PHYSICS_COMBINE_FRICTION_FUNC 3
+#define PHYSICS_COMBINE_BOUNCINESS_FUNC 0
 /// How to determine which face of a block was hit,
 /// (0) per-face proximity,
 ///     - heavily reliant on the order of checks in case of ties, ie. the wrong face can be returned
