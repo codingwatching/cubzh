@@ -510,37 +510,42 @@ bool _rigidbody_dynamic_tick(Scene *scene,
         // a replaced component will become "in contact" after replacement (setting swept to 0)
 
         if (minSwept < 0.0f) {
-            f3 = dv;
-            float3_op_scale(&f3, minSwept);
-            minSwept = 0.0f;
+            vx_assert(contact.rb != NULL);
 
-            // choose smaller replacement between checkpoint and trajectory
-            if (rb->checkpoint != NULL) {
-                const float3 checkpoint = {rb->checkpoint->x - pos.x,
-                                           rb->checkpoint->y - pos.y,
-                                           rb->checkpoint->z - pos.z};
-                const float sqrDist = float3_sqr_length(&checkpoint);
-                if (float_isZero(sqrDist, EPSILON_ZERO)) {
-                    // checkpoint is now obsolete and may cause bad replacements, reset it
-                    float3_free(rb->checkpoint);
-                    rb->checkpoint = NULL;
-                } else if (sqrDist < float3_sqr_length(&f3)) {
-                    f3 = checkpoint;
+            // if contact is dynamic, ignore replacement if self has higher mass
+            if (rigidbody_is_dynamic(contact.rb) == false || rb->mass <= contact.rb->mass) {
+                f3 = dv;
+                float3_op_scale(&f3, minSwept);
+
+                // choose smaller replacement between checkpoint and trajectory
+                if (rb->checkpoint != NULL) {
+                    const float3 checkpoint = {rb->checkpoint->x - pos.x,
+                                               rb->checkpoint->y - pos.y,
+                                               rb->checkpoint->z - pos.z};
+                    const float sqrDist = float3_sqr_length(&checkpoint);
+                    if (float_isZero(sqrDist, EPSILON_ZERO)) {
+                        // checkpoint is now obsolete and may cause bad replacements, reset it
+                        float3_free(rb->checkpoint);
+                        rb->checkpoint = NULL;
+                    } else if (sqrDist < float3_sqr_length(&f3)) {
+                        f3 = checkpoint;
+                    }
                 }
-            }
 
-            float3_op_add(&pos, &f3);
-            float3_op_add(&worldCollider->min, &f3);
-            float3_op_add(&worldCollider->max, &f3);
-            INC_REPLACEMENTS
+                float3_op_add(&pos, &f3);
+                float3_op_add(&worldCollider->min, &f3);
+                float3_op_add(&worldCollider->max, &f3);
+                INC_REPLACEMENTS
 
 #if DEBUG_RIGIDBODY_EXTRA_LOGS
-            cclog_debug("🏞 rigidbody of type %d replaced w/ (%.3f, %.3f, %.3f)",
+                cclog_debug("🏞 rigidbody of type %d replaced w/ (%.3f, %.3f, %.3f)",
                         transform_get_type(t),
                         f3.x,
                         f3.y,
                         f3.z);
 #endif
+            }
+            minSwept = 0.0f;
         }
 
         // after replacement: only in contact (==0), colliding (<1), or free movement (>= 1)
