@@ -631,11 +631,12 @@ bool _rigidbody_dynamic_tick(Scene *scene,
             }
 
             // (2) apply combined bounciness on intruding displacement, add leftover to push ;
-            // minor bounce responses are muffled
+            // minor bounce responses are muffled ; if no bounce, match push velocity (*)
             const float3 vBounce = (float3){-vIntruding.x * bounciness,
                                             -vIntruding.y * bounciness,
                                             -vIntruding.z * bounciness};
-            if (float3_sqr_length(&vBounce) > PHYSICS_BOUNCE_SQR_THRESHOLD) {
+            const bool bounced = float3_sqr_length(&vBounce) > PHYSICS_BOUNCE_SQR_THRESHOLD;
+            if (bounced) {
                 const float3 bounce = (float3){-intruding.x * bounciness,
                                                -intruding.y * bounciness,
                                                -intruding.z * bounciness};
@@ -659,6 +660,9 @@ bool _rigidbody_dynamic_tick(Scene *scene,
                 push3.z *= push / dt_f;
 
                 rigidbody_apply_push(contact.rb, &push3);
+                if (bounced == false) {
+                    rigidbody_apply_push(rb, &push3); // (*)
+                }
 
                 // self is flagged as awake, since contact will move from push
                 rigidbody_set_awake(rb);
