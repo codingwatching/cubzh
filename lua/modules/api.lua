@@ -1087,4 +1087,20 @@ mod.aiImageGenerations = function(prompt, optionsOrCallback, callback)
 	return req
 end
 
+-- Badges
+
+-- TODO: gaetan: how to know which badges have been unlocked by the current user?
+-- Callback signature: cb(error, badges)
+mod.listBadgesForWorld = function(_, worldId, cb)
+	local url = mod.kApiAddr .. "/worlds/" .. worldId .. "/badges"
+	local req = HTTP:Get(url, function(res)
+		if res.StatusCode ~= 200 then
+			return cb("Error (" .. tostring(res.StatusCode) .. "): " .. res.Body:ToString())
+		end
+		local badges = JSON:Decode(res.Body)
+		cb(nil, badges)
+	end)
+	return req
+end
+
 return mod
