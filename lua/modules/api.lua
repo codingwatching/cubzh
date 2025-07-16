@@ -1103,6 +1103,25 @@ mod.listBadgesForWorld = function(_, worldId, cb)
 	return req
 end
 
+-- Returns the URL for a badge's thumbnail
+-- @param badgeID string
+-- @param width number?
+-- @return url string
+mod.getBadgeThumbnailUrl = function(self, badgeID, width)
+	if self ~= mod then
+		error("api:getBadgeThumbnailUrl(badgeID, width): use `:`", 2)
+	end
+
+	local urlStr = mod.kApiAddr .. "/badges/" .. badgeID .. "/thumbnail.png"
+	if width ~= nil and width > 0 then
+		if width ~= 250 then -- we only use 250px width for now
+			print("⚠️ getWorldThumbnailUrl: unsupported width: " .. width)
+		end
+		urlStr = urlStr .. "?width=" .. width
+	end
+	return urlStr
+end
+
 -- Get badge thumbnail by badgeId
 -- cb(thumbnail, error)
 mod.getBadgeThumbnail = function(self, config)

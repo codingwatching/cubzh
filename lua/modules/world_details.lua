@@ -203,6 +203,11 @@ mod.createModalContent = function(_, config)
 					y,
 				}
 
+				if badge.userDidUnlock == true then
+					print("🐞 [badges] badge is unlocked", badge.tag)
+					cell.backgroundColor = Color.Green
+				end
+
 				-- -- Download badge icon
 				api:getBadgeThumbnail({
 					badgeID = badge.badgeID,
@@ -400,10 +405,7 @@ mod.createModalContent = function(_, config)
 	badgesScroll:setParent(cell)
 
 	fetchBadgesAndUpdateUI = function()
-		print("🐞 [badges] listing badges for world", world.id)
 		api:listBadgesForWorld(world.id, function(err, badges)
-			print("🐞 [badges] ERROR:", err)
-			print("🐞 [badges] BADGES:", badges)
 			if err ~= nil or badges == nil then
 				print("🐞 [badges] could not list badges for world", world.id, err)
 				return
