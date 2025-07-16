@@ -1739,6 +1739,10 @@ function createUI(system)
 				self.shape = nil
 			end
 
+			if shape == nil then 
+				return 
+			end
+
 			shape:RemoveFromParent()
 			_setupUIObject(shape)
 			self.shape = shape
