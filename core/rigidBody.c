@@ -222,10 +222,9 @@ bool _rigidbody_dynamic_tick(Scene *scene,
 
     const float3 constantAcceleration = *scene_get_constant_acceleration(scene);
 
-    f3 = (float3){(constantAcceleration.x + rb->constantAcceleration->x) * dt_f,
-                  (constantAcceleration.y + rb->constantAcceleration->y) * dt_f,
-                  (constantAcceleration.z + rb->constantAcceleration->z) * dt_f};
-    float3_op_add(rb->velocity, &f3);
+    rb->velocity->x += (constantAcceleration.x + rb->constantAcceleration->x) * dt_f;
+    rb->velocity->y += (constantAcceleration.y + rb->constantAcceleration->y) * dt_f;
+    rb->velocity->z += (constantAcceleration.z + rb->constantAcceleration->z) * dt_f;
 
     // ------------------------
     // APPLY DRAG
@@ -283,8 +282,10 @@ bool _rigidbody_dynamic_tick(Scene *scene,
 
     const float sqMag = float3_sqr_length(&f3);
     if (sqMag > PHYSICS_MAX_SQR_VELOCITY) {
-        float3_op_unscale(&f3, sqrtf(sqMag));
-        float3_op_scale(&f3, PHYSICS_MAX_VELOCITY);
+        const float mag = sqrtf(sqMag);
+        f3.x = f3.x / mag * PHYSICS_MAX_VELOCITY;
+        f3.y = f3.y / mag * PHYSICS_MAX_VELOCITY;
+        f3.z = f3.z / mag * PHYSICS_MAX_VELOCITY;
     }
 
 #if DEBUG_RIGIDBODY_EXTRA_LOGS
@@ -315,8 +316,7 @@ bool _rigidbody_dynamic_tick(Scene *scene,
     ContactData contact; // TODO: list of contacts to handle contact ties
 
     // initial frame delta translation
-    float3_copy(&dv, &f3);
-    float3_op_scale(&dv, dt_f);
+    dv = (float3){ f3.x * dt_f, f3.y * dt_f, f3.z * dt_f };
 
     // ----------------------
     // SOLVER ITERATIONS
@@ -496,11 +496,11 @@ bool _rigidbody_dynamic_tick(Scene *scene,
         }
 
         // ----------------------
-        // STOP MOTION THRESHOLD
+        // STOP THRESHOLD
         // ----------------------
         // remove superfluous movement or accumulated errors
 
-        if (float_isZero(minSwept, PHYSICS_STOP_MOTION_THRESHOLD)) {
+        if (float_isZero(minSwept, PHYSICS_STOP_THRESHOLD)) {
             minSwept = 0.0f;
         }
 
@@ -573,9 +573,16 @@ bool _rigidbody_dynamic_tick(Scene *scene,
 
         // collision or contact on at least one component
         if (minSwept < 1.0f) {
+            vx_assert(contact.rb != NULL);
+            const bool contactDynamic = rigidbody_is_dynamic(contact.rb);
+
             // remainder of the trajectory after contact
-            float3 remainder = dv;
-            float3_op_scale(&remainder, 1.0f - minSwept);
+            const float remainderSwept = 1.0f - minSwept;
+            const float3 remainder = {
+                dv.x * remainderSwept,
+                dv.y * remainderSwept,
+                dv.z * remainderSwept
+            };
 
             // contact world normal
             float3 wNormal;
@@ -589,30 +596,21 @@ bool _rigidbody_dynamic_tick(Scene *scene,
             // split intruding & tangential displacements
             const float intruding_mag = float3_dot_product(&remainder, &wNormal);
             const float vIntruding_mag = float3_dot_product(rb->velocity, &wNormal);
-            const float3 intruding = (float3){wNormal.x * intruding_mag,
-                                              wNormal.y * intruding_mag,
-                                              wNormal.z * intruding_mag};
-            const float3 tangential = (float3){remainder.x - intruding.x,
-                                               remainder.y - intruding.y,
-                                               remainder.z - intruding.z};
-            const float3 vIntruding = (float3){wNormal.x * vIntruding_mag,
-                                               wNormal.y * vIntruding_mag,
-                                               wNormal.z * vIntruding_mag};
+            const float3 intruding = (float3){ wNormal.x * intruding_mag,
+                                               wNormal.y * intruding_mag,
+                                               wNormal.z * intruding_mag };
+            const float3 tangential = (float3){ remainder.x - intruding.x,
+                                                remainder.y - intruding.y,
+                                                remainder.z - intruding.z };
+            const float3 vIntruding = (float3){ wNormal.x * vIntruding_mag,
+                                                wNormal.y * vIntruding_mag,
+                                                wNormal.z * vIntruding_mag };
 
             // combined friction & bounciness
             const FACE_INDEX_INT_T contactFace = utils_aligned_normal_to_face(&contact.normal);
             const FACE_INDEX_INT_T face = utils_face_swapped(contactFace);
-            const float friction = contact.rb != NULL ? rigidbody_get_combined_friction(rb,
-                                                                                        contact.rb,
-                                                                                        face,
-                                                                                        contactFace)
-                                                      : rb->friction[face];
-            const float bounciness = contact.rb != NULL
-                                         ? rigidbody_get_combined_bounciness(rb,
-                                                                             contact.rb,
-                                                                             face,
-                                                                             contactFace)
-                                         : rb->bounciness[face];
+            const float friction = rigidbody_get_combined_friction(rb, contact.rb, face, contactFace);
+            const float bounciness = rigidbody_get_combined_bounciness(rb, contact.rb, face, contactFace);
 
             // (1) apply combined friction on tangential displacement, assign tangential push if
             // displacement originated at least partly from own velocity, not only motion or scene
@@ -632,14 +630,14 @@ bool _rigidbody_dynamic_tick(Scene *scene,
 
             // (2) apply combined bounciness on intruding displacement, add leftover to push ;
             // minor bounce responses are muffled ; if no bounce, match push velocity (*)
-            const float3 vBounce = (float3){-vIntruding.x * bounciness,
-                                            -vIntruding.y * bounciness,
-                                            -vIntruding.z * bounciness};
+            const float3 vBounce = (float3){ -vIntruding.x * bounciness,
+                                             -vIntruding.y * bounciness,
+                                             -vIntruding.z * bounciness };
             const bool bounced = float3_sqr_length(&vBounce) > PHYSICS_BOUNCE_SQR_THRESHOLD;
             if (bounced) {
-                const float3 bounce = (float3){-intruding.x * bounciness,
-                                               -intruding.y * bounciness,
-                                               -intruding.z * bounciness};
+                const float3 bounce = (float3){ -intruding.x * bounciness,
+                                                -intruding.y * bounciness,
+                                                -intruding.z * bounciness };
 
                 float3_op_add(&dv, &bounce);
                 float3_op_add(rb->velocity, &vBounce);
@@ -652,7 +650,7 @@ bool _rigidbody_dynamic_tick(Scene *scene,
             }
 
             // (3) apply push relative to colliding masses
-            if (contact.rb != NULL && rigidbody_is_dynamic(contact.rb)) {
+            if (contactDynamic) {
                 const float push = rigidbody_get_mass_push_ratio(rb, contact.rb);
 
                 push3.x *= push / dt_f;
@@ -666,16 +664,6 @@ bool _rigidbody_dynamic_tick(Scene *scene,
 
                 // self is flagged as awake, since contact will move from push
                 rigidbody_set_awake(rb);
-
-                // TODO: inherit velocity from contact rigidbody
-                /*const float inherit_push = rigidbody_get_mass_push_ratio(contact.rb, rb);
-                const float inherit_mag = float3_dot_product(contact.rb->velocity, &tangential);
-                const float3 inherit = (float3){
-                    tangential.x * inherit_mag * (1.0f - friction),
-                    tangential.y * inherit_mag * (1.0f - friction),
-                    tangential.z * inherit_mag * (1.0f - friction)
-                };
-                rigidbody_apply_push(contact.rb, &push3);*/
             }
 
             // (4) reset contact mask if there was any motion, then update new contact along self's
@@ -1387,11 +1375,11 @@ float rigidbody_get_combined_friction(const RigidBody *rb1,
 #if PHYSICS_COMBINE_FRICTION_FUNC == 0
     return rb1->friction[face1];
 #elif PHYSICS_COMBINE_FRICTION_FUNC == 1
-    return maximum(minimum(rb1->friction[face1], rb2->friction[face2]), 0.0f);
+    return minimum(rb1->friction[face1], rb2->friction[face2]);
 #elif PHYSICS_COMBINE_FRICTION_FUNC == 2
-    return maximum(maximum(rb1->friction[face1], rb2->friction[face2]), 0.0f);
+    return maximum(rb1->friction[face1], rb2->friction[face2]);
 #elif PHYSICS_COMBINE_FRICTION_FUNC == 3
-    return maximum((rb1->friction[face1] + rb2->friction[face2]) * .5f, 0.0f);
+    return (rb1->friction[face1] + rb2->friction[face2]) * .5f;
 #endif
 }
 

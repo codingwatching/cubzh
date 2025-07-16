@@ -178,7 +178,7 @@ extern unsigned long upper_power_of_two(unsigned long v);
 /// or checks every axes and ensures to return the minimum collision (true)
 #define PHYSICS_FULL_BOX_SWEPT false
 /// Threshold under which we consider there is no motion (ratio 0-1)
-#define PHYSICS_STOP_MOTION_THRESHOLD .001f // 0.1% of motion left
+#define PHYSICS_STOP_THRESHOLD .001f // 0.1% of motion left
 /// Time (in frames) after which it's allowed to forget about a waiting end-of-contact callback
 #define PHYSICS_DISCARD_COLLISION_COUPLE 36000
 /// Number of frames during which an awaken rigidbody will skip sleep conditions, max 255 (uint8)
