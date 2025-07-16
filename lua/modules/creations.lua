@@ -317,13 +317,23 @@ creations.createModalContent = function(_, config)
 					itemType = "mesh"
 				end
 
+				local b64
+				if data ~= nil then
+					b64 = data:ToString({ format = "base64" })
+				end
+
+				local r = nil
+				if offsetRotation ~= nil then
+					r = { offsetRotation.X, offsetRotation.Y, offsetRotation.Z }
+				end
+
 				api:createItem({ 
 					name = sanitized, 
 					category = newCategory, 
 					original = original, 
 					type = itemType,
-					data = data,
-					offsetRotation = offsetRotation,
+					data = b64,
+					offsetRotation = r,
 					scale = scale,
 				}, function(err, item)
 					if err ~= nil then
