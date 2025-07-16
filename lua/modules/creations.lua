@@ -41,8 +41,38 @@ creations.createModalContent = function(_, config)
 	-- if original isn't nil, it means we're duplicating an entity
 	-- original: name of copied entity
 	-- grid parameter is used to force content reload after item creation
-	functions.createNewContent = function(what, original, grid, originalCategory)
+	functions.createNewContent = function(config)
 		local newContent = modal:createContent()
+
+		local defaultConfig = {
+			what = "item",
+			grid = nil, -- grid to update when done
+			original = nil,
+			originalCategory = nil,
+			preview = nil, -- Object to preview
+			data = nil,
+		}
+	
+		local ok, err = pcall(function()
+			config = require("config"):merge(defaultConfig, config, {
+				acceptTypes = {
+					grid = { "table" },
+					original = { "string" },
+					originalCategory = { "string" },
+					preview = { "Object", "MutableShape", "Shape", "Mesh", "Quad" },
+					data = { "Data" },
+				},
+			})
+		end)
+		if not ok then
+			error("creations:createNewContent(config) - config error: " .. err)
+		end
+
+		local what = config.what
+		local original = config.original
+		local originalCategory = config.originalCategory
+		local preview = config.preview
+		local data = config.data
 
 		if what == "item" then
 			if original then
@@ -50,6 +80,9 @@ creations.createModalContent = function(_, config)
 			else
 				newContent.title = "New Item"
 			end
+		elseif what == "model" then
+			newContent.title = "New 3D Model"
+			-- (can't be duplicated for now)
 		elseif what == "wearable" then
 			if original then
 				newContent.title = "Duplicate Equipment"
@@ -69,8 +102,7 @@ creations.createModalContent = function(_, config)
 		local buttonLabels = { "✨ Create Item ⚔️" }
 		local inputLabel = "Item Name?"
 
-		local textWithEmptyInput =
-			"An Item needs a name, coders will use it as a reference within world scripts. Choose wisely, it cannot be changed!"
+		local textWithEmptyInput = "Each one of your Items needs a unique name. Choose wisely, it can't be changed!"
 
 		if what == "wearable" and original == nil then
 			categories = { "hair", "jacket", "pants", "boots" }
@@ -91,7 +123,10 @@ creations.createModalContent = function(_, config)
 			categoryShapes = { "shapes/world_map_icon" }
 			buttonLabels = { "✨ Create World 🌎" }
 			inputLabel = "World Name?"
-			textWithEmptyInput = "A World needs a name! No pressure, this can be changed later on."
+			textWithEmptyInput = "A World needs a name! No pressure, you can change it later."
+		elseif what == "model" then
+			categories = { "null" }
+			buttonLabels = { "Save" }
 		end
 
 		local currentCategory = 1
@@ -104,7 +139,12 @@ creations.createModalContent = function(_, config)
 		end
 		newContent.bottomCenter = { btnCreate }
 
-		local templatePreview = ui:createShape(bundle:Shape(categoryShapes[currentCategory]), { spherized = true })
+		local templatePreview
+		if preview ~= nil then
+			templatePreview = ui:createShape(preview, { spherized = true })
+		else
+			templatePreview = ui:createShape(bundle:Shape(categoryShapes[currentCategory]), { spherized = true })
+		end
 		templatePreview:setParent(node)
 
 		templatePreview.pivot.LocalRotation = { -0.1, 0, -0.2 }
@@ -127,7 +167,11 @@ creations.createModalContent = function(_, config)
 		local nextTemplateBtn
 		local previousTemplateBtn
 
-		local text = ui:createText(textWithEmptyInput, theme.textColor)
+		local text = ui:createText(textWithEmptyInput, { 
+			size = "small", 
+			color = theme.textColor, 
+			alignment = "center",
+		})
 		text:setParent(node)
 
 		local input = ui:createTextInput("", inputLabel, {
@@ -318,7 +362,11 @@ creations.createModalContent = function(_, config)
 								else
 									what = "wearable"
 								end
-								m:push(functions.createNewContent(what, itemFullName, nil, newCategory))
+								m:push(functions.createNewContent({
+									what = what, 
+									original = itemFullName, 
+									originalCategory = newCategory
+								}))
 							end
 						end
 
@@ -432,6 +480,11 @@ creations.createModalContent = function(_, config)
 			return Number2(content.Width, content.Height)
 		end
 
+		newContent.willResignActive = function(self)
+			templatePreview.object.Tick = nil
+			templatePreview:setShape(nil)
+		end
+
 		if not Client.IsMobile then
 			input:focus()
 		end
@@ -440,7 +493,7 @@ creations.createModalContent = function(_, config)
 	end
 
 	-- step that's used to adjust scale and rotation of imported model
-	functions.setupModelContent = function(what, model)
+	functions.setupModelContent = function(what, model, data, grid)
 		local content = modal:createContent()
 		content.title = "New 3D Model"
 		content.icon = "✨"
@@ -476,19 +529,27 @@ creations.createModalContent = function(_, config)
 		modelCubeContainer.IsHidden = true
 
 		avatarObject:SetParent(modelAndAvatar)
-		model:SetParent(modelAndAvatar)
 		modelCubeContainer:SetParent(modelAndAvatar)
-
-		local modelOffsetRotation = Rotation(0, 0, 0)
-		model.Scale = 1
 		
-		local box = Box()
-		box:Fit(model, { recurse = true, localBox = true })
-		if model.Pivot ~= nil then
-			model.Pivot = Number3(box.Center.X, box.Center.Y, box.Center.Z)
-		end
+		local modelOffsetRotation = Rotation(0, 0, 0)
+		local modelScale = 10
 
-		model.Scale = 10
+		callbacks.setupModel = function()
+			model:SetParent(modelAndAvatar)
+			model.LocalPosition:Set(0, 0, 0)
+			model.LocalRotation:Set(0, 0, 0)
+			if model.Pivot ~= nil then
+				model.Pivot:Set(0, 0, 0)
+			end
+			model.Scale = 1
+			local box = Box()
+			box:Fit(model, { recurse = true, localBox = true })
+			if model.Pivot ~= nil then
+				model.Pivot = Number3(box.Center.X, box.Center.Y, box.Center.Z)
+			end
+			model.Scale = modelScale
+		end
+		callbacks.setupModel()
 
 		local preview = ui:createShape(modelAndAvatar, { spherized = false, enforceRatio = true })
 		preview:setParent(node)
@@ -516,7 +577,6 @@ creations.createModalContent = function(_, config)
 			model.LocalPosition:Set(-totalWidth * 0.5 + modelRadius, modelHeight * 0.5, 0)
 			modelCubeContainer.LocalPosition:Set(model.LocalPosition)
 		end
-		
 		callbacks.updatePositions()
 
 		callbacks.refreshPreview = function()
@@ -529,7 +589,7 @@ creations.createModalContent = function(_, config)
 		end
 
 		local scaleInput = ui:createTextInput(
-			string.format("%.1f", model.Scale.X),
+			string.format("%.1f", modelScale),
 			"", { textSize = "small", }
 		)
 		scaleInput:setParent(node)
@@ -548,11 +608,12 @@ creations.createModalContent = function(_, config)
 			min = scaleMin,
 			max = scaleMax,
 			step = 0.1,
-			defaultValue = model.Scale.X,
+			defaultValue = modelScale,
 			hapticFeedback = false,
 			button = ui:buttonNeutral({ content = "  ", padding = theme.padding }),
 			onValueChange = function(v)
-				model.Scale = v
+				modelScale = v
+				model.Scale = modelScale
 				scaleInput.Text = string.format("%.1f", v)
 				callbacks.refreshPreview()
 			end,
@@ -560,7 +621,7 @@ creations.createModalContent = function(_, config)
 		scaleSlider:setParent(node)
 
 		scaleInput.onSubmit = function(self)
-			local oldScale = model.Scale.X
+			local oldScale = modelScale
 			local newScale
 			local ok = pcall(function()
 				newScale = tonumber(self.Text)
@@ -568,8 +629,9 @@ creations.createModalContent = function(_, config)
 			if ok and type(newScale) == "number" then
 				newScale = math.max(0, newScale)
 				scaleSlider:setValue(math.min(scaleMax, math.max(scaleMin, newScale)))
-				model.Scale = newScale
-				self.Text = string.format("%.1f", newScale)
+				modelScale = newScale
+				model.Scale = modelScale
+				self.Text = string.format("%.1f", modelScale)
 			else
 				self.Text = string.format("%.1f", oldScale)
 			end
@@ -667,20 +729,32 @@ creations.createModalContent = function(_, config)
 			return Number2(content.Width, content.Height)
 		end
 
-		local r = Rotation(0, 0, 0)
-		model.Tick = function(self, dt)
-			r = r * Rotation(0, dt, 0)
-			model.LocalRotation =  r * modelOffsetRotation
-			avatarObject.LocalRotation = r
+		content.didBecomeActive = function(self)
+			callbacks.setupModel()
+			callbacks.updatePositions()
+			callbacks.refreshPreview()
+
+			local r = Rotation(0, 0, 0)
+			model.Tick = function(self, dt)
+				r = r * Rotation(0, dt, 0)
+				model.LocalRotation =  r * modelOffsetRotation
+				avatarObject.LocalRotation = r
+			end
 		end
 
 		content.willResignActive = function(self)
 			model.Tick = nil
 		end
 
+		btnNext.onRelease = function()
+			local m = content:getModalIfContentIsActive()
+			if m ~= nil then
+				m:push(functions.createNewContent({ what = "model", preview = model, data = data, grid = grid }))
+			end
+		end
+
 		return content
 	end
-
 
 	functions.uploadFileForNewContent = function(what, grid)
 		local newContent = modal:createContent()
@@ -786,19 +860,7 @@ creations.createModalContent = function(_, config)
 					showTexts()
 					return
 				end
-
 				showLoading()
-
-				local function upload()
-					api:uploadItemFile(what, fileData, function(err, response)
-						if err ~= nil then
-							showError(err.message .. " CODE: " ..err.statusCode)
-							return
-						end
-						-- print("FILE UPLOADED:", response.filename)
-						showTexts()
-					end)
-				end
 
 				if what == "model" then
 					Object:Load(fileData, function(o)
@@ -811,12 +873,10 @@ creations.createModalContent = function(_, config)
 							showError("can't load Mesh from file")
 							return
 						end
-						-- print("MODEL LOADED LOCALLY")
-
-						-- upload()
+						
 						local m = newContent:getModalIfContentIsActive()
 						if m ~= nil then
-							newContent:pushAndRemoveSelf(functions.setupModelContent(what, o))
+							newContent:pushAndRemoveSelf(functions.setupModelContent(what, o, fileData, grid))
 						end
 					end)
 				else
@@ -951,7 +1011,7 @@ creations.createModalContent = function(_, config)
 				callback = function()
 					local m = content:getModalIfContentIsActive()
 					if m ~= nil then
-						m:push(functions.createNewContent("item", nil, grid))
+						m:push(functions.createNewContent( { what = "item", grid = grid }))
 					end
 				end,
 			},
@@ -974,7 +1034,7 @@ creations.createModalContent = function(_, config)
 				callback = function()
 					local m = content:getModalIfContentIsActive()
 					if m ~= nil then
-						m:push(functions.createNewContent("wearable", nil, grid))
+						m:push(functions.createNewContent({ what = "wearable", grid = grid }))
 					end
 				end,
 			},
@@ -985,7 +1045,7 @@ creations.createModalContent = function(_, config)
 				callback = function()
 					local m = content:getModalIfContentIsActive()
 					if m ~= nil then
-						m:push(functions.createNewContent("world", nil, grid))
+						m:push(functions.createNewContent({ what = "world", grid = grid}))
 					end
 				end,
 			},
@@ -1247,7 +1307,12 @@ creations.createModalContent = function(_, config)
 							else
 								what = "wearable"
 							end
-							m:push(functions.createNewContent(what, itemFullName, grid, category))
+							m:push(functions.createNewContent({ 
+								what = what, 
+								original = itemFullName, 
+								grid = grid, 
+								originalCategory = category 
+							}))
 						end
 					end
 
