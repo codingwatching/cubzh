@@ -671,6 +671,7 @@ moduleMT.likeItem = function(self, itemID, addLike, callback)
 end
 
 -- api:createItem({name = "banana", category = nil, original = nil}, function(err, item))
+-- to create a mesh: { name = "foo", type = "mesh", data = Data, offsetRotation = Rotation, scale = 10.0 }
 moduleMT.createItem = function(self, data, callback)
 	local url = self.kApiAddr .. "/itemdrafts"
 	local req = System:HttpPost(url, data, function(res)

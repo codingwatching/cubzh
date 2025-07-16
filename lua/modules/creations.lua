@@ -51,6 +51,8 @@ creations.createModalContent = function(_, config)
 			originalCategory = nil,
 			preview = nil, -- Object to preview
 			data = nil,
+			offsetRotation = nil,
+			scale = nil,
 		}
 	
 		local ok, err = pcall(function()
@@ -61,6 +63,8 @@ creations.createModalContent = function(_, config)
 					originalCategory = { "string" },
 					preview = { "Object", "MutableShape", "Shape", "Mesh", "Quad" },
 					data = { "Data" },
+					offsetRotation = { "Rotation" },
+					scale = { "number" },
 				},
 			})
 		end)
@@ -73,6 +77,8 @@ creations.createModalContent = function(_, config)
 		local originalCategory = config.originalCategory
 		local preview = config.preview
 		local data = config.data
+		local offsetRotation = config.offsetRotation
+		local scale = config.scale
 
 		if what == "item" then
 			if original then
@@ -306,7 +312,20 @@ creations.createModalContent = function(_, config)
 					end
 				end)
 			else
-				api:createItem({ name = sanitized, category = newCategory, original = original }, function(err, item)
+				local itemType = "voxels"
+				if what == "model" then
+					itemType = "mesh"
+				end
+
+				api:createItem({ 
+					name = sanitized, 
+					category = newCategory, 
+					original = original, 
+					type = itemType,
+					data = data,
+					offsetRotation = offsetRotation,
+					scale = scale,
+				}, function(err, item)
 					if err ~= nil then
 						if err.statusCode == 409 then
 							text.Text = "❌ You already have an item with that name!"
@@ -320,68 +339,77 @@ creations.createModalContent = function(_, config)
 
 						btnCreate:enable()
 						input:enable()
-					else
-						System:DebugEvent(
-							"User creates an item",
-							{ ["item-id"] = item.id, repo = item.repo, name = item.name }
-						)
-
-						-- forces grid to refresh when coming back
-						if grid ~= nil then
-							grid.needsToRefreshEntries = true
-						end
-
-						local itemFullName = item.repo .. "." .. item.name
-						-- local category = cell.category
-
-						local cell = {}
-						cell.id = item.id
-						cell.name = item.name
-						cell.repo = item.repo
-						cell.description = ""
-						cell.fullName = itemFullName
-						cell.created = item.created
-
-						local itemDetailsContent =
-							itemDetails:createModalContent({ mode = "create", uikit = ui, item = cell })
-
-						local btnEdit = ui:button({ content = "✏️ Edit", textSize = "big" })
-						btnEdit.onRelease = function()
-							System.LaunchItemEditor(itemFullName, newCategory)
-						end
-
-						local btnDuplicate = ui:button({ content = "📑 Duplicate", textSize = "default" })
-						btnDuplicate.onRelease = function()
-							-- no need to pass grid, it's already marked
-							-- for refresh at this point
-							local m = itemDetailsContent:getModalIfContentIsActive()
-							if m ~= nil then
-								local what
-								if newCategory == nil then
-									what = "item"
-								else
-									what = "wearable"
-								end
-								m:push(functions.createNewContent({
-									what = what, 
-									original = itemFullName, 
-									originalCategory = newCategory
-								}))
-							end
-						end
-
-						-- itemDetailsContent.bottomCenter = {btnDuplicate, btnEdit}
-						itemDetailsContent.bottomRight = { btnEdit }
-						itemDetailsContent.bottomLeft = { btnDuplicate }
-
-						itemDetailsContent.idealReducedContentSize = function(content, width, height)
-							content.Width = width
-							content.Height = height
-							return Number2(content.Width, content.Height)
-						end
-
-						newContent:pushAndRemoveSelf(itemDetailsContent)
+						return
 					end
+					
+					System:DebugEvent(
+						"User creates an item",
+						{ 
+							["item-id"] = item.id, 
+							repo = item.repo, 
+							name = item.name,
+							type = itemType,
+						}
+					)
+
+					-- forces grid to refresh when coming back
+					if grid ~= nil then
+						grid.needsToRefreshEntries = true
+					end
+
+					local itemFullName = item.repo .. "." .. item.name
+					-- local category = cell.category
+
+					local cell = {}
+					cell.id = item.id
+					cell.name = item.name
+					cell.repo = item.repo
+					cell.description = ""
+					cell.fullName = itemFullName
+					cell.created = item.created
+
+					local itemDetailsContent = itemDetails:createModalContent({ 
+						mode = "create", 
+						uikit = ui, 
+						item = cell,
+					})
+
+					local btnEdit = ui:button({ content = "✏️ Edit", textSize = "big" })
+					btnEdit.onRelease = function()
+						System.LaunchItemEditor(itemFullName, newCategory)
+					end
+
+					local btnDuplicate = ui:button({ content = "📑 Duplicate", textSize = "default" })
+					btnDuplicate.onRelease = function()
+						-- no need to pass grid, it's already marked
+						-- for refresh at this point
+						local m = itemDetailsContent:getModalIfContentIsActive()
+						if m ~= nil then
+							local what
+							if newCategory == nil then
+								what = "item"
+							else
+								what = "wearable"
+							end
+							m:push(functions.createNewContent({
+								what = what, 
+								original = itemFullName, 
+								originalCategory = newCategory
+							}))
+						end
+					end
+
+					-- itemDetailsContent.bottomCenter = {btnDuplicate, btnEdit}
+					itemDetailsContent.bottomRight = { btnEdit }
+					itemDetailsContent.bottomLeft = { btnDuplicate }
+
+					itemDetailsContent.idealReducedContentSize = function(content, width, height)
+						content.Width = width
+						content.Height = height
+						return Number2(content.Width, content.Height)
+					end
+
+					newContent:pushAndRemoveSelf(itemDetailsContent)
 				end) -- api:createItem
 			end -- end if world/item
 		end
@@ -749,7 +777,14 @@ creations.createModalContent = function(_, config)
 		btnNext.onRelease = function()
 			local m = content:getModalIfContentIsActive()
 			if m ~= nil then
-				m:push(functions.createNewContent({ what = "model", preview = model, data = data, grid = grid }))
+				m:push(functions.createNewContent({ 
+					what = "model", 
+					preview = model, 
+					data = data, 
+					grid = grid,
+					offsetRotation = modelOffsetRotation,
+					scale = modelScale,
+				}))
 			end
 		end
 
