@@ -42,8 +42,11 @@ typedef enum {
 ///     - DataFormat_VOX: Shape*\n
 ///     - DataFormat_GLTF: DoublyLinkedList*\n
 /// @returns data format used to deserialize
-DataFormat serialization_load_data(const void *buffer, const size_t size, const ASSET_MASK_T filter,
-                                   const ShapeSettings *shapeSettings, void **out);
+DataFormat serialization_load_data(const void *buffer,
+                                   const size_t size,
+                                   const ASSET_MASK_T filter,
+                                   const ShapeSettings *shapeSettings,
+                                   void **out);
 
 //MARK: - 3ZH files -
 

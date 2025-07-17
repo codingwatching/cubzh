@@ -157,6 +157,43 @@ bool serialization_load_assets(Stream *stream,
         return false;
     }
 
+    // external formats
+    {
+        uint32_t magic;
+        if (stream_read_uint32(stream, &magic) == false) {
+            cclog_error("failed to read magic byte");
+            goto return_error;
+        }
+
+        DataFormat format = DataFormat_Error;
+
+        if (magic == MAGIC_VOX) {
+            format = serialization_vox_load(stream, (Shape **)out, shapeSettings->isMutable, NULL) != no_error ?
+            DataFormat_VOX : DataFormat_Error;
+
+            if (format == DataFormat_Error) {
+                goto return_error;
+            }
+            goto return_success;
+
+        } else if (magic == MAGIC_GLTF) {
+            const char *buf;
+            size_t size = 0;
+            if (stream_get_buffer_and_size(stream, &buf, &size)) {
+                format = serialization_gltf_load(buf, size, filter, (DoublyLinkedList **)out) ?
+                DataFormat_GLTF : DataFormat_Error;
+            }
+
+            if (format == DataFormat_Error) {
+                goto return_error;
+            }
+            goto return_success;
+        }
+    }
+
+    // 3ZH and PCUBES
+    stream_set_cursor_position(stream, 0);
+
     // read magic bytes
     if (readMagicBytes(stream, allowLegacy) == false) {
         goto return_error;
