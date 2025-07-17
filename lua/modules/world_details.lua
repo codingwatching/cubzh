@@ -57,7 +57,7 @@ mod.createModalContent = function(_, config)
 	local badgesFetched = {}
 
 	badges = {
-		createCell = nil, -- first cell: button to create a new badge
+		cells = {},
 	}
 
 	-- Constants for badges list
@@ -81,12 +81,18 @@ mod.createModalContent = function(_, config)
 			firstIndexOfContent = 2
 		end
 
+		if index >= firstIndexOfContent + #badgesFetched then
+			return nil
+		end
+
+		local cell = badges.cells[index]
+
 		-- index of the "Create badge" cell
 		if index < firstIndexOfContent then
-			if badges.createCell == nil then
-				badges.createCell = ui:frameScrollCellWithBevel()
-				badges.createCell.Width = CONFIG.BADGE_CELL_WIDTH
-				badges.createCell.parentDidResize = badgeCellResizeFn
+			if cell == nil then
+				cell = ui:frameScrollCellWithBevel()
+				cell.Width = CONFIG.BADGE_CELL_WIDTH
+				cell.parentDidResize = badgeCellResizeFn
 
 				local image = ui:frame({
 					image = {
@@ -98,6 +104,8 @@ mod.createModalContent = function(_, config)
 				image.object.Color = Color(180, 180, 180)
 				image.Width = CONFIG.BADGE_CELL_WIDTH * 0.6
 				image.Height = image.Width
+				cell.image = image
+				image:setParent(cell)
 
 				local label = ui:createText(loc("New\nBadge"), {
 					color = Color(180, 180, 180),
@@ -106,24 +114,14 @@ mod.createModalContent = function(_, config)
 					outlineColor = Color(10, 10, 10),
 					alignment = "center",
 				})
-				label:setParent(badges.createCell)
-				label.pos = {
-					CONFIG.BADGE_CELL_WIDTH * 0.5 - label.Width * 0.5,
-					CONFIG.BADGE_CELL_HEIGHT * 0.5 * 0.5 - label.Height * 0.5,
-				}
+				cell.label = label
+				label:setParent(cell)
 
-				local vSpaceForImage = CONFIG.BADGE_CELL_HEIGHT - (label.pos.Y + label.Height)
-				image.pos = {
-					CONFIG.BADGE_CELL_WIDTH * 0.5 - image.Width * 0.5,
-					CONFIG.BADGE_CELL_HEIGHT - vSpaceForImage * 0.5 - image.Height * 0.5,
-				}
-				image:setParent(badges.createCell)
-
-				badges.createCell.onPress = function(_)
+				cell.onPress = function(_)
 					Client:HapticFeedback()
 				end
 
-				badges.createCell.onRelease = function(_)
+				cell.onRelease = function(_)
 					-- show badge creation form in the world details modal
 					badgeModalContent = badgeModal:createModalContent({
 						uikit = ui,
@@ -137,62 +135,108 @@ mod.createModalContent = function(_, config)
 						print("❌ no modal found")
 					end
 				end
+
+				badges.cells[index] = cell
 			end
-			return badges.createCell
+
+			local label = cell.label
+			local image = cell.image
+			
+			label.pos = {
+				CONFIG.BADGE_CELL_WIDTH * 0.5 - label.Width * 0.5,
+				CONFIG.BADGE_CELL_HEIGHT * 0.5 * 0.5 - label.Height * 0.5,
+			}
+
+			local vSpaceForImage = CONFIG.BADGE_CELL_HEIGHT - (label.pos.Y + label.Height)
+			image.pos = {
+				CONFIG.BADGE_CELL_WIDTH * 0.5 - image.Width * 0.5,
+				CONFIG.BADGE_CELL_HEIGHT - vSpaceForImage * 0.5 - image.Height * 0.5,
+			}
+
+			return cell
 		else -- display a badge cell
 			local fetchedBadgeIndex = index + 1 - firstIndexOfContent
 			if fetchedBadgeIndex <= #badgesFetched then
-				-- display a badge cell
+				
 				local badge = badgesFetched[fetchedBadgeIndex]
 
-				local cell = ui:frameScrollCellWithBevel()
-				cell.Width = CONFIG.BADGE_CELL_WIDTH
-				cell.parentDidResize = badgeCellResizeFn
+				if cell == nil then
+					cell = ui:frame({ color = Color(255, 255, 255, 0.2) })
+					cell.Width = CONFIG.BADGE_CELL_WIDTH
+					cell.parentDidResize = badgeCellResizeFn
+
+					local iconImage = ui:frame({
+						image = {
+							data = Data:FromBundle("images/icon-plus.png"),
+							alpha = true,
+							filtering = true,
+						},
+					})
+					iconImage.object.Color = Color(180, 180, 180)
+					iconImage.Width = CONFIG.BADGE_CELL_WIDTH * 0.6
+					iconImage.Height = iconImage.Width
+					cell.iconImage = iconImage
+					iconImage:setParent(cell)
+
+					local nameLabel = ui:createText(badge.name, {
+						color = Color.White,
+						size = "small",
+						outline = 0.4,
+						outlineColor = Color(10, 10, 10),
+						alignment = "center",
+					})
+					cell.nameLabel = nameLabel
+					nameLabel:setParent(cell)
+
+					local rarityLabel = ui:createText("rarity: 15%", {
+						color = Color.White,
+						size = "small",
+						alignment = "center",
+					})
+					cell.rarityLabel = rarityLabel
+					rarityLabel:setParent(cell)
+
+					-- -- Download badge icon
+					local req = api:getBadgeThumbnail({
+						badgeID = badge.badgeID,
+						callback = function(icon, err)
+							if err ~= nil then
+								return
+							end
+							iconImage:setImage(icon)
+						end,
+					})
+					-- TODO: cancel req if cell is destroyed
+
+					badges.cells[index] = cell
+				end
+
+				local rarityLabel = cell.rarityLabel
+				local nameLabel = cell.nameLabel
+				local iconImage = cell.iconImage
 
 				local y = CONFIG.BADGE_CELL_HEIGHT
 
-				local iconImage = ui:frame({
-					image = {
-						data = Data:FromBundle("images/icon-plus.png"),
-						alpha = true,
-						filtering = true,
-					},
-				})
-				iconImage.object.Color = Color(180, 180, 180)
-				iconImage.Width = CONFIG.BADGE_CELL_WIDTH * 0.6
-				iconImage.Height = iconImage.Width
-				iconImage:setParent(cell)
+				rarityLabel.object.Scale = 1
+				if rarityLabel.Width > cell.Width then
+					rarityLabel.object.Scale = cell.Width / rarityLabel.Width
+				end
+
 				y = y - theme.padding - iconImage.Height
 				iconImage.pos = {
 					CONFIG.BADGE_CELL_WIDTH * 0.5 - iconImage.Width * 0.5,
 					y,
 				}
 
-				local nameLabel = ui:createText(badge.name, {
-					color = Color.White,
-					size = "small",
-					outline = 0.4,
-					outlineColor = Color(10, 10, 10),
-					alignment = "center",
-				})
-				nameLabel:setParent(cell)
 				y = y - theme.padding - nameLabel.Height
 				nameLabel.pos = {
 					CONFIG.BADGE_CELL_WIDTH * 0.5 - nameLabel.Width * 0.5,
 					y,
 				}
 
-				local tagLabel = ui:createText(badge.tag, {
-					color = Color.White,
-					size = "small",
-					outline = 0.4,
-					outlineColor = Color(10, 10, 10),
-					alignment = "center",
-				})
-				tagLabel:setParent(cell)
-				y = y - theme.padding - tagLabel.Height
-				tagLabel.pos = {
-					CONFIG.BADGE_CELL_WIDTH * 0.5 - tagLabel.Width * 0.5,
+				y = y - theme.padding - rarityLabel.Height
+				rarityLabel.pos = {
+					CONFIG.BADGE_CELL_WIDTH * 0.5 - rarityLabel.Width * 0.5,
 					y,
 				}
 
@@ -200,17 +244,6 @@ mod.createModalContent = function(_, config)
 					nameLabel.Color = Color.Green
 					tagLabel.Color = Color.Green
 				end
-
-				-- -- Download badge icon
-				api:getBadgeThumbnail({
-					badgeID = badge.badgeID,
-					callback = function(icon, err)
-						if err ~= nil then
-							return
-						end
-						iconImage:setImage(icon)
-					end,
-				})
 
 				return cell
 			end
