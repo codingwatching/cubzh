@@ -145,16 +145,9 @@ mod.createModalContent = function(_, config)
 				-- display a badge cell
 				local badge = badgesFetched[fetchedBadgeIndex]
 
-				print("🐞 [badges] badge", badge.id, badge.name, badge.tag)
-				for k, v in pairs(badge) do
-					print("🐞 [badges] badge to render:", k, v)
-				end
-
 				local cell = ui:frameScrollCellWithBevel()
 				cell.Width = CONFIG.BADGE_CELL_WIDTH
 				cell.parentDidResize = badgeCellResizeFn
-
-				print("🐞 [badges] badge name --->", badge.name)
 
 				local y = CONFIG.BADGE_CELL_HEIGHT
 
@@ -204,15 +197,14 @@ mod.createModalContent = function(_, config)
 				}
 
 				if badge.userDidUnlock == true then
-					print("🐞 [badges] badge is unlocked", badge.tag)
-					cell.backgroundColor = Color.Green
+					nameLabel.Color = Color.Green
+					tagLabel.Color = Color.Green
 				end
 
 				-- -- Download badge icon
 				api:getBadgeThumbnail({
 					badgeID = badge.badgeID,
 					callback = function(icon, err)
-						print("🐞 [badges] getBadgeThumbnail callback", icon, err)
 						if err ~= nil then
 							return
 						end
@@ -379,14 +371,6 @@ mod.createModalContent = function(_, config)
 	local badgesTitle = ui:createText("Badges", { color = Color.White, size = "default" })
 	badgesTitle:setParent(cell)
 
-	-- local badgesDataFetcher = {
-	-- 	entities = {},
-	-- 	nbEntities = 0,
-	-- 	row = cell,
-	-- 	title = "Badges",
-	-- 	displayNumberOfEntries = 0, -- 1
-	-- }
-
 	-- create scroll to display badges
 	local badgesScroll = ui:scroll({
 		backgroundColor = Color(26, 26, 30),
@@ -400,7 +384,6 @@ mod.createModalContent = function(_, config)
 		direction = "right",
 		loadCell = badgesScrollLoadCell,
 		unloadCell = badgesScrollUnloadCell,
-		-- userdata = badgesDataFetcher,
 	})
 	badgesScroll:setParent(cell)
 
@@ -411,13 +394,7 @@ mod.createModalContent = function(_, config)
 				return
 			end
 
-			print("🐞 [badges] BADGES COUNT:", #badges)
-
 			badgesFetched = badges
-
-			for _, badge in ipairs(badgesFetched) do
-				print("🐞 [badges] BADGE:", badge.id, badge.tag, badge.name)
-			end
 
 			badgesScroll:flush()
 			badgesScroll:refresh()
@@ -443,8 +420,6 @@ mod.createModalContent = function(_, config)
 				if data == nil then
 					return
 				end
-
-				print("setting icon for world id:", world.id, "size:", data.Length)
 
 				systemApi:setWorldIcon(world.id, data, function(err)
 					if err ~= nil then

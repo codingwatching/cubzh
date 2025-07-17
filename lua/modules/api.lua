@@ -1089,7 +1089,6 @@ end
 
 -- Badges
 
--- TODO: gaetan: how to know which badges have been unlocked by the current user?
 -- Callback signature: cb(error, badges)
 mod.listBadgesForWorld = function(_, worldId, cb)
 	local url = mod.kApiAddr .. "/worlds/" .. worldId .. "/badges"
@@ -1125,12 +1124,9 @@ end
 -- Get badge thumbnail by badgeId
 -- cb(thumbnail, error)
 mod.getBadgeThumbnail = function(self, config)
-	print("🐞 [badges] getBadgeThumbnail - 1")
 	if self ~= mod then
 		error("api:getBadgeThumbnail(config): use `:`", 2)
 	end
-
-	print("🐞 [badges] getBadgeThumbnail - 2")
 
 	local defaultConfig = {
 		badgeID = "",
@@ -1138,8 +1134,6 @@ mod.getBadgeThumbnail = function(self, config)
 		callback = nil,
 		-- validateCache = false, -- TODO: do we want to expose "forceCacheRevalidation" in Luau?
 	}
-
-	print("🐞 [badges] getBadgeThumbnail - 3")
 
 	ok, err = pcall(function()
 		config = require("config"):merge(defaultConfig, config, {
@@ -1151,22 +1145,18 @@ mod.getBadgeThumbnail = function(self, config)
 	end)
 
 	if not ok then
-		error("api:getWorldThumbnail(config): config error (" .. err .. ")", 2)
+		error("api:getBadgeThumbnail(config): config error (" .. err .. ")", 2)
 	end
 
 	if config.worldID == "" then
-		error("api:getWorldThumbnail(config): config.worldID should not be empty", 2)
+		error("api:getBadgeThumbnail(config): config.worldID should not be empty", 2)
 	end
 	if config.callback == nil then
-		error("api:getWorldThumbnail(config): config.callback should be a function", 2)
+		error("api:getBadgeThumbnail(config): config.callback should be a function", 2)
 	end
 
-	print("🐞 [badges] getBadgeThumbnail - 4", config.badgeID, "|", config.width)
-
 	local urlStr = self:getBadgeThumbnailUrl(config.badgeID, config.width)
-
 	local req = HTTP:Get(urlStr, function(res)
-		print("🐞 [badges] getBadgeThumbnail - 5", res.StatusCode, res.Body)
 		if res.StatusCode == 200 then
 			config.callback(res.Body)
 		else
