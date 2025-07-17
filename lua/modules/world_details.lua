@@ -60,12 +60,30 @@ mod.createModalContent = function(_, config)
 		cells = {},
 	}
 
+	local t = 0
+	local r = Rotation()
+	local l = LocalEvent:Listen(LocalEvent.Name.Tick, function(dt)
+		t += dt * 1.5
+		r.Y = math.pi + math.sin(t) * 0.4
+		r.X = math.cos(t * 1.1) * 0.3
+		for _, cell in ipairs(badges.cells) do
+			if cell.badge ~= nil then
+				cell.badge.LocalRotation:Set(r)
+			end
+		end
+	end)
+	table.insert(listeners, l)
+
+	local maskQuadData = Data:FromBundle("images/mask-round.png")
+
+	local PADDING = theme.padding
+
 	-- Constants for badges list
 	-- (similar to friends list in cubzh.lua)
 	local CONFIG = {
-		BADGE_CELL_WIDTH = 80,
-		BADGE_CELL_HEIGHT = 120,
-		BADGES_CELL_PADDING = 10,
+		BADGE_CELL_WIDTH = 90,
+		BADGE_CELL_HEIGHT = 140,
+		BADGES_CELL_PADDING = PADDING,
 	}
 
 	local function badgeCellResizeFn(self)
@@ -161,22 +179,54 @@ mod.createModalContent = function(_, config)
 				local badge = badgesFetched[fetchedBadgeIndex]
 
 				if cell == nil then
-					cell = ui:frame({ color = Color(255, 255, 255, 0.2) })
+					cell = ui:frame({ color = Color(255, 255, 255, 0) })
 					cell.Width = CONFIG.BADGE_CELL_WIDTH
 					cell.parentDidResize = badgeCellResizeFn
 
-					local iconImage = ui:frame({
-						image = {
-							data = Data:FromBundle("images/icon-plus.png"),
-							alpha = true,
-							filtering = true,
-						},
-					})
-					iconImage.object.Color = Color(180, 180, 180)
-					iconImage.Width = CONFIG.BADGE_CELL_WIDTH * 0.6
-					iconImage.Height = iconImage.Width
-					cell.iconImage = iconImage
-					iconImage:setParent(cell)
+					local badgeShape = ui:frame()
+					cell.badgeShape = badgeShape
+					badgeShape.Width = CONFIG.BADGE_CELL_WIDTH
+					badgeShape.Height = CONFIG.BADGE_CELL_WIDTH
+					badgeShape:setParent(cell)
+
+					local maskQuad = Quad()
+					maskQuad.Color = Color(255, 255, 255, 0)
+					maskQuad.Image = {
+						data = maskQuadData,
+						cutout = true,
+					}
+					maskQuad.Anchor = { 0.5, 0.5 }
+					maskQuad.IsMask = true
+
+					local iconQuad = Quad()
+					iconQuad.Color = Color(255, 255, 255, 0)
+					iconQuad.Anchor = { 0.5, 0.5 }
+
+					Object:Load(Data:FromBundle("shapes/badge.glb"), function(o)
+						o.IsUnlit = true
+						
+						cell.badge = o
+
+						maskQuad:SetParent(o)
+						maskQuad.Width = o.Width * 0.88 * 80
+						maskQuad.Height = o.Height * 0.88 * 80
+						maskQuad.Scale = 1 / 80
+						maskQuad.LocalPosition.Z = -o.Depth * 0.28
+
+						iconQuad:SetParent(maskQuad)
+						iconQuad.Width = maskQuad.Width
+						iconQuad.Height = maskQuad.Height
+
+						local s = ui:createShape(o, { spherized = false })
+						s.Width = badgeShape.Width
+						s.Height = badgeShape.Height
+						s:setParent(cell)
+
+						s.pos = badgeShape.pos
+						badgeShape:remove()
+						badgeShape = s
+						cell.badgeShape = s
+					end)
 
 					local nameLabel = ui:createText(badge.name, {
 						color = Color.White,
@@ -188,7 +238,7 @@ mod.createModalContent = function(_, config)
 					cell.nameLabel = nameLabel
 					nameLabel:setParent(cell)
 
-					local rarityLabel = ui:createText("rarity: 15%", {
+					local rarityLabel = ui:createText("rarity: -%", {
 						color = Color.White,
 						size = "small",
 						alignment = "center",
@@ -203,7 +253,11 @@ mod.createModalContent = function(_, config)
 							if err ~= nil then
 								return
 							end
-							iconImage:setImage(icon)
+							iconQuad.Color = Color(255, 255, 255)
+							iconQuad.Image = {
+								data = icon,
+								filtering = false,
+							}
 						end,
 					})
 					-- TODO: cancel req if cell is destroyed
@@ -213,28 +267,42 @@ mod.createModalContent = function(_, config)
 
 				local rarityLabel = cell.rarityLabel
 				local nameLabel = cell.nameLabel
-				local iconImage = cell.iconImage
+				local badgeShape = cell.badgeShape
 
 				local y = CONFIG.BADGE_CELL_HEIGHT
 
-				rarityLabel.object.Scale = 1
+				nameLabel.object.Scale = 1
+				if nameLabel.Width > cell.Width then
+					nameLabel.object.Scale = cell.Width / nameLabel.Width
+				end
+
+				rarityLabel.object.Scale = 0.8
 				if rarityLabel.Width > cell.Width then
 					rarityLabel.object.Scale = cell.Width / rarityLabel.Width
 				end
 
-				y = y - theme.padding - iconImage.Height
-				iconImage.pos = {
-					CONFIG.BADGE_CELL_WIDTH * 0.5 - iconImage.Width * 0.5,
+				local vSpace = y - badgeShape.Height - PADDING * 2
+				local textHeight = nameLabel.Height + rarityLabel.Height
+				if textHeight > vSpace then
+					local scale = vSpace / textHeight
+					nameLabel.object.Scale *= scale
+					rarityLabel.object.Scale *= scale
+				end
+
+				y = y - badgeShape.Height
+
+				cell.badgeShape.pos = {
+					CONFIG.BADGE_CELL_WIDTH * 0.5 - cell.badgeShape.Width * 0.5,
 					y,
 				}
 
-				y = y - theme.padding - nameLabel.Height
+				y = y - PADDING - nameLabel.Height
 				nameLabel.pos = {
 					CONFIG.BADGE_CELL_WIDTH * 0.5 - nameLabel.Width * 0.5,
 					y,
 				}
 
-				y = y - theme.padding - rarityLabel.Height
+				y = y - rarityLabel.Height
 				rarityLabel.pos = {
 					CONFIG.BADGE_CELL_WIDTH * 0.5 - rarityLabel.Width * 0.5,
 					y,
@@ -242,7 +310,6 @@ mod.createModalContent = function(_, config)
 
 				if badge.userDidUnlock == true then
 					nameLabel.Color = Color.Green
-					tagLabel.Color = Color.Green
 				end
 
 				return cell
@@ -251,7 +318,9 @@ mod.createModalContent = function(_, config)
 		return nil -- no cell for index (this line may not be needed)
 	end
 
-	local badgesScrollUnloadCell = function(_, _) end
+	local badgesScrollUnloadCell = function(_, cell) 
+		cell:setParent(nil)
+	end
 
 	local privateFields = {}
 
@@ -408,8 +477,8 @@ mod.createModalContent = function(_, config)
 	local badgesScroll = ui:scroll({
 		backgroundColor = Color(26, 26, 30),
 		padding = {
-			top = 0,
-			bottom = 0,
+			top = CONFIG.BADGES_CELL_PADDING,
+			bottom = CONFIG.BADGES_CELL_PADDING,
 			left = CONFIG.BADGES_CELL_PADDING,
 			right = CONFIG.BADGES_CELL_PADDING,
 		},
@@ -437,7 +506,7 @@ mod.createModalContent = function(_, config)
 	-- TODO: gaetan: should this be done this way?
 	badgesScroll.parentDidResize = function(self)
 		self.Width = self.parent.Width - theme.padding * 2
-		self.Height = CONFIG.BADGE_CELL_HEIGHT -- + CONFIG.BADGES_CELL_PADDING * 2
+		self.Height = CONFIG.BADGE_CELL_HEIGHT + CONFIG.BADGES_CELL_PADDING * 2
 	end
 
 	if createMode then
