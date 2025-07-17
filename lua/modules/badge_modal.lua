@@ -50,6 +50,7 @@ mod.createModalContent = function(_, config)
 				iconData = nil,
 				tag = nil,
 				name = nil,
+				description = nil,
 			}
 
 			privateFields.scheduleRefresh = function()
@@ -131,14 +132,18 @@ mod.createModalContent = function(_, config)
 			editIconBtn:setParent(cell)
 
 			-- Tag
-			local tagEdit = ui:createTextInput("", "Badge Tag")
+			local tagEdit = ui:createTextInput("", "Identifier")
 			tagEdit:setParent(cell)
 			local tagStatus = ui:createText("⚠️", theme.textColor)
 			tagStatus:setParent(cell)
 
 			-- Name
-			local nameEdit = ui:createTextInput("", "Badge Name")
+			local nameEdit = ui:createTextInput("", "Name")
 			nameEdit:setParent(cell)
+
+			-- Description
+			local descriptionEdit = ui:createTextInput("", "Description")
+			descriptionEdit:setParent(cell)
 
 			-- Create Badge Button
 			local createBadgeBtn = ui:buttonPositive({ content = loc("Create Badge") })
@@ -155,7 +160,13 @@ mod.createModalContent = function(_, config)
 
 			-- Tag value has changed
 			tagEdit.onTextChange = function(self)
-				-- TODO: gaetan: should we prohibit spaces and special characters
+				-- allow only alphanumeric characters and underscores
+				if not self.Text:match("^%w+$") then
+					self.onTextChangeSave = self.onTextChange
+					self.onTextChange = nil
+					self.Text = self.Text:gsub("[^%w]", "")
+					self.onTextChange = self.onTextChangeSave
+				end
 
 				-- store new value
 				privateFields.tag = self.Text
@@ -170,6 +181,12 @@ mod.createModalContent = function(_, config)
 			-- Name value has changed
 			nameEdit.onTextChange = function(self)
 				privateFields.name = self.Text
+				node:refreshCreateButton()
+			end
+
+			-- Description value has changed
+			descriptionEdit.onTextChange = function(self)
+				privateFields.description = self.Text
 				node:refreshCreateButton()
 			end
 
@@ -220,6 +237,7 @@ mod.createModalContent = function(_, config)
 				-- compute width values
 				tagEdit.Width = cell.Width - tagStatus.Width - theme.padding * 2
 				nameEdit.Width = tagEdit.Width
+				descriptionEdit.Width = tagEdit.Width
 
 				local y = contentHeight
 
@@ -237,6 +255,10 @@ mod.createModalContent = function(_, config)
 				-- name edit + button
 				y = y - theme.padding - nameEdit.Height
 				nameEdit.pos = { theme.padding, y }
+
+				-- description edit
+				y = y - theme.padding - descriptionEdit.Height
+				descriptionEdit.pos = { theme.padding, y }
 
 				-- create badge button
 				y = y - theme.padding - createBadgeBtn.Height
@@ -281,7 +303,7 @@ mod.createModalContent = function(_, config)
 					icon = privateFields.iconData,
 					tag = privateFields.tag,
 					name = privateFields.name,
-					-- description = privateFields.description,
+					description = privateFields.description,
 				}, function(err)
 					if err then
 						print("error creating badge:", err)

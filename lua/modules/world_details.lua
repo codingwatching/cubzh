@@ -53,6 +53,8 @@ mod.createModalContent = function(_, config)
 	local likeRequest
 	local refreshTimer
 	local listeners = {}
+	-- array of badges fetched from the server
+	local badgesFetched = {}
 
 	badges = {
 		createCell = nil, -- first cell: button to create a new badge
@@ -122,26 +124,96 @@ mod.createModalContent = function(_, config)
 				end
 
 				badges.createCell.onRelease = function(_)
-					-- Temporary: display a "coming soon" modal
-					Menu:ShowAlert({ message = "Coming soon!" }, System)
-
-					-- -- show badge creation form in the world details modal
-					-- badgeModalContent = badgeModal:createModalContent({
-					-- 	uikit = ui,
-					-- 	mode = "create",
-					-- 	worldId = world.id,
-					-- })
-					-- local m = content:getModalIfContentIsActive()
-					-- if m ~= nil then
-					-- 	m:push(badgeModalContent)
-					-- else
-					-- 	print("❌ no modal found")
-					-- end
+					-- show badge creation form in the world details modal
+					badgeModalContent = badgeModal:createModalContent({
+						uikit = ui,
+						mode = "create",
+						worldId = world.id,
+					})
+					local m = content:getModalIfContentIsActive()
+					if m ~= nil then
+						m:push(badgeModalContent)
+					else
+						print("❌ no modal found")
+					end
 				end
 			end
 			return badges.createCell
-		else
-			-- TODO: display a badge cell
+		else -- display a badge cell
+			local fetchedBadgeIndex = index + 1 - firstIndexOfContent
+			if fetchedBadgeIndex <= #badgesFetched then
+				-- display a badge cell
+				local badge = badgesFetched[fetchedBadgeIndex]
+
+				local cell = ui:frameScrollCellWithBevel()
+				cell.Width = CONFIG.BADGE_CELL_WIDTH
+				cell.parentDidResize = badgeCellResizeFn
+
+				local y = CONFIG.BADGE_CELL_HEIGHT
+
+				local iconImage = ui:frame({
+					image = {
+						data = Data:FromBundle("images/icon-plus.png"),
+						alpha = true,
+						filtering = true,
+					},
+				})
+				iconImage.object.Color = Color(180, 180, 180)
+				iconImage.Width = CONFIG.BADGE_CELL_WIDTH * 0.6
+				iconImage.Height = iconImage.Width
+				iconImage:setParent(cell)
+				y = y - theme.padding - iconImage.Height
+				iconImage.pos = {
+					CONFIG.BADGE_CELL_WIDTH * 0.5 - iconImage.Width * 0.5,
+					y,
+				}
+
+				local nameLabel = ui:createText(badge.name, {
+					color = Color.White,
+					size = "small",
+					outline = 0.4,
+					outlineColor = Color(10, 10, 10),
+					alignment = "center",
+				})
+				nameLabel:setParent(cell)
+				y = y - theme.padding - nameLabel.Height
+				nameLabel.pos = {
+					CONFIG.BADGE_CELL_WIDTH * 0.5 - nameLabel.Width * 0.5,
+					y,
+				}
+
+				local tagLabel = ui:createText(badge.tag, {
+					color = Color.White,
+					size = "small",
+					outline = 0.4,
+					outlineColor = Color(10, 10, 10),
+					alignment = "center",
+				})
+				tagLabel:setParent(cell)
+				y = y - theme.padding - tagLabel.Height
+				tagLabel.pos = {
+					CONFIG.BADGE_CELL_WIDTH * 0.5 - tagLabel.Width * 0.5,
+					y,
+				}
+
+				if badge.userDidUnlock == true then
+					nameLabel.Color = Color.Green
+					tagLabel.Color = Color.Green
+				end
+
+				-- -- Download badge icon
+				api:getBadgeThumbnail({
+					badgeID = badge.badgeID,
+					callback = function(icon, err)
+						if err ~= nil then
+							return
+						end
+						iconImage:setImage(icon)
+					end,
+				})
+
+				return cell
+			end
 		end
 		return nil -- no cell for index (this line may not be needed)
 	end
@@ -214,8 +286,6 @@ mod.createModalContent = function(_, config)
 	cell:setParent(nil)
 
 	local title
-	local name
-	local editNameBtn
 	local by
 	local authorBtn
 	local author
@@ -223,15 +293,12 @@ mod.createModalContent = function(_, config)
 	local reportBtn
 	local editDescriptionBtn
 	local editIconBtn
-	local nameArea
 	local description
 	local views
 	local creationDate
 	local updateDate
 	local serverSizeText
 	local serverSizeSlider
-
-	local iconRatio = 1 -- 16 / 9
 
 	local iconMask = ui:frame({
 		image = {
@@ -304,19 +371,9 @@ mod.createModalContent = function(_, config)
 	local badgesTitle = ui:createText("Badges", { color = Color.White, size = "default" })
 	badgesTitle:setParent(cell)
 
-	local badgesDataFetcher = {
-		entities = {},
-		nbEntities = 0,
-		row = cell,
-		title = "Badges",
-		displayNumberOfEntries = 0, -- 1
-	}
-
+	-- create scroll to display badges
 	local badgesScroll = ui:scroll({
-		-- backgroundColor = Color(255, 255, 255),
-		-- backgroundColor = Color(43, 45, 49),
 		backgroundColor = Color(26, 26, 30),
-		-- backgroundColor = theme.buttonTextColor,
 		padding = {
 			top = 0,
 			bottom = 0,
@@ -327,10 +384,24 @@ mod.createModalContent = function(_, config)
 		direction = "right",
 		loadCell = badgesScrollLoadCell,
 		unloadCell = badgesScrollUnloadCell,
-		userdata = badgesDataFetcher,
-		centerContent = true,
 	})
 	badgesScroll:setParent(cell)
+
+	fetchBadgesAndUpdateUI = function()
+		api:listBadgesForWorld(world.id, function(err, badges)
+			if err ~= nil or badges == nil then
+				print("🐞 [badges] could not list badges for world", world.id, err)
+				return
+			end
+
+			badgesFetched = badges
+
+			badgesScroll:flush()
+			badgesScroll:refresh()
+		end)
+	end
+
+	-- TODO: gaetan: should this be done this way?
 	badgesScroll.parentDidResize = function(self)
 		self.Width = self.parent.Width - theme.padding * 2
 		self.Height = CONFIG.BADGE_CELL_HEIGHT -- + CONFIG.BADGES_CELL_PADDING * 2
@@ -349,8 +420,6 @@ mod.createModalContent = function(_, config)
 				if data == nil then
 					return
 				end
-
-				print("setting icon for world id:", world.id, "size:", data.Length)
 
 				systemApi:setWorldIcon(world.id, data, function(err)
 					if err ~= nil then
@@ -520,10 +589,6 @@ mod.createModalContent = function(_, config)
 			iconArea:setImage(world.thumbnail)
 		end
 
-		if name ~= nil then
-			name.Text = world.title or ""
-		end
-
 		if config.mode == "create" then
 			if world.description == nil or world.description == "" then
 				description.empty = true
@@ -676,6 +741,8 @@ mod.createModalContent = function(_, config)
 			})
 			table.insert(requests, req)
 		end
+
+		fetchBadgesAndUpdateUI()
 	end
 
 	local w = 400
@@ -894,6 +961,7 @@ mod.createModalContent = function(_, config)
 			scroll.pos.Y = 0
 		end
 
+		-- TODO: gaetan: check if this is really needed
 		scroll:flush()
 		scroll:refresh()
 	end

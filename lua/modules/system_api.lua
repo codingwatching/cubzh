@@ -1141,4 +1141,34 @@ mod.createBadge = function(self, badgeInfo, callback)
 	return req
 end
 
+-- callback(err)
+mod.unlockBadge = function(self, worldId, badgeTag, callback)
+	if self ~= mod then
+		error("api:unlockBadge(worldId, badgeTag): use `:`", 2)
+	end
+
+	-- compute signature
+	local signature = System:ComputeBadgeSignature(worldId, badgeTag)
+
+	-- send request
+	local u = url:parse(mod.kApiAddr .. "/users/self/badges")
+	local body = {
+		worldId = worldId,
+		badgeTag = badgeTag,
+		signature = signature,
+	}
+	local req = System:HttpPost(u:toString(), body, function(res)
+		if res.StatusCode ~= 200 then
+			if callback ~= nil then
+				callback(api:error(res.StatusCode, res.Body))
+			end
+			return
+		end
+
+		callback(nil) -- success
+	end)
+
+	return req
+end
+
 return mod

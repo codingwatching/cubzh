@@ -1087,4 +1087,84 @@ mod.aiImageGenerations = function(prompt, optionsOrCallback, callback)
 	return req
 end
 
+-- Badges
+
+-- Callback signature: cb(error, badges)
+mod.listBadgesForWorld = function(_, worldId, cb)
+	local url = mod.kApiAddr .. "/worlds/" .. worldId .. "/badges"
+	local req = HTTP:Get(url, function(res)
+		if res.StatusCode ~= 200 then
+			return cb("Error (" .. tostring(res.StatusCode) .. "): " .. res.Body:ToString())
+		end
+		local badges = JSON:Decode(res.Body)
+		cb(nil, badges)
+	end)
+	return req
+end
+
+-- Returns the URL for a badge's thumbnail
+-- @param badgeID string
+-- @param width number?
+-- @return url string
+mod.getBadgeThumbnailUrl = function(self, badgeID, width)
+	if self ~= mod then
+		error("api:getBadgeThumbnailUrl(badgeID, width): use `:`", 2)
+	end
+
+	local urlStr = mod.kApiAddr .. "/badges/" .. badgeID .. "/thumbnail.png"
+	if width ~= nil and width > 0 then
+		if width ~= 250 then -- we only use 250px width for now
+			print("⚠️ getWorldThumbnailUrl: unsupported width: " .. width)
+		end
+		urlStr = urlStr .. "?width=" .. width
+	end
+	return urlStr
+end
+
+-- Get badge thumbnail by badgeId
+-- cb(thumbnail, error)
+mod.getBadgeThumbnail = function(self, config)
+	if self ~= mod then
+		error("api:getBadgeThumbnail(config): use `:`", 2)
+	end
+
+	local defaultConfig = {
+		badgeID = "",
+		width = nil,
+		callback = nil,
+		-- validateCache = false, -- TODO: do we want to expose "forceCacheRevalidation" in Luau?
+	}
+
+	ok, err = pcall(function()
+		config = require("config"):merge(defaultConfig, config, {
+			acceptTypes = {
+				width = { "number" },
+				callback = { "function" },
+			},
+		})
+	end)
+
+	if not ok then
+		error("api:getBadgeThumbnail(config): config error (" .. err .. ")", 2)
+	end
+
+	if config.worldID == "" then
+		error("api:getBadgeThumbnail(config): config.worldID should not be empty", 2)
+	end
+	if config.callback == nil then
+		error("api:getBadgeThumbnail(config): config.callback should be a function", 2)
+	end
+
+	local urlStr = self:getBadgeThumbnailUrl(config.badgeID, config.width)
+	local req = HTTP:Get(urlStr, function(res)
+		if res.StatusCode == 200 then
+			config.callback(res.Body)
+		else
+			config.callback(nil, mod:error(res.StatusCode, "status code: " .. res.StatusCode))
+		end
+	end)
+
+	return req
+end
+
 return mod
