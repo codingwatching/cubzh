@@ -159,7 +159,7 @@ mod.createModalContent = function(_, config)
 
 			local label = cell.label
 			local image = cell.image
-			
+
 			label.pos = {
 				CONFIG.BADGE_CELL_WIDTH * 0.5 - label.Width * 0.5,
 				CONFIG.BADGE_CELL_HEIGHT * 0.5 * 0.5 - label.Height * 0.5,
@@ -175,7 +175,6 @@ mod.createModalContent = function(_, config)
 		else -- display a badge cell
 			local fetchedBadgeIndex = index + 1 - firstIndexOfContent
 			if fetchedBadgeIndex <= #badgesFetched then
-				
 				local badge = badgesFetched[fetchedBadgeIndex]
 
 				if cell == nil then
@@ -204,7 +203,7 @@ mod.createModalContent = function(_, config)
 
 					Object:Load(Data:FromBundle("shapes/badge.glb"), function(o)
 						o.IsUnlit = true
-						
+
 						cell.badge = o
 
 						maskQuad:SetParent(o)
@@ -318,7 +317,7 @@ mod.createModalContent = function(_, config)
 		return nil -- no cell for index (this line may not be needed)
 	end
 
-	local badgesScrollUnloadCell = function(_, cell) 
+	local badgesScrollUnloadCell = function(_, cell)
 		cell:setParent(nil)
 	end
 

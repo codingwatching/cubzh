@@ -409,7 +409,7 @@ function triggerCallbacks()
 		if isActive then
 			blockEvents()
 			System.PointerForceShown = true
-			removeBadge()
+			-- removeBadge()
 		else
 			unblockEvents()
 			System.PointerForceShown = false
@@ -1041,39 +1041,39 @@ function showSubTopBar()
 			alpha = true,
 		},
 	})
-	
+
 	subTopBar:setParent(background)
 	subTopBar.Height = 30
 	subTopBar.Width = 80
 	subTopBar.pos = { 0, 0 }
-	
+
 	local STBBluxIcon1 = ui:frame({ image = {
 		data = Data:FromBundle("images/icon-blux.png"),
 		alpha = true,
 	} })
 	STBBluxIcon1:setParent(subTopBar)
-	
+
 	local STBBluxIcon2 = ui:frame({ image = {
 		data = Data:FromBundle("images/icon-blux.png"),
 		alpha = true,
 	} })
 	STBBluxIcon2:setParent(subTopBar)
-	
-	STBLabel1 = ui:createText("-", { size = "small", color =Color(253, 222, 44) })
+
+	STBLabel1 = ui:createText("-", { size = "small", color = Color(253, 222, 44) })
 	STBLabel1.object.Scale = 0.8
 	STBLabel1:setParent(subTopBar)
 	STBLabel1.pos = { theme.paddingTiny, theme.paddingTiny }
-	
+
 	STBLabel2 = ui:createText(" (1", { size = "small", color = Color(150, 150, 150) })
 	STBLabel2.object.Scale = 0.8
 	STBLabel2:setParent(subTopBar)
 	STBLabel2.pos = { theme.paddingTiny, theme.paddingTiny }
-	
+
 	STBLabel3 = ui:createText("/request)", { size = "small", color = Color(150, 150, 150) })
 	STBLabel3.object.Scale = 0.8
 	STBLabel3:setParent(subTopBar)
 	STBLabel3.pos = { theme.paddingTiny, theme.paddingTiny }
-	
+
 	subTopBar.layout = function()
 		subTopBar.Height = STBLabel1.Height + theme.paddingTiny * 2
 		STBBluxIcon1.Width = subTopBar.Height * 0.8 STBBluxIcon1.Height = STBBluxIcon1.Width
@@ -1090,7 +1090,7 @@ function showSubTopBar()
 
 		subTopBar.pos = { topBar.pos.X, topBar.pos.Y - subTopBar.Height - theme.paddingTiny }
 	end
-	
+
 	local subTopBarReq = nil
 	subTopBar.refreshBalance = function(self)
 		if subTopBarReq ~= nil then
@@ -1105,7 +1105,7 @@ function showSubTopBar()
 			subTopBar:layout()
 		end)
 	end
-	
+
 	subTopBar:layout()
 	subTopBar:refreshBalance()
 end
@@ -1143,28 +1143,28 @@ end
 cubzhBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
 cubzhBtn:setParent(topBar)
 
-uiBadge = require("ui_badge")
+-- uiBadge = require("ui_badge")
 
-cubzhBtnBadge = nil
+-- cubzhBtnBadge = nil
 
-function showBadge(str)
-	removeBadge()
-	cubzhBtnBadge = uiBadge:create({ text = str, ui = ui })
-	cubzhBtnBadge.internalParentDidResize = cubzhBtnBadge.parentDidResize
-	cubzhBtnBadge.parentDidResize = function(self)
-		self.pos.X = self.parent.Width * 0.5
-		self.pos.Y = 0
-		self:internalParentDidResize()
-	end
-	cubzhBtnBadge:setParent(cubzhBtn)
-end
+-- function showBadge(str)
+-- 	removeBadge()
+-- 	cubzhBtnBadge = uiBadge:create({ text = str, ui = ui })
+-- 	cubzhBtnBadge.internalParentDidResize = cubzhBtnBadge.parentDidResize
+-- 	cubzhBtnBadge.parentDidResize = function(self)
+-- 		self.pos.X = self.parent.Width * 0.5
+-- 		self.pos.Y = 0
+-- 		self:internalParentDidResize()
+-- 	end
+-- 	cubzhBtnBadge:setParent(cubzhBtn)
+-- end
 
-function removeBadge()
-	if cubzhBtnBadge ~= nil then
-		cubzhBtnBadge:remove()
-		cubzhBtnBadge = nil
-	end
-end
+-- function removeBadge()
+-- 	if cubzhBtnBadge ~= nil then
+-- 		cubzhBtnBadge:remove()
+-- 		cubzhBtnBadge = nil
+-- 	end
+-- end
 
 if System.IsHomeAppRunning then
 	local settingsIcon = ui:frame({ image = {
@@ -2300,7 +2300,7 @@ function getCubzhMenuModalContent()
 		image = {
 			data = Data:FromBundle("images/icon-discord.png"),
 			alpha = true,
-		}
+		},
 	})
 
 	local c = ui:frame()
