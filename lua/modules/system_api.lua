@@ -1142,7 +1142,7 @@ mod.createBadge = function(self, badgeInfo, callback)
 	return req
 end
 
--- callback(err)
+-- callback(err, unlocked: boolean)
 mod.unlockBadge = function(self, worldId, badgeTag, callback)
 	if self ~= mod then
 		error("api:unlockBadge(worldId, badgeTag): use `:`", 2)
@@ -1166,7 +1166,16 @@ mod.unlockBadge = function(self, worldId, badgeTag, callback)
 			return
 		end
 
-		callback(nil) -- success
+		-- read response body
+		-- {"unlocked":true|false}
+
+		local response, err = JSON:Decode(res.Body)
+		if err ~= nil then
+			callback(api:error(res.StatusCode, "JSON decode error: " .. err))
+			return
+		end
+
+		callback(nil, response.unlocked) -- success
 	end)
 
 	return req

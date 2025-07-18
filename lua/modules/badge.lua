@@ -14,8 +14,12 @@ mod.unlockBadge = function(_, badgeTag, callback)
 		error("unlockBadge must be called from a world")
 	end
 
-	system_api:unlockBadge(worldId, badgeTag, function(err)
-		callback(err) -- err is nil on success
+	system_api:unlockBadge(worldId, badgeTag, function(err, unlocked)
+		-- err is nil on success
+		-- unlocked is true if the badge was just unlocked for the 1st time
+		if callback ~= nil then
+			callback(err, unlocked)
+		end
 	end)
 end
 
