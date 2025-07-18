@@ -75,6 +75,8 @@ mod.createModalContent = function(_, config)
 	table.insert(listeners, l)
 
 	local maskQuadData = Data:FromBundle("images/mask-round.png")
+	local badgeLockedModelData = Data:FromBundle("shapes/badge-dark.glb")
+	local badgeUnlockedModelData = Data:FromBundle("shapes/badge.glb")
 
 	local PADDING = theme.padding
 
@@ -188,33 +190,47 @@ mod.createModalContent = function(_, config)
 					badgeShape.Height = CONFIG.BADGE_CELL_WIDTH
 					badgeShape:setParent(cell)
 
-					local maskQuad = Quad()
-					maskQuad.Color = Color(255, 255, 255, 0)
-					maskQuad.Image = {
-						data = maskQuadData,
-						cutout = true,
-					}
-					maskQuad.Anchor = { 0.5, 0.5 }
-					maskQuad.IsMask = true
+					local showBadgeUnlocked = createMode or badge.userDidUnlock
 
-					local iconQuad = Quad()
-					iconQuad.Color = Color(255, 255, 255, 0)
-					iconQuad.Anchor = { 0.5, 0.5 }
+					local maskQuad
+					local iconQuad
+					if showBadgeUnlocked then
+						maskQuad = Quad()
+						maskQuad.Color = Color(255, 255, 255, 0)
+						maskQuad.Image = {
+							data = maskQuadData,
+							cutout = true,
+						}
+						maskQuad.Anchor = { 0.5, 0.5 }
+						maskQuad.IsMask = true
 
-					Object:Load(Data:FromBundle("shapes/badge.glb"), function(o)
+						iconQuad = Quad()
+						iconQuad.Color = Color(255, 255, 255, 0)
+						iconQuad.Anchor = { 0.5, 0.5 }
+					end
+
+					local badgeData = badgeLockedModelData
+					if showBadgeUnlocked then
+						badgeData = badgeUnlockedModelData
+					end
+
+					Object:Load(badgeData, function(o)
 						o.IsUnlit = true
 
 						cell.badge = o
 
-						maskQuad:SetParent(o)
-						maskQuad.Width = o.Width * 0.88 * 80
-						maskQuad.Height = o.Height * 0.88 * 80
-						maskQuad.Scale = 1 / 80
-						maskQuad.LocalPosition.Z = -o.Depth * 0.28
+						if showBadgeUnlocked then
+							maskQuad:SetParent(o)
+							maskQuad.Width = o.Width * 0.88 * 80
+							maskQuad.Height = o.Height * 0.88 * 80
+							maskQuad.Scale = 1 / 80
+							maskQuad.LocalPosition.Z = -o.Depth * 0.28
+							
 
-						iconQuad:SetParent(maskQuad)
-						iconQuad.Width = maskQuad.Width
-						iconQuad.Height = maskQuad.Height
+							iconQuad:SetParent(maskQuad)
+							iconQuad.Width = maskQuad.Width
+							iconQuad.Height = maskQuad.Height
+						end
 
 						local s = ui:createShape(o, { spherized = false })
 						s.Width = badgeShape.Width
@@ -237,7 +253,11 @@ mod.createModalContent = function(_, config)
 					cell.nameLabel = nameLabel
 					nameLabel:setParent(cell)
 
-					local rarityLabel = ui:createText("rarity: -%", {
+					local rarity = badge.rarity
+					if rarity == nil then
+						rarity = 0
+					end
+					local rarityLabel = ui:createText(string.format("rarity: %.1f%%", rarity), {
 						color = Color.White,
 						size = "small",
 						alignment = "center",
@@ -246,19 +266,21 @@ mod.createModalContent = function(_, config)
 					rarityLabel:setParent(cell)
 
 					-- -- Download badge icon
-					local req = api:getBadgeThumbnail({
-						badgeID = badge.badgeID,
-						callback = function(icon, err)
-							if err ~= nil then
-								return
-							end
-							iconQuad.Color = Color(255, 255, 255)
-							iconQuad.Image = {
-								data = icon,
-								filtering = false,
-							}
-						end,
-					})
+					if showBadgeUnlocked then
+						local req = api:getBadgeThumbnail({
+							badgeID = badge.badgeID,
+							callback = function(icon, err)
+								if err ~= nil then
+									return
+								end
+								iconQuad.Color = Color(255, 255, 255)
+								iconQuad.Image = {
+									data = icon,
+									filtering = false,
+								}
+							end,
+						})
+					end
 					-- TODO: cancel req if cell is destroyed
 
 					badges.cells[index] = cell
@@ -495,6 +517,18 @@ mod.createModalContent = function(_, config)
 				return
 			end
 
+			table.sort(badges, function(a, b)
+				-- unlocked first
+				if (a.userDidUnlock and not b.userDidUnlock) then
+					return true
+				elseif (not a.userDidUnlock and b.userDidUnlock) then
+					return false
+				end
+				-- both same unlock status, sort by rarity (most common first, i.e. higher rarity value first)
+				local ar = a.rarity or 0
+				local br = b.rarity or 0
+				return ar > br
+			end)
 			badgesFetched = badges
 
 			badgesScroll:flush()
