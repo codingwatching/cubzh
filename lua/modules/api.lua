@@ -600,7 +600,7 @@ mod.getWorlds = function(self, config, callback)
 		sortBy = "updatedAt:desc", -- likes:desc
 		page = 1,
 		perPage = 50,
-		fields = { "title", "created", "updated", "views", "likes" },
+		fields = { "title", "created", "updated", "views", "likes", "maxPlayers" },
 	}
 
 	ok, err = pcall(function()

@@ -1280,7 +1280,7 @@ function home()
 			dataFetcher.req = api:getWorlds({
 				category = config.category,
 				sortBy = config.sortBy,
-				fields = { "title", "created", "updated", "views", "likes" },
+				fields = { "title", "created", "updated", "views", "likes", "maxPlayers" },
 			}, function(worlds, err)
 				if err ~= nil then
 					return

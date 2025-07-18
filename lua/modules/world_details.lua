@@ -393,15 +393,15 @@ mod.createModalContent = function(_, config)
 		end
 		btnLaunch:setParent(worldDetails)
 
-		-- TODO: only display servers button if multiplayer
-
-		btnServers = ui:buttonNeutral({ content = "Servers", textSize = "default" })
-		btnServers.onRelease = function()
-			local config = { worldID = world.id, title = world.title, uikit = ui }
-			local list = require("server_list"):create(config)
-			content:push(list)
+		if world.maxPlayers ~= nil and world.maxPlayers > 1 then
+			btnServers = ui:buttonSecondary({ content = "Servers", textSize = "small" })
+			btnServers.onRelease = function()
+				local config = { worldID = world.id, title = world.title, uikit = ui }
+				local list = require("server_list"):create(config)
+				content:push(list)
+			end
+			btnServers:setParent(worldDetails)
 		end
-		btnServers:setParent(worldDetails)
 	end
 
 	local cell = ui:frame() -- { color = Color(100, 100, 100) }
@@ -488,15 +488,16 @@ mod.createModalContent = function(_, config)
 	end
 	title:setParent(cell)
 
-	local descriptionTitle = ui:createText("Description", { color = Color.White, size = "default" })
-	descriptionTitle:setParent(cell)
+	-- local descriptionTitle = ui:createText("Description", { color = Color.White, size = "default" })
+	-- descriptionTitle:setParent(cell)
 
 	local badgesTitle = ui:createText("Badges", { color = Color.White, size = "default" })
 	badgesTitle:setParent(cell)
 
 	-- create scroll to display badges
 	local badgesScroll = ui:scroll({
-		backgroundColor = Color(26, 26, 30),
+		backgroundColor = theme.buttonTextColor,
+		-- backgroundColor = Color(26, 26, 30),
 		padding = {
 			top = CONFIG.BADGES_CELL_PADDING,
 			bottom = CONFIG.BADGES_CELL_PADDING,
@@ -632,7 +633,7 @@ mod.createModalContent = function(_, config)
 	description = ui:createText("description", { color = TEXT_COLOR, size = "small" })
 	description:setParent(cell)
 
-	likeBtn = ui:buttonNeutral({ content = "🤍 …", textSize = "small" })
+	likeBtn = ui:buttonSecondary({ content = "🤍 …", textSize = "small" })
 	likeBtn:setParent(cell)
 
 	reportBtn = ui:button({
@@ -972,8 +973,8 @@ mod.createModalContent = function(_, config)
 			+ padding
 			+ viewAndLikesHeight -- views and likes
 			+ padding
-			+ descriptionTitle.Height
-			+ padding
+			-- + descriptionTitle.Height
+			-- + padding
 			+ description.Height
 			+ theme.paddingBig
 			+ badgesTitle.Height
@@ -1053,8 +1054,8 @@ mod.createModalContent = function(_, config)
 		end
 
 		-- description
-		y = y - padding - descriptionTitle.Height
-		descriptionTitle.pos = { padding, y }
+		-- y = y - padding - descriptionTitle.Height
+		-- descriptionTitle.pos = { padding, y }
 		y = y - padding - description.Height
 		description.pos = { padding, y }
 
@@ -1083,13 +1084,19 @@ mod.createModalContent = function(_, config)
 		if btnLaunch then
 			scroll.Height = self.Height - btnLaunch.Height - padding * 2
 
-			local bottomButtonsWidth = btnServers.Width + padding + btnLaunch.Width
+			if btnServers then
+				btnLaunch.Width = self.Width - btnServers.Width - padding * 3
+				btnServers.Height = btnLaunch.Height
 
-			btnServers.pos = {
-				width * 0.5 - bottomButtonsWidth * 0.5,
-				padding + btnLaunch.Height * 0.5 - btnServers.Height * 0.5,
-			}
-			btnLaunch.pos = { btnServers.pos.X + btnServers.Width + padding, padding }
+				btnServers.pos = {
+					padding,
+					padding,
+				}
+				btnLaunch.pos = { btnServers.pos.X + btnServers.Width + padding, padding }
+			else
+				btnLaunch.Width = self.Width - padding * 2
+				btnLaunch.pos = { self.Width * 0.5 - btnLaunch.Width * 0.5, padding }
+			end
 			scroll.pos.Y = btnLaunch.pos.Y + btnLaunch.Height + padding
 		else
 			scroll.Height = self.Height
