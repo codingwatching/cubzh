@@ -875,6 +875,12 @@ local function refreshNotificationIcon(category)
 				ui:createShape(bundle:Shape("shapes/friends_icon"), { spherized = false, doNotFlip = true })
 		end
 		notificationIcon = notificationIconSocial
+	elseif category == "badge" then
+		if notificationIconBadge == nil then
+			notificationIconBadge =
+				ui:createShape(bundle:Shape("shapes/turnip"), { spherized = false, doNotFlip = true })
+		end
+		notificationIcon = notificationIconBadge
 	else
 		if notificationIconGeneric == nil then
 			notificationIconGeneric =
@@ -968,6 +974,7 @@ end
 
 notificationFrame:setParent(nil)
 
+-- title argument is not used for now
 function showNotification(_, text, category)
 	if noticationTimer ~= nil then
 		noticationTimer:Cancel()
@@ -979,6 +986,8 @@ function showNotification(_, text, category)
 
 	if category == "money" then
 		sfx("coin_1", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
+	elseif category == "badge" then
+		sfx("victory_1", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 	else
 		sfx("buttonpositive_3", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 	end
@@ -3050,6 +3059,10 @@ end)
 
 LocalEvent:Listen(LocalEvent.Name.DidReceivePushNotification, function(title, body, category, _)
 	showNotification(title, body, category)
+end)
+
+LocalEvent:Listen(LocalEvent.Name.BadgeUnlocked, function(badgeTitle)
+	showNotification(nil, badgeTitle, "badge")
 end)
 
 -- sign up / sign in flow

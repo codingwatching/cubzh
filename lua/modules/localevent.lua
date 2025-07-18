@@ -116,13 +116,14 @@ localevent.name = {
 	DidReceivePushNotification = 59, -- callback: function(title, body, category, badge)
 	NotificationCountDidChange = 60, -- callback: function() -- doesn't provide count, API request should be sent to obtain it.
 	WorldRequested = 61, -- callback: function() -- doesn't provide information about what world for privacy purposes
+	BadgeUnlocked = 62, -- callback: function(badgeTitle)
 
-	Action1 = 62,
-	Action1Release = 63,
-	Action2 = 64,
-	Action2Release = 65,
-	Action3 = 66,
-	Action3Release = 67,
+	Action1 = 63,
+	Action1Release = 64,
+	Action2 = 65,
+	Action2Release = 66,
+	Action3 = 67,
+	Action3Release = 68,
 }
 localevent.Name = localevent.name
 

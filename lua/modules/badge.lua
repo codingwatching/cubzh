@@ -17,6 +17,10 @@ mod.unlockBadge = function(_, badgeTag, callback)
 	system_api:unlockBadge(worldId, badgeTag, function(err, unlocked)
 		-- err is nil on success
 		-- unlocked is true if the badge was just unlocked for the 1st time
+		if unlocked then
+			-- TODO: gaetan: display badge title instead of tag
+			LocalEvent:Send(LocalEvent.Name.BadgeUnlocked, badgeTag)
+		end
 		if callback ~= nil then
 			callback(err, unlocked)
 		end
