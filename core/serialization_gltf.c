@@ -211,6 +211,13 @@ bool serialization_gltf_load(const void *buffer, const size_t size, const ASSET_
 
     Transform **transforms = malloc(data->nodes_count * sizeof(Transform*));
 
+    const Matrix4x4 flipZ = {
+        1.0f, 0, 0, 0,
+        0, 1.0f, 0, 0,
+        0, 0, -1.0f, 0,
+        0, 0, 0, 1
+    };
+
     // first pass, create transforms
     for (cgltf_size i = 0; i < data->nodes_count; ++i) {
         const cgltf_node *node = &data->nodes[i];
@@ -272,14 +279,14 @@ bool serialization_gltf_load(const void *buffer, const size_t size, const ASSET_
                     for (size_t k = 0; k < vertexCount; ++k) {
                         // position (float3)
                         cgltf_accessor_read_float(posAccessor, k, &vertices[k].x, 3);
-                        vertices[k].x *= -1.0f; // swap to left-handed coordinates (*)
+                        vertices[k].z *= -1.0f; // swap to LHS (*)
 
                         // normal (uint8 normalized)
                         if (normalAccessor != NULL) {
                             float normal[3]; cgltf_accessor_read_float(normalAccessor, k, normal, 3);
-                            vertices[k].nx = utils_pack_norm_to_uint8(-normal[0]); // (*)
+                            vertices[k].nx = utils_pack_norm_to_uint8(normal[0]);
                             vertices[k].ny = utils_pack_norm_to_uint8(normal[1]);
-                            vertices[k].nz = utils_pack_norm_to_uint8(normal[2]);
+                            vertices[k].nz = utils_pack_norm_to_uint8(-normal[2]); // (*)
                         } else {
                             vertices[k].nx = utils_pack_norm_to_uint8(0.0f);
                             vertices[k].ny = utils_pack_norm_to_uint8(0.0f);
@@ -289,11 +296,11 @@ bool serialization_gltf_load(const void *buffer, const size_t size, const ASSET_
                         // tangent (uint8 normalized, pre-apply handedness)
                         if (tangentAccessor != NULL) {
                             float tangent[4]; cgltf_accessor_read_float(tangentAccessor, k, tangent, 4);
-                            vertices[k].tx = utils_pack_norm_to_uint8(-tangent[0] * tangent[3]); // (*)
-                            vertices[k].ty = utils_pack_norm_to_uint8(tangent[1] * tangent[3]);
-                            vertices[k].tz = utils_pack_norm_to_uint8(tangent[2] * tangent[3]);
+                            vertices[k].tx = utils_pack_norm_to_uint8(tangent[0] * -tangent[3]);
+                            vertices[k].ty = utils_pack_norm_to_uint8(tangent[1] * -tangent[3]);
+                            vertices[k].tz = utils_pack_norm_to_uint8(-tangent[2] * -tangent[3]); // (*)
                         } else {
-                            vertices[k].tx = utils_pack_norm_to_uint8(-1.0f); // default to right (*)
+                            vertices[k].tx = utils_pack_norm_to_uint8(1.0f); // default to right
                             vertices[k].ty = utils_pack_norm_to_uint8(0.0f);
                             vertices[k].tz = utils_pack_norm_to_uint8(0.0f);
                         }
@@ -499,7 +506,7 @@ bool serialization_gltf_load(const void *buffer, const size_t size, const ASSET_
                     mesh_set_vertex_buffer(mesh, vertices, (uint32_t)posAccessor->count);
                     mesh_set_index_buffer(mesh, indices, ibCount);
                     mesh_set_primitive_type(mesh, primitiveType);
-                    mesh_set_front_ccw(mesh, true); // swap to left-handed coordinates
+                    mesh_set_front_ccw(mesh, true); // swap to LHS
                     mesh_reset_model_aabb(mesh);
                     mesh_set_material(mesh, material);
                     
@@ -587,15 +594,29 @@ bool serialization_gltf_load(const void *buffer, const size_t size, const ASSET_
         }
         vx_assert_d(transforms[i] != NULL);
 
-        // set transform
+        // set transform, swap handedness from right to left
         if (node->has_matrix) {
-            transform_utils_set_mtx(transforms[i], (const Matrix4x4 *)node->matrix);
+            Matrix4x4 mtx = *(const Matrix4x4*)node->matrix;
+            matrix4x4_op_multiply_2(&flipZ, &mtx);
+            matrix4x4_op_multiply(&mtx, &flipZ);
+            transform_utils_set_mtx(transforms[i], &mtx);
         } else {
             if (node->has_translation) {
-                transform_set_local_position_vec(transforms[i], (const float3 *)node->translation);
+                const float3 flipped = (float3){
+                    node->translation[0],
+                    node->translation[1],
+                    -node->translation[2]
+                };
+                transform_set_local_position_vec(transforms[i], &flipped);
             }
             if (node->has_rotation) {
-                transform_set_local_rotation_vec(transforms[i], (const float4 *)node->rotation);
+                Quaternion flipped = (Quaternion){
+                    node->rotation[2],
+                    -node->rotation[0],
+                    -node->rotation[1],
+                    node->rotation[3]
+                };
+                transform_set_local_rotation(transforms[i], &flipped);
             }
             if (node->has_scale) {
                 transform_set_local_scale_vec(transforms[i], (const float3 *)node->scale);
