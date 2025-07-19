@@ -73,13 +73,14 @@ focusedComboBoxSelector = nil
 
 function focus(node)
 	if focused ~= nil then
-		if focused == node then
+		if _focused == node then
 			return false -- already focused
 		end
-		if focused._unfocus ~= nil then
-			focused:_unfocus()
-		end
+		local _focused = focused
 		focused = nil
+		if _focused._unfocus ~= nil then
+			_focused:_unfocus()
+		end
 	end
 	focused = node
 
@@ -2624,7 +2625,10 @@ function createUI(system)
 			_textInputRefreshColor(self)
 			self:_refresh()
 
-			unfocus()
+			if focused == self then
+				unfocus()
+			end
+
 			if self.onFocusLost ~= nil then
 				self:onFocusLost()
 			end
