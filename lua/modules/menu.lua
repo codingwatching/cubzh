@@ -1148,29 +1148,6 @@ end
 cubzhBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
 cubzhBtn:setParent(topBar)
 
--- uiBadge = require("ui_badge")
-
--- cubzhBtnBadge = nil
-
--- function showBadge(str)
--- 	removeBadge()
--- 	cubzhBtnBadge = uiBadge:create({ text = str, ui = ui })
--- 	cubzhBtnBadge.internalParentDidResize = cubzhBtnBadge.parentDidResize
--- 	cubzhBtnBadge.parentDidResize = function(self)
--- 		self.pos.X = self.parent.Width * 0.5
--- 		self.pos.Y = 0
--- 		self:internalParentDidResize()
--- 	end
--- 	cubzhBtnBadge:setParent(cubzhBtn)
--- end
-
--- function removeBadge()
--- 	if cubzhBtnBadge ~= nil then
--- 		cubzhBtnBadge:remove()
--- 		cubzhBtnBadge = nil
--- 	end
--- end
-
 if System.IsHomeAppRunning then
 	local settingsIcon = ui:frame({ image = {
 		data = Data:FromBundle("images/icon-settings.png"),
@@ -3057,45 +3034,33 @@ LocalEvent:Listen(LocalEvent.Name.DidReceivePushNotification, function(title, bo
 	showNotification(title, body, category)
 end)
 
-local getBadgeThumbnailReq
-local function displayBadgeNotification(text)
-	if notificationIconBadge == nil then
-		local badgeUnlockedModelData = Data:FromBundle("shapes/badge.glb")
-		Object:Load(badgeUnlockedModelData, function(o)
-			notificationIconBadge = ui:createShape(o, { spherized = false, doNotFlip = true })
-			showNotification(_, text, "badge")
-		end)
-		return
-	else
-		showNotification(nil, text, "badge")
-	end
-end
-
+local badgeRequests
+local notificationIconBadgeObject
 LocalEvent:Listen(LocalEvent.Name.BadgeUnlocked, function(info)
-	print("Badge UnLocked:", info.badgeId, info.badgeName or "-")
+	-- print("Badge UnLocked:", info.badgeId, info.badgeName or "-")
 	local text = info.badgeName or "-"
 
-	if getBadgeThumbnailReq ~= nil then
-		getBadgeThumbnailReq:Cancel()
-		getBadgeThumbnailReq = nil
+	if notificationIconBadge == nil then
+		if badgeRequests == nil then
+			badgeRequests = require("badge"):createBadgeObject({
+				badgeId = info.badgeId,
+				locked = false,
+				frontOnly = false,
+				callback = function(badgeObject)
+					createBadgeObjectRequests = nil
+					notificationIconBadgeObject = badgeObject
+					notificationIconBadge = ui:createShape(notificationIconBadgeObject, { spherized = false, doNotFlip = true })
+					showNotification(nil, text, "badge")
+				end,
+			})
+		end
+	else 
+		local req = notificationIconBadgeObject:setBadgeId(info.badgeId, function()
+			badgeRequests = nil
+			showNotification(nil, text, "badge")
+		end)
+		badgeRequests = { req }
 	end
-
-	getBadgeThumbnailReq = api:getBadgeThumbnail({
-		badgeID = info.badgeId,
-		callback = function(icon, err)
-			getBadgeThumbnailReq = nil
-			if err ~= nil then
-				return
-			end
-
-			-- iconQuad.Color = Color(255, 255, 255)
-			-- iconQuad.Image = {
-			-- 	data = icon,
-			-- 	filtering = false,
-			-- }
-			displayBadgeNotification(text)
-		end,
-	})
 end)
 
 -- sign up / sign in flow
