@@ -14,15 +14,21 @@ mod.unlockBadge = function(_, badgeTag, callback)
 		error("unlockBadge must be called from a world")
 	end
 
-	system_api:unlockBadge(worldId, badgeTag, function(err, unlocked)
+	-- unlocked, badgeId
+	system_api:unlockBadge(worldId, badgeTag, function(err, response)
 		-- err is nil on success
 		-- unlocked is true if the badge was just unlocked for the 1st time
-		if unlocked then
+		if response.unlocked == true then
 			-- TODO: gaetan: display badge title instead of tag
-			LocalEvent:Send(LocalEvent.Name.BadgeUnlocked, badgeTag)
+			LocalEvent:Send(LocalEvent.Name.BadgeUnlocked, {
+				worldId = worldId,
+				badgeTag = badgeTag,
+				badgeId = response.badgeId,
+				badgeName = response.badgeName,
+			})
 		end
 		if callback ~= nil then
-			callback(err, unlocked)
+			callback(err, response)
 		end
 	end)
 end

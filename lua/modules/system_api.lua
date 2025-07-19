@@ -1167,7 +1167,7 @@ mod.unlockBadge = function(self, worldId, badgeTag, callback)
 		end
 
 		-- read response body
-		-- {"unlocked":true|false}
+		-- {"unlocked":true|false, "badgeId": "badge-id", "badgeName": "Badge Name"}
 
 		local response, err = JSON:Decode(res.Body)
 		if err ~= nil then
@@ -1175,7 +1175,7 @@ mod.unlockBadge = function(self, worldId, badgeTag, callback)
 			return
 		end
 
-		callback(nil, response.unlocked) -- success
+		callback(nil, response) -- success
 	end)
 
 	return req

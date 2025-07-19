@@ -972,18 +972,6 @@ notificationFrame:setParent(nil)
 
 -- title argument is not used for now
 function showNotification(_, text, category)
-
-	if category == "badge" then
-		if notificationIconBadge == nil then
-			local badgeUnlockedModelData = Data:FromBundle("shapes/badge.glb")
-			Object:Load(badgeUnlockedModelData, function(o)
-				notificationIconBadge = ui:createShape(o, { spherized = false, doNotFlip = true })
-				showNotification(_, text, category)
-			end)
-			return
-		end
-	end
-
 	if noticationTimer ~= nil then
 		noticationTimer:Cancel()
 		noticationTimer = nil
@@ -995,7 +983,7 @@ function showNotification(_, text, category)
 	if category == "money" then
 		sfx("coin_1", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 	elseif category == "badge" then
-		sfx("victory_1", { Volume = 0.6, Pitch = 4.0, Spatialized = false })
+		sfx("achievement", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 	else
 		sfx("buttonpositive_3", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 	end
@@ -3069,8 +3057,45 @@ LocalEvent:Listen(LocalEvent.Name.DidReceivePushNotification, function(title, bo
 	showNotification(title, body, category)
 end)
 
-LocalEvent:Listen(LocalEvent.Name.BadgeUnlocked, function(badgeTitle)
-	showNotification(nil, badgeTitle, "badge")
+local getBadgeThumbnailReq
+local function displayBadgeNotification(text)
+	if notificationIconBadge == nil then
+		local badgeUnlockedModelData = Data:FromBundle("shapes/badge.glb")
+		Object:Load(badgeUnlockedModelData, function(o)
+			notificationIconBadge = ui:createShape(o, { spherized = false, doNotFlip = true })
+			showNotification(_, text, "badge")
+		end)
+		return
+	else
+		showNotification(nil, text, "badge")
+	end
+end
+
+LocalEvent:Listen(LocalEvent.Name.BadgeUnlocked, function(info)
+	print("Badge UnLocked:", info.badgeId, info.badgeName or "-")
+	local text = info.badgeName or "-"
+
+	if getBadgeThumbnailReq ~= nil then
+		getBadgeThumbnailReq:Cancel()
+		getBadgeThumbnailReq = nil
+	end
+
+	getBadgeThumbnailReq = api:getBadgeThumbnail({
+		badgeID = info.badgeId,
+		callback = function(icon, err)
+			getBadgeThumbnailReq = nil
+			if err ~= nil then
+				return
+			end
+
+			-- iconQuad.Color = Color(255, 255, 255)
+			-- iconQuad.Image = {
+			-- 	data = icon,
+			-- 	filtering = false,
+			-- }
+			displayBadgeNotification(text)
+		end,
+	})
 end)
 
 -- sign up / sign in flow
