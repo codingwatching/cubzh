@@ -876,11 +876,7 @@ local function refreshNotificationIcon(category)
 		end
 		notificationIcon = notificationIconSocial
 	elseif category == "badge" then
-		if notificationIconBadge == nil then
-			notificationIconBadge =
-				ui:createShape(bundle:Shape("shapes/turnip"), { spherized = false, doNotFlip = true })
-		end
-		notificationIcon = notificationIconBadge
+		notificationIcon = notificationIconBadge -- not supposed to be nil
 	else
 		if notificationIconGeneric == nil then
 			notificationIconGeneric =
@@ -976,6 +972,18 @@ notificationFrame:setParent(nil)
 
 -- title argument is not used for now
 function showNotification(_, text, category)
+
+	if category == "badge" then
+		if notificationIconBadge == nil then
+			local badgeUnlockedModelData = Data:FromBundle("shapes/badge.glb")
+			Object:Load(badgeUnlockedModelData, function(o)
+				notificationIconBadge = ui:createShape(o, { spherized = false, doNotFlip = true })
+				showNotification(_, text, category)
+			end)
+			return
+		end
+	end
+
 	if noticationTimer ~= nil then
 		noticationTimer:Cancel()
 		noticationTimer = nil
@@ -987,7 +995,7 @@ function showNotification(_, text, category)
 	if category == "money" then
 		sfx("coin_1", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 	elseif category == "badge" then
-		sfx("victory_1", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
+		sfx("victory_1", { Volume = 0.6, Pitch = 4.0, Spatialized = false })
 	else
 		sfx("buttonpositive_3", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 	end
