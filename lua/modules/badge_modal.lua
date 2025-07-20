@@ -71,6 +71,9 @@ mod.createModalContent = function(_, config)
 	-- modal content variables
 	local refreshTimer
 
+	-- create content
+	local content = modal:createContent()
+
 	-- define some functions
 	local functions = {
 		constructNode = function()
@@ -210,9 +213,7 @@ mod.createModalContent = function(_, config)
 			end
 
 			node.refresh = function(self)
-				-- scroll fills the entire modal content
 				scroll.Width = self.Width
-				scroll.Height = self.Height
 
 				local contentWidth = self.Width - theme.padding * 2
 				identifierLabel.object.MaxWidth = contentWidth
@@ -234,6 +235,10 @@ mod.createModalContent = function(_, config)
 
 				cell.Width = contentWidth
 				cell.Height = contentHeight
+
+				-- shrink to fit content if possible
+				self.Height = math.min(contentHeight + theme.padding * 2, self.Height)
+				scroll.Height = self.Height
 
 				-- compute width values
 				tagEdit.Width = cell.Width - theme.padding * 2
@@ -308,12 +313,20 @@ mod.createModalContent = function(_, config)
 					description = description,
 				}, function(err)
 					if err then
-						print("error creating badge:", err)
-						-- TODO: display error somewhere
+						Menu:ShowAlert({
+							message = loc("Sorry, something went wrong. 😕"),
+							neutralLabel = loc("OK"),
+							neutralCallback = function() end,
+						}, System)
 					else
-						print("badge created successfully")
-						-- go back to the previous modal content
-						-- TODO: !!!
+						-- badge created successfully, going back to world details
+						Menu:ShowAlert({
+							message = loc("Badge Created! ✅"),
+							neutralLabel = loc("OK"),
+							neutralCallback = function()
+								content:pop()
+							end,
+						}, System)
 					end
 				end)
 			end
@@ -323,15 +336,11 @@ mod.createModalContent = function(_, config)
 		end,
 	}
 
-	-- create content
-	local content = modal:createContent()
-	content.closeButton = true
-
 	content.idealReducedContentSize = function(node, width, height)
 		node.Width = width
 		node.Height = height
 		node:refresh()
-		return Number2(width, height)
+		return Number2(node.Width, node.Height)
 	end
 
 	content.node = functions.constructNode()

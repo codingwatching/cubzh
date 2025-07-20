@@ -328,6 +328,8 @@ function showAlert(config)
 
 	if config.positiveCallback then
 		alertModal:setPositiveCallback(config.positiveLabel or "OK", config.positiveCallback)
+	elseif config.negativeCallback or config.neutralCallback then
+		alertModal:setPositiveCallback("", nil)
 	end
 	if config.negativeCallback then
 		alertModal:setNegativeCallback(config.negativeLabel or "No", config.negativeCallback)

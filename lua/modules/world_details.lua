@@ -60,6 +60,13 @@ mod.createModalContent = function(_, config)
 		cells = {},
 	}
 
+	local function removeAllCells()
+		for _, cell in ipairs(badges.cells) do
+			cell:remove()
+		end
+		badges.cells = {}
+	end
+
 	local t = 0
 	local r = Rotation()
 	local l = LocalEvent:Listen(LocalEvent.Name.Tick, function(dt)
@@ -321,6 +328,7 @@ mod.createModalContent = function(_, config)
 		for _, listener in ipairs(listeners) do
 			listener:Resume()
 		end
+		fetchBadgesAndUpdateUI()
 	end
 
 	content.willResignActive = function()
@@ -458,7 +466,7 @@ mod.createModalContent = function(_, config)
 	})
 	badgesScroll:setParent(cell)
 
-	fetchBadgesAndUpdateUI = function()
+	function fetchBadgesAndUpdateUI()
 		api:listBadgesForWorld(world.id, function(err, badges)
 			if err ~= nil or badges == nil then
 				print("🐞 [badges] could not list badges for world", world.id, err)
@@ -480,6 +488,7 @@ mod.createModalContent = function(_, config)
 			badgesFetched = badges
 
 			badgesScroll:flush()
+			removeAllCells()
 			badgesScroll:refresh()
 		end)
 	end
@@ -517,7 +526,7 @@ mod.createModalContent = function(_, config)
 						callback = function(thumbnail, err)
 							if err == nil then
 								world.thumbnail = thumbnail
-								privateFields:refreshWorld()
+								refreshWorld()
 							end
 						end,
 					})
@@ -667,7 +676,7 @@ mod.createModalContent = function(_, config)
 	scroll:setParent(worldDetails)
 
 	-- refreshes UI with what's in local config.world / world
-	privateFields.refreshWorld = function()
+	local function refreshWorld()
 		if world.thumbnail ~= nil then
 			iconArea:setImage(world.thumbnail)
 		end
@@ -778,7 +787,7 @@ mod.createModalContent = function(_, config)
 	end
 
 	-- send request to gather world information
-	privateFields.loadWorld = function()
+	local function loadWorld()
 		local req = api:getWorld(world.id, {
 			"authorName",
 			"authorId",
@@ -807,7 +816,7 @@ mod.createModalContent = function(_, config)
 			world.updated = worldInfo.updated
 			world.maxPlayers = worldInfo.maxPlayers
 
-			privateFields:refreshWorld()
+			refreshWorld()
 		end)
 		table.insert(requests, req)
 
@@ -818,14 +827,12 @@ mod.createModalContent = function(_, config)
 				callback = function(thumbnail, err)
 					if err == nil then
 						world.thumbnail = thumbnail
-						privateFields:refreshWorld()
+						refreshWorld()
 					end
 				end,
 			})
 			table.insert(requests, req)
 		end
-
-		fetchBadgesAndUpdateUI()
 	end
 
 	local w = 400
@@ -1055,8 +1062,8 @@ mod.createModalContent = function(_, config)
 		scroll:refresh()
 	end
 
-	privateFields:refreshWorld()
-	privateFields:loadWorld()
+	refreshWorld()
+	loadWorld()
 
 	return content
 end
