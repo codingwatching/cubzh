@@ -43,6 +43,31 @@ local badgeUnlockedData = nil
 local badgeLockedData = nil
 local maskQuadData = nil
 
+local function _setBadgeImage(self, imageData, callback)
+	if typeof(self) ~= "Mesh" then
+		error("badgeObject:setBadgeImage(imageData) should be called with `:`")
+	end
+	
+	local iconQuad = self.iconQuad
+	local iconQuadBack = self.iconQuadBack
+
+	if iconQuad ~= nil then
+		iconQuad.Color = Color(255, 255, 255)
+		iconQuad.Image = {
+			data = imageData,
+			filtering = false,
+		}	
+	end
+
+	if iconQuadBack ~= nil then
+		iconQuadBack.Color = Color(255, 255, 255)
+		iconQuadBack.Image = {
+			data = imageData,
+			filtering = false,
+		}
+	end
+end
+
 local function _setBadgeId(self, badgeId, callback)
 	if typeof(self) ~= "Mesh" then
 		error("badgeObject:setBadgeId(badgeId) should be called with `:`")
@@ -149,6 +174,7 @@ mod.createBadgeObject = function(self, config)
 		end
 
 		o.setBadgeId = _setBadgeId
+		o.setBadgeImage = _setBadgeImage
 
 		local maskQuad
 		local iconQuad
