@@ -26,6 +26,7 @@ typedef struct _WorldText WorldText;
 #define WORLDTEXT_DEFAULT_FONT_WEIGHT_LIGHT 0.45f
 #define WORLDTEXT_DEFAULT_FONT_SLANT_REGULAR 0.5f
 #define WORLDTEXT_DEFAULT_FONT_SLANT_ITALIC 0.6f
+#define WORLDTEXT_DEFAULT_OUTLINE_WEIGHT 0.0f
 #define WORLDTEXT_DEFAULT_OUTLINE_COLOR 0x00FFFFFF
 #define WORLDTEXT_ID_NONE 0
 
@@ -52,6 +53,7 @@ const char *world_text_get_text(const WorldText *wt);
 bool world_text_is_empty(const WorldText *wt);
 void world_text_toggle_drawmodes(WorldText *wt, bool toggle);
 bool world_text_uses_drawmodes(const WorldText *wt);
+void world_text_check_and_clear_drawmodes(WorldText *wt);
 void world_text_set_anchor_x(WorldText *wt, float x);
 float world_text_get_anchor_x(const WorldText *wt);
 void world_text_set_anchor_y(WorldText *wt, float y);

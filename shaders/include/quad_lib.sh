@@ -24,10 +24,17 @@ void unpackQuadFullMetadata(float f, out float metadata[8]) {
 	metadata[1] = unpack9SliceNormal;
 	metadata[2] = cutout;
 	metadata[3] = greyscale;
-	metadata[4] = s / VOXEL_LIGHT_MAX;
-	metadata[5] = r / VOXEL_LIGHT_MAX;
-	metadata[6] = g / VOXEL_LIGHT_MAX;
-	metadata[7] = b / VOXEL_LIGHT_MAX;
+	if (unlit > 0.5) {
+		metadata[4] = (s + r * 16.0);
+		metadata[5] = 0.0;
+		metadata[6] = 0.0;
+		metadata[7] = 0.0;
+	} else {
+		metadata[4] = s / VOXEL_LIGHT_MAX;
+		metadata[5] = r / VOXEL_LIGHT_MAX;
+		metadata[6] = g / VOXEL_LIGHT_MAX;
+		metadata[7] = b / VOXEL_LIGHT_MAX;
+	}
 }
 
 vec2 unpackQuadMetadata_OIT(float f) {

@@ -113,6 +113,7 @@ void _world_text_void_free(void *o) {
     weakptr_invalidate(wt->wptr);
     // free fields
     free(wt->text);
+    free(wt->drawmodes);
     // free struct
     free(wt);
 }
@@ -223,7 +224,7 @@ void world_text_toggle_drawmodes(WorldText *wt, bool toggle) {
     if (toggle && wt->drawmodes == NULL) {
         wt->drawmodes = (WorldTextDrawmodes*)malloc(sizeof(WorldTextDrawmodes));
         wt->drawmodes->outlineColor = WORLDTEXT_DEFAULT_OUTLINE_COLOR;
-        wt->drawmodes->outlineWeight = 0;
+        wt->drawmodes->outlineWeight = (uint8_t)(CLAMP01F(WORLDTEXT_DEFAULT_OUTLINE_WEIGHT) * 255);
     } else if (toggle == false && wt->drawmodes != NULL) {
         free(wt->drawmodes);
         wt->drawmodes = NULL;
@@ -232,6 +233,13 @@ void world_text_toggle_drawmodes(WorldText *wt, bool toggle) {
 
 bool world_text_uses_drawmodes(const WorldText *wt) {
     return wt->drawmodes != NULL;
+}
+
+void world_text_check_and_clear_drawmodes(WorldText *wt) {
+    if (wt->drawmodes != NULL && wt->drawmodes->outlineWeight == 0) {
+        free(wt->drawmodes);
+        wt->drawmodes = NULL;
+    }
 }
 
 void world_text_set_anchor_x(WorldText *wt, float x) {
@@ -507,16 +515,16 @@ void world_text_drawmode_set_outline_weight(WorldText *wt, float value) {
 }
 
 float world_text_drawmode_get_outline_weight(const WorldText *wt) {
-    return wt->drawmodes != NULL ? wt->drawmodes->outlineWeight / 255.0f : 0.0f;
+    return wt->drawmodes != NULL ? wt->drawmodes->outlineWeight / 255.0f : WORLDTEXT_DEFAULT_OUTLINE_WEIGHT;
 }
 
 void world_text_drawmode_set_outline_color(WorldText *wt, uint32_t rgb) {
     if (wt->drawmodes == NULL) {
         world_text_toggle_drawmodes(wt, true);
     }
-    wt->drawmodes->outlineColor = rgb & 0x00FFFFFF; // force alpha to 0 (unused, make packing easier);
+    wt->drawmodes->outlineColor = rgb & 0x00FFFFFF; // force alpha to 0 (unused, make packing easier)
 }
 
 uint32_t world_text_drawmode_get_outline_color(const WorldText *wt) {
-    return wt->drawmodes != NULL ? wt->drawmodes->outlineColor : 0;
+    return wt->drawmodes != NULL ? wt->drawmodes->outlineColor : WORLDTEXT_DEFAULT_OUTLINE_COLOR;
 }

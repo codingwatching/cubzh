@@ -18,6 +18,17 @@ extern "C" {
 
 #define QUAD_CUTOUT_NONE -1.0f
 #define QUAD_CUTOUT_DEFAULT 1.0f
+#define QUAD_ADDITIVE_FACTOR_DEFAULT 1
+
+typedef enum {
+    BillboardMode_None,
+    BillboardMode_Screen,       // always faces the screen, no rotation
+    BillboardMode_Horizontal,   // local X axis is locked
+    BillboardMode_Vertical,     // local Y axis is locked
+    BillboardMode_ScreenX,      // always faces the screen, use world X rotation in screen space
+    BillboardMode_ScreenY,      // ... world Y rotation
+    BillboardMode_ScreenZ       // ... world Z rotation
+} BillboardMode;
 
 typedef struct _Quad Quad;
 
@@ -31,6 +42,9 @@ void quad_set_data(Quad *q, Weakptr *data, uint32_t size);
 void *quad_get_data(const Quad *q);
 uint32_t quad_get_data_size(const Quad *q);
 uint32_t quad_get_data_hash(const Quad *q);
+void quad_toggle_drawmodes(Quad *q, bool toggle);
+bool quad_uses_drawmodes(const Quad *q);
+void quad_check_and_clear_drawmodes(Quad *q);
 void quad_set_width(Quad *q, float value);
 float quad_get_width(const Quad *q);
 void quad_set_height(Quad *q, float value);
@@ -79,6 +93,15 @@ void quad_set_9slice_scale(Quad *q, float value);
 float quad_get_9slice_scale(const Quad *q);
 void quad_set_9slice_corner_width(Quad *q, float value);
 float quad_get_9slice_corner_width(const Quad *q);
+
+// MARK: - Draw modes -
+
+void quad_drawmode_set_billboard(Quad *q, BillboardMode mode);
+BillboardMode quad_drawmode_get_billboard(const Quad *q);
+void quad_drawmode_set_additive(Quad *q, bool toggle);
+bool quad_drawmode_is_additive(const Quad *q);
+void quad_drawmode_set_additive_factor(Quad *q, uint8_t value);
+uint8_t quad_drawmode_get_additive_factor(const Quad *q);
 
 // MARK: - Utils -
 

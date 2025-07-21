@@ -88,11 +88,7 @@ void main() {
 				   sliceUV(v_uv.y, vBorders, slice.y));
 	
 	vec4 tex = texture2D(s_fb1, uv);
-#if QUAD_VARIANT_ALPHA
-	color *= mix(tex.xyzw, tex.wwwx, v_greyscale);
-#else
-	color *= mix(tex.xyzw, tex.xxxx, v_greyscale);
-#endif
+	color *= mix(tex.rgba, tex.rrrr, v_greyscale);
 
 #if OIT_VARIANT_CUTOUT
 	if (color.a < v_cutout) discard;
