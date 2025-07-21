@@ -153,7 +153,7 @@ float rigidbody_get_combined_bounciness(const RigidBody *rb1,
                                         const RigidBody *rb2,
                                         const FACE_INDEX_INT_T face1,
                                         const FACE_INDEX_INT_T face2);
-float rigidbody_get_mass_push_ratio(const RigidBody *rb, const RigidBody *pushed);
+float rigidbody_get_mass_ratio(const RigidBody *rb, const RigidBody *other);
 void rigidbody_apply_force_impulse(RigidBody *rb, const float3 *value);
 void rigidbody_apply_push(RigidBody *rb, const float3 *value);
 void rigidbody_broadphase_world_to_model(const Matrix4x4 *invModel,

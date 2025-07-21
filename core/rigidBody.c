@@ -233,9 +233,7 @@ bool _rigidbody_dynamic_tick(Scene *scene,
     // or make it all accessible in Lua w/ pass-through rigidbodies & settable drag property / air
     // drag in config
 
-    float drag = PHYSICS_AIR_DRAG_DEFAULT;
-    drag = 1.0f - minimum(drag * dt_f, 1.0f);
-
+    const float drag = CLAMP01(1.0f - PHYSICS_AIR_DRAG_DEFAULT * dt_f);
     float3_op_scale(rb->velocity, drag);
 
     // ------------------------
@@ -609,58 +607,77 @@ bool _rigidbody_dynamic_tick(Scene *scene,
             // combined friction & bounciness
             const FACE_INDEX_INT_T contactFace = utils_aligned_normal_to_face(&contact.normal);
             const FACE_INDEX_INT_T face = utils_face_swapped(contactFace);
+            const float massRatio = rigidbody_get_mass_ratio(rb, contact.rb);
             const float friction = rigidbody_get_combined_friction(rb, contact.rb, face, contactFace);
             const float bounciness = rigidbody_get_combined_bounciness(rb, contact.rb, face, contactFace);
 
-            // (1) apply combined friction on tangential displacement, assign tangential push if
-            // displacement originated at least partly from own velocity, not only motion or scene
-            // constant
-            dv = tangential;
-            float3_op_substract(rb->velocity, &vIntruding);
+            // weighted by mass ratio (neutral at mass ratio 0.5),
+            // - friction keeps more momentum for heavier object
+            // - bounciness reduced when hitting lighter object that provide less support for a bounce
+            const float frictionSelf = LERP(friction, 1.0f, massRatio * 2.0f - 1.0f);
+            const float frictionContact = LERP(friction, 1.0f, (1.0f - massRatio) * 2.0f - 1.0f);
+            const float bouncinessSelf = bounciness * CLAMP01F((1.0f - massRatio) * 2.0f);
 
-            float3_op_scale(&dv, friction);
-            float3_op_scale(rb->velocity, friction);
+            // (1) apply combined friction on tangential displacement, assign tangential push ;
+            // skip if motion was used
+            if (float3_isZero(rb->motion, EPSILON_ZERO) == true) {
+                dv = (float3){
+                   tangential.x * frictionSelf,
+                   tangential.y * frictionSelf,
+                   tangential.z * frictionSelf
+                };
 
-            if (float3_isZero(rb->velocity, EPSILON_ZERO) == false) {
-                push3 = tangential;
-                float3_op_scale(&push3, 1.0f - friction);
+                // portion of velocity consumed by friction this frame
+                rb->velocity-> x -= tangential.x * (1.0f - frictionSelf);
+                rb->velocity-> y -= tangential.y * (1.0f - frictionSelf);
+                rb->velocity-> z -= tangential.z * (1.0f - frictionSelf);
             } else {
-                push3 = float3_zero;
+                dv = tangential;
             }
+            push3 = dv;
+            float3_op_scale(&push3, 1.0f - frictionContact);
 
-            // (2) apply combined bounciness on intruding displacement, add leftover to push ;
-            // minor bounce responses are muffled ; if no bounce, match push velocity (*)
-            const float3 vBounce = (float3){ -vIntruding.x * bounciness,
-                                             -vIntruding.y * bounciness,
-                                             -vIntruding.z * bounciness };
+            // (2a) apply combined bounciness on intruding displacement, add leftover to push ;
+            // minor bounce responses are muffled
+            const float3 vBounce = (float3){ -vIntruding.x * bouncinessSelf,
+                                             -vIntruding.y * bouncinessSelf,
+                                             -vIntruding.z * bouncinessSelf };
             const bool bounced = float3_sqr_length(&vBounce) > PHYSICS_BOUNCE_SQR_THRESHOLD;
             if (bounced) {
-                const float3 bounce = (float3){ -intruding.x * bounciness,
-                                                -intruding.y * bounciness,
-                                                -intruding.z * bounciness };
-
+                const float3 bounce = (float3){ -intruding.x * bouncinessSelf,
+                                                -intruding.y * bouncinessSelf,
+                                                -intruding.z * bouncinessSelf };
                 float3_op_add(&dv, &bounce);
-                float3_op_add(rb->velocity, &vBounce);
 
-                push3.x += intruding.x * (1.0f - bounciness);
-                push3.y += intruding.y * (1.0f - bounciness);
-                push3.z += intruding.z * (1.0f - bounciness);
+                push3.x += intruding.x * (1.0f - bouncinessSelf);
+                push3.y += intruding.y * (1.0f - bouncinessSelf);
+                push3.z += intruding.z * (1.0f - bouncinessSelf);
+
+                // portion of velocity transformed into a bounce
+                rb->velocity->x += -vIntruding.x + vBounce.x;
+                rb->velocity->y += -vIntruding.y + vBounce.y;
+                rb->velocity->z += -vIntruding.z + vBounce.z;
+            }
+            // (2b) if no bounce, add full push if contact is dynamic, else consume all velocity
+            else if (contactDynamic) {
+                push3.x += intruding.x * massRatio;
+                push3.y += intruding.y * massRatio;
+                push3.z += intruding.z * massRatio;
+
+                // portion of velocity consumed by mass push this frame
+                rb->velocity->x -= vIntruding.x * (1.0f - massRatio) * dt_f;
+                rb->velocity->y -= vIntruding.y * (1.0f - massRatio) * dt_f;
+                rb->velocity->z -= vIntruding.z * (1.0f - massRatio) * dt_f;
+
+                const float pushDrag = CLAMP01F(1.0f - PHYSICS_MASS_PUSH_DRAG * dt_f);
+                float3_op_scale(rb->velocity, pushDrag);
             } else {
-                float3_op_add(&push3, &intruding);
+                float3_op_substract(rb->velocity, &vIntruding);
             }
 
-            // (3) apply push relative to colliding masses
+            // (3) apply push
             if (contactDynamic) {
-                const float push = rigidbody_get_mass_push_ratio(rb, contact.rb);
-
-                push3.x *= push / dt_f;
-                push3.y *= push / dt_f;
-                push3.z *= push / dt_f;
-
-                rigidbody_apply_push(contact.rb, &push3);
-                if (bounced == false) {
-                    rigidbody_apply_push(rb, &push3); // (*)
-                }
+                float3_op_add(contact.rb->velocity, &push3);
 
                 // self is flagged as awake, since contact will move from push
                 rigidbody_set_awake(rb);
@@ -1398,8 +1415,8 @@ float rigidbody_get_combined_bounciness(const RigidBody *rb1,
 #endif
 }
 
-float rigidbody_get_mass_push_ratio(const RigidBody *rb, const RigidBody *pushed) {
-    return CLAMP01F(rb->mass / pushed->mass - PHYSICS_MASS_PUSH_THRESHOLD);
+float rigidbody_get_mass_ratio(const RigidBody *rb, const RigidBody *other) {
+    return CLAMP01F(rb->mass / (rb->mass + other->mass));
 }
 
 void rigidbody_apply_force_impulse(RigidBody *rb, const float3 *value) {

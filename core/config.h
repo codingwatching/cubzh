@@ -150,9 +150,6 @@ extern unsigned long upper_power_of_two(unsigned long v);
 #define PHYSICS_MAX_SQR_VELOCITY 160000.0f
 /// Threshold under which bounce is muffled
 #define PHYSICS_BOUNCE_SQR_THRESHOLD 1.0f
-/// Threshold of mass push ratio under which it is ignored
-#define PHYSICS_MASS_PUSH_THRESHOLD                                                                \
-    0.01f // if pushing object mass is 1% or less of pushed object mass
 /// Multiple collision responses may fall within the same simulation frame, up to max iterations
 #define PHYSICS_MAX_SOLVER_ITERATIONS 4
 /// How to combine friction/bounciness of 2 rigidbodies in contact,
@@ -203,6 +200,7 @@ extern unsigned long upper_power_of_two(unsigned long v);
 /// Permanent absorption of any force in given environment, currently we only have air drag
 /// This could become configurable in Lua, and could be a property of pass-through rigidbodies
 #define PHYSICS_AIR_DRAG_DEFAULT 0.001f
+#define PHYSICS_MASS_PUSH_DRAG 0.05f
 #define PHYSICS_GRAVITY -225.0f // strong gravity makes movement more dynamic
 
 /// Physics properties default values
