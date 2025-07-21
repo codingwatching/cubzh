@@ -94,12 +94,12 @@ mod.checkPhoneNumber = function(_, phoneNumber, callback)
 	local body = {
 		phoneNumber = phoneNumber,
 	}
-	local req = System:HttpPost(url, body, function(resp)
-		if resp.StatusCode ~= 200 then
+	local req = System:HttpPost(url, body, function(res)
+		if res.StatusCode ~= 200 then
 			callback(nil, api:error(res.StatusCode, "could not check phone number"))
 			return
 		end
-		local response, err = JSON:Decode(resp.Body)
+		local response, err = JSON:Decode(res.Body)
 		if err ~= nil then
 			callback(nil, api:error(res.StatusCode, "checkPhoneNumber JSON decode error: " .. err))
 			return
@@ -992,7 +992,7 @@ mod.readNotifications = function(self, config)
 	local req = System:HttpPatch(u:toString(), body, function(res)
 		if res.StatusCode ~= 200 then
 			if config.callback ~= nil then
-				config.callback(mod:error(res.StatusCode, "status code: " .. res.StatusCode))
+				config.callback(api:error(res.StatusCode, "status code: " .. res.StatusCode))
 			end
 			return
 		end
@@ -1135,6 +1135,78 @@ mod.createBadge = function(self, badgeInfo, callback)
 				callback(api:error(res.StatusCode, res.Body))
 			end
 			return
+		end
+
+		callback(nil) -- success
+	end)
+	return req
+end
+
+-- badgeInfo argument:
+-- {
+-- 	badgeID = config.badgeObj.badgeID,
+-- 	icon = badgeObject:getBadgeImageData(),
+-- 	tag = tag,
+-- 	name = name,
+-- 	description = description,
+-- }
+mod.updateBadge = function(self, badgeInfo, callback)
+	if self ~= mod then
+		error("api:updateBadge(badgeInfo, callback): use `:`", 2)
+	end
+
+	if badgeInfo == nil or type(badgeInfo) ~= "table" then
+		error("api:updateBadge(badgeInfo, callback): badgeInfo must be a table", 2)
+	end
+	if callback == nil or type(callback) ~= "function" then
+		error("api:updateBadge(badgeInfo, callback): callback must be a function", 2)
+	end
+
+	-- validate badgeInfo
+	if badgeInfo.badgeID == nil or type(badgeInfo.badgeID) ~= "string" then
+		error("api:updateBadge(badgeInfo, callback): badgeInfo.badgeID must be a string", 2)
+	end
+	if badgeInfo.icon ~= nil and type(badgeInfo.icon) ~= "userdata" then -- TODO: gaetan: why not "Data"? Is this correct?
+		error("api:updateBadge(badgeInfo, callback): badgeInfo.icon must be a Data object (or nil)", 2)
+	end
+	if badgeInfo.name ~= nil and type(badgeInfo.name) ~= "string" then
+		error("api:updateBadge(badgeInfo, callback): badgeInfo.name must be a string (or nil)", 2)
+	end
+	if badgeInfo.description ~= nil and type(badgeInfo.description) ~= "string" then
+		error("api:updateBadge(badgeInfo, callback): badgeInfo.description must be a string (or nil)", 2)
+	end
+
+	-- construct JSON payload
+	local payload = {
+		badgeID = badgeInfo.badgeID,
+	}
+	if badgeInfo.icon ~= nil then
+		payload.imageBase64 = badgeInfo.icon:ToString({ format = "base64" })
+	end
+	if badgeInfo.name ~= nil then
+		payload.name = badgeInfo.name
+	end
+	if badgeInfo.description ~= nil then
+		payload.description = badgeInfo.description
+	end
+
+	local payloadJson = JSON:Encode(payload)
+
+	-- send request
+	local u = url:parse(mod.kApiAddr .. "/badges/" .. badgeInfo.badgeID)
+	local req = System:HttpPatch(u:toString(), payloadJson, function(res)
+		if res.StatusCode ~= 200 then
+			if callback ~= nil then
+				callback(api:error(res.StatusCode, "status code: " .. res.StatusCode))
+			end
+			return
+		end
+
+		-- if icon has been update, we clear the HTTP cache for the badge image
+		if badgeInfo.icon ~= nil then
+			-- https://api.cu.bzh/badges/5eee2343-51b3-49d1-be97-73af468aff49/thumbnail.png
+			local urlBadgeThumbnail = mod.kApiAddr .. "/badges/" .. badgeInfo.badgeID .. "/thumbnail.png"
+			System:ClearHttpCacheForUrl(urlBadgeThumbnail)
 		end
 
 		callback(nil) -- success

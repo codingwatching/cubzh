@@ -36,18 +36,20 @@ mod.unlock = function(_, badgeTag, callback)
 end
 mod.unlockBadge = mod.unlock -- legacy
 
--- returns a Badge Object 
+-- returns a Badge Object
 -- thumbnail can be loaded on creation or later with badgeObject:setThumbnail(imageData)
 -- returns table with underlying requests in case they need to be cancelled
 local badgeUnlockedData = nil
 local badgeLockedData = nil
 local maskQuadData = nil
 
-local function _setBadgeImage(self, imageData, callback)
+local function _setBadgeImage(self, imageData)
 	if typeof(self) ~= "Mesh" then
 		error("badgeObject:setBadgeImage(imageData) should be called with `:`")
 	end
-	
+
+	self.badgeImageData = imageData
+
 	local iconQuad = self.iconQuad
 	local iconQuadBack = self.iconQuadBack
 
@@ -56,7 +58,7 @@ local function _setBadgeImage(self, imageData, callback)
 		iconQuad.Image = {
 			data = imageData,
 			filtering = false,
-		}	
+		}
 	end
 
 	if iconQuadBack ~= nil then
@@ -66,6 +68,13 @@ local function _setBadgeImage(self, imageData, callback)
 			filtering = false,
 		}
 	end
+end
+
+local function _getBadgeImageData(self)
+	if typeof(self) ~= "Mesh" then
+		error("badgeObject:getBadgeImageData() should be called with `:`")
+	end
+	return self.badgeImageData
 end
 
 local function _setBadgeId(self, badgeId, callback)
@@ -88,7 +97,7 @@ local function _setBadgeId(self, badgeId, callback)
 	local iconQuadBack = self.iconQuadBack
 
 	-- make quad transparent while loading thumbnail
-	iconQuad.Color = Color(255, 255, 255, 0) 
+	iconQuad.Color = Color(255, 255, 255, 0)
 	if iconQuadBack ~= nil then
 		iconQuadBack.Color = Color(255, 255, 255, 0)
 	end
@@ -102,18 +111,9 @@ local function _setBadgeId(self, badgeId, callback)
 				end
 				return
 			end
-			iconQuad.Color = Color(255, 255, 255)
-			iconQuad.Image = {
-				data = icon,
-				filtering = false,
-			}
-			if iconQuadBack ~= nil then
-				iconQuadBack.Color = Color(255, 255, 255)
-				iconQuadBack.Image = {
-					data = icon,
-					filtering = false,
-				}
-			end
+
+			self:setBadgeImage(icon)
+
 			if callback ~= nil then
 				callback()
 			end
@@ -147,7 +147,7 @@ mod.createBadgeObject = function(self, config)
 	end
 
 	local badgeData
-	
+
 	if config.locked then
 		if badgeLockedData == nil then
 			badgeLockedData = Data:FromBundle("shapes/badge-dark.glb")
@@ -175,6 +175,7 @@ mod.createBadgeObject = function(self, config)
 
 		o.setBadgeId = _setBadgeId
 		o.setBadgeImage = _setBadgeImage
+		o.getBadgeImageData = _getBadgeImageData
 
 		local maskQuad
 		local iconQuad
@@ -248,7 +249,7 @@ mod.createBadgeObject = function(self, config)
 				end
 			end)
 			table.insert(reqs, req)
-		else 
+		else
 			if config.callback ~= nil then
 				config.callback(o)
 			end

@@ -18,7 +18,7 @@ mod.createModalContent = function(_, config)
 		uikit = require("uikit"), -- allows to provide specific instance of uikit
 		onOpen = nil,
 		mode = nil, -- "create" or "edit"
-		badgeId = nil, -- must be provided if mode is "edit"
+		badgeObj = nil, -- must be provided if mode is "edit"
 		worldId = nil, -- must be provided if mode is "create"
 	}
 
@@ -28,7 +28,7 @@ mod.createModalContent = function(_, config)
 			acceptTypes = {
 				onOpen = { "function" },
 				mode = { "string" },
-				badgeId = { "string" },
+				badgeObj = { "table" },
 				worldId = { "string" },
 			},
 		})
@@ -80,8 +80,8 @@ mod.createModalContent = function(_, config)
 			local node = ui:frame()
 
 			-- badge creation form fields
-			local iconData
-			local tag 
+			-- local iconData
+			local tag
 			local name
 			local description
 
@@ -118,8 +118,12 @@ mod.createModalContent = function(_, config)
 			badgeShape.Height = ICON_SIZE
 			badgeShape:setParent(cell)
 
+			local badgeId = nil
+			if config.badgeObj ~= nil then
+				badgeId = config.badgeObj.badgeID
+			end
 			local req = badge:createBadgeObject({
-				badgeId = nil,
+				badgeId = badgeId,
 				locked = false,
 				frontOnly = true,
 				callback = function(o)
@@ -136,6 +140,8 @@ mod.createModalContent = function(_, config)
 					local y = cell.Height - theme.padding - badgeShape.Height
 					badgeShape.pos = { theme.padding, y }
 
+					node:refreshCreateButton()
+
 					animateBadge()
 				end,
 			})
@@ -144,27 +150,53 @@ mod.createModalContent = function(_, config)
 			editIconBtn:setParent(cell)
 
 			-- Tag
-			local identifierLabel = ui:createText("The identifier is used in code to unlock the badge. (a-z & 0-9 characters only)", { 
-				size = "small", 
-				color = Color(150, 150, 150),
-			})
+			local identifierLabel =
+				ui:createText("The identifier is used in code to unlock the badge. (a-z & 0-9 characters only)", {
+					size = "small",
+					color = Color(150, 150, 150),
+				})
 			identifierLabel:setParent(cell)
 
-			local tagEdit = ui:createTextInput("", "identifier")
-			tagEdit:setParent(cell)
+			local tagTextOrEdit = nil
+			if config.mode == "create" then
+				tagTextOrEdit = ui:createTextInput("", "identifier")
+			elseif config.mode == "edit" then
+				-- config.badgeObj.tag must exist in this case
+				tag = config.badgeObj.tag
+				tagTextOrEdit = ui:createText("Identifier: " .. tag, {
+					size = "small",
+					color = Color.White,
+				})
+			end
+			tagTextOrEdit:setParent(cell)
 
 			-- Name
-
 			local nameEdit = ui:createTextInput("", "Badge Name")
 			nameEdit:setParent(cell)
+			if config.badgeObj ~= nil then
+				name = config.badgeObj.name
+				nameEdit.Text = name
+			end
 
 			-- Description
 			local descriptionEdit = ui:createTextInput("", "Description")
 			descriptionEdit:setParent(cell)
+			if config.badgeObj ~= nil then
+				description = config.badgeObj.description
+				descriptionEdit.Text = description
+			end
 
 			-- Create Badge Button
-			local createBadgeBtn = ui:buttonPositive({ 
-				content = loc("Create"), 
+			local submitBtnText = nil
+			if config.mode == "create" then
+				submitBtnText = loc("Create")
+			elseif config.mode == "edit" then
+				submitBtnText = loc("Update")
+			else
+				error("badge_modal:createModalContent(config): invalid mode: " .. config.mode)
+			end
+			local submitFormBtn = ui:buttonPositive({
+				content = submitBtnText,
 				padding = {
 					top = theme.padding,
 					bottom = theme.padding,
@@ -172,24 +204,26 @@ mod.createModalContent = function(_, config)
 					right = theme.padding * 2,
 				},
 			})
-			createBadgeBtn:disable()
-			createBadgeBtn:setParent(cell)
+			submitFormBtn:disable()
+			submitFormBtn:setParent(cell)
 
 			-- Tag value has changed
-			tagEdit.onTextChange = function(self)
-				-- allow only alphanumeric characters and underscores
-				if not self.Text:match("^%w+$") then
-					self.onTextChangeSave = self.onTextChange
-					self.onTextChange = nil
-					self.Text = self.Text:gsub("[^%w]", "")
-					self.onTextChange = self.onTextChangeSave
+			if config.mode == "create" then
+				tagTextOrEdit.onTextChange = function(self)
+					-- allow only alphanumeric characters and underscores
+					if not self.Text:match("^%w+$") then
+						self.onTextChangeSave = self.onTextChange
+						self.onTextChange = nil
+						self.Text = self.Text:gsub("[^%w]", "")
+						self.onTextChange = self.onTextChangeSave
+					end
+
+					-- store new value
+					tag = self.Text
+
+					-- update create button
+					node:refreshCreateButton()
 				end
-
-				-- store new value
-				tag = self.Text
-
-				-- update create button
-				node:refreshCreateButton()
 			end
 
 			-- Name value has changed
@@ -205,10 +239,10 @@ mod.createModalContent = function(_, config)
 			end
 
 			node.refreshCreateButton = function()
-				if iconData ~= nil and tag ~= nil and tag ~= "" then
-					createBadgeBtn:enable()
+				if badgeObject ~= nil and badgeObject:getBadgeImageData() ~= nil and tag ~= nil and tag ~= "" then
+					submitFormBtn:enable()
 				else
-					createBadgeBtn:disable()
+					submitFormBtn:disable()
 				end
 			end
 
@@ -224,13 +258,13 @@ mod.createModalContent = function(_, config)
 					+ theme.padding
 					+ identifierLabel.Height
 					+ theme.padding
-					+ tagEdit.Height
+					+ tagTextOrEdit.Height
 					+ theme.padding
 					+ nameEdit.Height
 					+ theme.padding
 					+ descriptionEdit.Height
 					+ theme.padding
-					+ createBadgeBtn.Height
+					+ submitFormBtn.Height
 					+ theme.padding
 
 				cell.Width = contentWidth
@@ -241,9 +275,10 @@ mod.createModalContent = function(_, config)
 				scroll.Height = self.Height
 
 				-- compute width values
-				tagEdit.Width = cell.Width - theme.padding * 2
-				nameEdit.Width = tagEdit.Width
-				descriptionEdit.Width = tagEdit.Width
+				local formFieldWidth = cell.Width - theme.padding * 2
+				tagTextOrEdit.Width = formFieldWidth
+				nameEdit.Width = formFieldWidth
+				descriptionEdit.Width = formFieldWidth
 
 				local y = contentHeight
 
@@ -253,8 +288,8 @@ mod.createModalContent = function(_, config)
 				editIconBtn.pos = { badgeShape.pos.X + badgeShape.Width + theme.padding, y }
 
 				-- tag edit + button
-				y = y - theme.padding - tagEdit.Height
-				tagEdit.pos = { theme.padding, y }
+				y = y - theme.padding - tagTextOrEdit.Height
+				tagTextOrEdit.pos = { theme.padding, y }
 
 				-- identifier label
 				y = y - theme.padding - identifierLabel.Height
@@ -269,8 +304,8 @@ mod.createModalContent = function(_, config)
 				descriptionEdit.pos = { theme.padding, y }
 
 				-- create badge button
-				y = y - theme.padding - createBadgeBtn.Height
-				createBadgeBtn.pos = { (cell.Width - createBadgeBtn.Width) / 2, y }
+				y = y - theme.padding - submitFormBtn.Height
+				submitFormBtn.pos = { (cell.Width - submitFormBtn.Width) / 2, y }
 
 				-- Update create button state
 				self:refreshCreateButton()
@@ -284,19 +319,19 @@ mod.createModalContent = function(_, config)
 			editIconBtn.onRelease = function()
 				File:OpenAndReadAll(function(success, data)
 					if not success then -- TODO: handle error
-						iconData = nil -- reset icon data
+						-- iconData = nil -- reset icon data
 						return
 					end
 
 					if data == nil then -- TODO: handle error
-						iconData = nil -- reset icon data
+						-- iconData = nil -- reset icon data
 						return
 					end
 
 					-- store icon data in a variable
-					iconData = data
+					-- iconData = data
 					if badgeObject ~= nil then
-						badgeObject:setBadgeImage(iconData)
+						badgeObject:setBadgeImage(data)
 					end
 
 					node:refreshCreateButton()
@@ -304,31 +339,49 @@ mod.createModalContent = function(_, config)
 			end
 
 			-- Create badge button callback
-			createBadgeBtn.onRelease = function()
-				system_api:createBadge({
-					worldID = config.worldId,
-					icon = iconData,
-					tag = tag,
-					name = name,
-					description = description,
-				}, function(err)
-					if err then
-						Menu:ShowAlert({
-							message = loc("Sorry, something went wrong. 😕"),
-							neutralLabel = loc("OK"),
-							neutralCallback = function() end,
-						}, System)
-					else
-						-- badge created successfully, going back to world details
-						Menu:ShowAlert({
-							message = loc("Badge Created! ✅"),
-							neutralLabel = loc("OK"),
-							neutralCallback = function()
-								content:pop()
-							end,
-						}, System)
-					end
-				end)
+			submitFormBtn.onRelease = function()
+				if config.mode == "create" then
+					system_api:createBadge({
+						worldID = config.worldId,
+						icon = badgeObject:getBadgeImageData(),
+						tag = tag,
+						name = name,
+						description = description,
+					}, function(err)
+						if err then
+							Menu:ShowAlert({
+								message = loc("Sorry, something went wrong. 😕"),
+								neutralLabel = loc("OK"),
+								neutralCallback = function() end,
+							}, System)
+						else
+							-- badge created successfully, going back to world details
+							Menu:ShowAlert({
+								message = loc("Badge Created! ✅"),
+								neutralLabel = loc("OK"),
+								neutralCallback = function()
+									content:pop()
+								end,
+							}, System)
+						end
+					end)
+				elseif config.mode == "edit" then
+					system_api:updateBadge({
+						badgeID = config.badgeObj.badgeID,
+						icon = badgeObject:getBadgeImageData(),
+						name = name,
+						description = description,
+					}, function(err)
+						print("[🐞][EDIT BADGE][RESPONSE] err:", err)
+						-- if err then
+						-- 	Menu:ShowAlert({
+						-- 		message = loc("Sorry, something went wrong. 😕"),
+						-- 		neutralLabel = loc("OK"),
+						-- 		neutralCallback = function() end,
+						-- 	}, System)
+						-- end
+					end)
+				end
 			end
 
 			node:refresh()

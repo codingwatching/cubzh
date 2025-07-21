@@ -237,6 +237,21 @@ mod.createModalContent = function(_, config)
 					cell.rarityLabel = rarityLabel
 					rarityLabel:setParent(cell)
 
+					cell.onRelease = function(_)
+						-- show badge creation form in the world details modal
+						badgeModalContent = badgeModal:createModalContent({
+							uikit = ui,
+							mode = "edit",
+							badgeObj = badge,
+						})
+						local m = content:getModalIfContentIsActive()
+						if m ~= nil then
+							m:push(badgeModalContent)
+						else
+							print("❌ no modal found")
+						end
+					end
+
 					badges.cells[index] = cell
 				end
 
@@ -475,9 +490,9 @@ mod.createModalContent = function(_, config)
 
 			table.sort(badges, function(a, b)
 				-- unlocked first
-				if (a.userDidUnlock and not b.userDidUnlock) then
+				if a.userDidUnlock and not b.userDidUnlock then
 					return true
-				elseif (not a.userDidUnlock and b.userDidUnlock) then
+				elseif not a.userDidUnlock and b.userDidUnlock then
 					return false
 				end
 				-- both same unlock status, sort by rarity (most common first, i.e. higher rarity value first)
