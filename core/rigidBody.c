@@ -896,6 +896,7 @@ void _rigidbody_trigger_tick(Scene *scene,
                 }
                 float3 wNormal;
                 matrix4x4_op_multiply_vec_vector(&wNormal, &normal, &hitModel);
+                float3_normalize(&wNormal);
 
                 _rigidbody_fire_reciprocal_callbacks(scene,
                                                      rb,
