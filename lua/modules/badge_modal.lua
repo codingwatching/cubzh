@@ -17,9 +17,10 @@ mod.createModalContent = function(_, config)
 	local defaultConfig = {
 		uikit = require("uikit"), -- allows to provide specific instance of uikit
 		onOpen = nil,
-		mode = nil, -- "create" or "edit"
+		mode = nil, -- "display" or "create" or "edit"
 		badgeObj = nil, -- must be provided if mode is "edit"
 		worldId = nil, -- must be provided if mode is "create"
+		locked = true,
 	}
 
 	-- merge provided config with default config
@@ -30,6 +31,7 @@ mod.createModalContent = function(_, config)
 				mode = { "string" },
 				badgeObj = { "table" },
 				worldId = { "string" },
+				locked = { "boolean" },
 			},
 		})
 	end)
@@ -124,7 +126,7 @@ mod.createModalContent = function(_, config)
 			end
 			local req = badge:createBadgeObject({
 				badgeId = badgeId,
-				locked = false,
+				locked = config.locked and config.mode == "display",
 				frontOnly = true,
 				callback = function(o)
 					badgeObject = o
@@ -148,14 +150,20 @@ mod.createModalContent = function(_, config)
 
 			local editIconBtn = ui:buttonSecondary({ content = "✏️ Set Image", textSize = "small" })
 			editIconBtn:setParent(cell)
+			if config.mode == "display" then
+				editIconBtn.IsHidden = true
+			end
 
 			-- Tag
 			local identifierLabel = nil
 			if config.mode == "create" then
-				identifierLabel = ui:createText("The identifier is used in code to unlock the badge. (a-z & 0-9 characters only, players don't see it)", {
-					size = "small",
-					color = Color(150, 150, 150),
-				})
+				identifierLabel = ui:createText(
+					"The identifier is used in code to unlock the badge. (a-z & 0-9 characters only, players don't see it)",
+					{
+						size = "small",
+						color = Color(150, 150, 150),
+					}
+				)
 				identifierLabel:setParent(cell)
 			end
 
@@ -169,24 +177,46 @@ mod.createModalContent = function(_, config)
 					size = "small",
 					color = Color.White,
 				})
+			elseif config.mode == "display" then
+				-- display the badge unlock status and date
+				-- local text = "not unlocked yet"
+				-- if not config.locked then
+				-- 	text = "unlocked on " .. config.badgeObj.userUnlockedAt -- this field doesn't exist yet
+				-- end
+				-- tagTextOrEdit = ui:createText(text, {
+				-- 	size = "small",
+				-- 	color = Color.White,
+				-- })
 			end
-			tagTextOrEdit:setParent(cell)
+			if tagTextOrEdit ~= nil then
+				tagTextOrEdit:setParent(cell)
+			end
 
 			-- Name
-			local nameEdit = ui:createTextInput("", "Badge Name")
-			nameEdit:setParent(cell)
-			if config.badgeObj ~= nil then
+			local nameTextOrEdit = nil
+			if config.mode == "create" or config.mode == "edit" then
+				nameTextOrEdit = ui:createTextInput("", "Badge Name")
+			elseif config.mode == "display" then
 				name = config.badgeObj.name
-				nameEdit.Text = name
+				nameTextOrEdit = ui:createText(name, {
+					size = "default",
+					color = Color.White,
+				})
 			end
+			nameTextOrEdit:setParent(cell)
 
 			-- Description
-			local descriptionEdit = ui:createTextInput("", "Description")
-			descriptionEdit:setParent(cell)
-			if config.badgeObj ~= nil then
+			local descriptionTextOrEdit = nil
+			if config.mode == "create" or config.mode == "edit" then
+				descriptionTextOrEdit = ui:createTextInput("", "Description")
+			elseif config.mode == "display" then
 				description = config.badgeObj.description
-				descriptionEdit.Text = description
+				descriptionTextOrEdit = ui:createText(description, {
+					size = "small",
+					color = Color.White,
+				})
 			end
+			descriptionTextOrEdit:setParent(cell)
 
 			-- Create Badge Button
 			local submitBtnText = nil
@@ -194,6 +224,8 @@ mod.createModalContent = function(_, config)
 				submitBtnText = loc("Create")
 			elseif config.mode == "edit" then
 				submitBtnText = loc("Update")
+			elseif config.mode == "display" then
+				submitBtnText = loc("Close")
 			else
 				error("badge_modal:createModalContent(config): invalid mode: " .. config.mode)
 			end
@@ -229,22 +261,30 @@ mod.createModalContent = function(_, config)
 			end
 
 			-- Name value has changed
-			nameEdit.onTextChange = function(self)
-				name = self.Text
-				node:refreshCreateButton()
+			if config.mode == "create" or config.mode == "edit" then
+				nameTextOrEdit.onTextChange = function(self)
+					name = self.Text
+					node:refreshCreateButton()
+				end
 			end
 
 			-- Description value has changed
-			descriptionEdit.onTextChange = function(self)
-				description = self.Text
-				node:refreshCreateButton()
+			if config.mode == "create" or config.mode == "edit" then
+				descriptionTextOrEdit.onTextChange = function(self)
+					description = self.Text
+					node:refreshCreateButton()
+				end
 			end
 
 			node.refreshCreateButton = function()
-				if badgeObject ~= nil and badgeObject:getBadgeImageData() ~= nil and tag ~= nil and tag ~= "" then
+				if config.mode == "display" then
 					submitFormBtn:enable()
 				else
-					submitFormBtn:disable()
+					if badgeObject ~= nil and badgeObject:getBadgeImageData() ~= nil and tag ~= nil and tag ~= "" then
+						submitFormBtn:enable()
+					else
+						submitFormBtn:disable()
+					end
 				end
 			end
 
@@ -260,11 +300,11 @@ mod.createModalContent = function(_, config)
 				local contentHeight = theme.padding
 					+ badgeShape.Height
 					+ theme.padding
-					+ tagTextOrEdit.Height
+					+ (tagTextOrEdit.Height or 0)
 					+ theme.padding
-					+ nameEdit.Height
+					+ nameTextOrEdit.Height
 					+ theme.padding
-					+ descriptionEdit.Height
+					+ descriptionTextOrEdit.Height
 					+ theme.padding
 					+ submitFormBtn.Height
 					+ theme.padding
@@ -283,9 +323,11 @@ mod.createModalContent = function(_, config)
 
 				-- compute width values
 				local formFieldWidth = cell.Width - theme.padding * 2
-				tagTextOrEdit.Width = formFieldWidth
-				nameEdit.Width = formFieldWidth
-				descriptionEdit.Width = formFieldWidth
+				if tagTextOrEdit ~= nil then
+					tagTextOrEdit.Width = formFieldWidth
+				end
+				nameTextOrEdit.Width = formFieldWidth
+				descriptionTextOrEdit.Width = formFieldWidth
 
 				local y = contentHeight
 
@@ -295,8 +337,10 @@ mod.createModalContent = function(_, config)
 				editIconBtn.pos = { badgeShape.pos.X + badgeShape.Width + theme.padding, y }
 
 				-- tag edit + button
-				y = y - theme.padding - tagTextOrEdit.Height
-				tagTextOrEdit.pos = { theme.padding, y }
+				if tagTextOrEdit ~= nil then
+					y = y - theme.padding - tagTextOrEdit.Height
+					tagTextOrEdit.pos = { theme.padding, y }
+				end
 
 				-- identifier label
 				if identifierLabel ~= nil then
@@ -305,12 +349,12 @@ mod.createModalContent = function(_, config)
 				end
 
 				-- name edit + button
-				y = y - theme.padding - nameEdit.Height
-				nameEdit.pos = { theme.padding, y }
+				y = y - theme.padding - nameTextOrEdit.Height
+				nameTextOrEdit.pos = { theme.padding, y }
 
 				-- description edit
-				y = y - theme.padding - descriptionEdit.Height
-				descriptionEdit.pos = { theme.padding, y }
+				y = y - theme.padding - descriptionTextOrEdit.Height
+				descriptionTextOrEdit.pos = { theme.padding, y }
 
 				-- create badge button
 				y = y - theme.padding - submitFormBtn.Height
@@ -325,26 +369,28 @@ mod.createModalContent = function(_, config)
 			end
 
 			-- Import icon button callback
-			editIconBtn.onRelease = function()
-				File:OpenAndReadAll(function(success, data)
-					if not success then -- TODO: handle error
-						-- iconData = nil -- reset icon data
-						return
-					end
+			if config.mode == "create" or config.mode == "edit" then
+				editIconBtn.onRelease = function()
+					File:OpenAndReadAll(function(success, data)
+						if not success then -- TODO: handle error
+							-- iconData = nil -- reset icon data
+							return
+						end
 
-					if data == nil then -- TODO: handle error
-						-- iconData = nil -- reset icon data
-						return
-					end
+						if data == nil then -- TODO: handle error
+							-- iconData = nil -- reset icon data
+							return
+						end
 
-					-- store icon data in a variable
-					-- iconData = data
-					if badgeObject ~= nil then
-						badgeObject:setBadgeImage(data)
-					end
+						-- store icon data in a variable
+						-- iconData = data
+						if badgeObject ~= nil then
+							badgeObject:setBadgeImage(data)
+						end
 
-					node:refreshCreateButton()
-				end)
+						node:refreshCreateButton()
+					end)
+				end
 			end
 
 			-- Create badge button callback
@@ -381,7 +427,9 @@ mod.createModalContent = function(_, config)
 						name = name,
 						description = description,
 					}, function(err)
-						print("[🐞][EDIT BADGE][RESPONSE] err:", err)
+						if err then
+							print("Edit badge error:", err)
+						end
 						-- if err then
 						-- 	Menu:ShowAlert({
 						-- 		message = loc("Sorry, something went wrong. 😕"),
@@ -390,6 +438,8 @@ mod.createModalContent = function(_, config)
 						-- 	}, System)
 						-- end
 					end)
+				elseif config.mode == "display" then
+					content:pop()
 				end
 			end
 
@@ -406,7 +456,13 @@ mod.createModalContent = function(_, config)
 	end
 
 	content.node = functions.constructNode()
-	content.title = "New Badge"
+	if config.mode == "create" then
+		content.title = "New Badge"
+	elseif config.mode == "edit" then
+		content.title = "Edit Badge"
+	elseif config.mode == "display" then
+		content.title = "Badge details"
+	end
 	content.icon = "🏅"
 
 	content.didBecomeActive = function()

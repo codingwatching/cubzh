@@ -245,17 +245,33 @@ mod.createModalContent = function(_, config)
 					end
 
 					cell.onRelease = function(_)
-						-- show badge creation form in the world details modal
-						badgeModalContent = badgeModal:createModalContent({
-							uikit = ui,
-							mode = "edit",
-							badgeObj = badge,
-						})
-						local m = content:getModalIfContentIsActive()
-						if m ~= nil then
-							m:push(badgeModalContent)
-						else
-							print("❌ no modal found")
+						if createMode then -- edit badge
+							-- show badge creation form in the world details modal
+							badgeModalContent = badgeModal:createModalContent({
+								uikit = ui,
+								mode = "edit",
+								badgeObj = badge,
+							})
+							local m = content:getModalIfContentIsActive()
+							if m ~= nil then
+								m:push(badgeModalContent)
+							else
+								print("❌ no modal found")
+							end
+						else -- display badge
+							-- show badge creation form in the world details modal
+							badgeModalContent = badgeModal:createModalContent({
+								uikit = ui,
+								mode = "display",
+								badgeObj = badge,
+								locked = not showBadgeUnlocked,
+							})
+							local m = content:getModalIfContentIsActive()
+							if m ~= nil then
+								m:push(badgeModalContent)
+							else
+								print("❌ no modal found")
+							end
 						end
 					end
 
