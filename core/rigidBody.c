@@ -552,8 +552,8 @@ bool _rigidbody_dynamic_tick(Scene *scene,
         // ----------------------
         // PRE-COLLISION MOVEMENT
         // ----------------------
+        // if not already in contact (minSwept > 0), apply movement and reset contact mask
 
-        // not in contact already
         if (minSwept > 0.0f) {
             f3 = dv;
             float3_op_scale(&f3, minimum(minSwept, 1.0f));
@@ -561,6 +561,22 @@ bool _rigidbody_dynamic_tick(Scene *scene,
             float3_op_add(&pos, &f3);
             float3_op_add(&worldCollider->min, &f3);
             float3_op_add(&worldCollider->max, &f3);
+
+            if (float_isZero(f3.x, EPSILON_ZERO) != false) {
+                utils_axes_mask_set(&rb->contact,
+                                    (uint8_t)(f3.x > 0.0f ? AxesMaskNX : AxesMaskX),
+                                    false);
+            }
+            if (float_isZero(f3.y, EPSILON_ZERO) != false) {
+                utils_axes_mask_set(&rb->contact,
+                                    (uint8_t)(f3.y > 0.0f ? AxesMaskNY : AxesMaskY),
+                                    false);
+            }
+            if (float_isZero(f3.z, EPSILON_ZERO) != false) {
+                utils_axes_mask_set(&rb->contact,
+                                    (uint8_t)(f3.z > 0.0f ? AxesMaskNZ : AxesMaskZ),
+                                    false);
+            }
         }
 
         // ----------------------
@@ -683,25 +699,7 @@ bool _rigidbody_dynamic_tick(Scene *scene,
                 rigidbody_set_awake(rb);
             }
 
-            // (4) reset contact mask if there was any motion, then update new contact along self's
-            // box
-            if (minSwept > 0.0f) {
-                if (float_isZero(dv.x, EPSILON_ZERO) != false) {
-                    utils_axes_mask_set(&rb->contact,
-                                        (uint8_t)(dv.x > 0.0f ? AxesMaskNX : AxesMaskX),
-                                        false);
-                }
-                if (float_isZero(dv.y, EPSILON_ZERO) != false) {
-                    utils_axes_mask_set(&rb->contact,
-                                        (uint8_t)(dv.y > 0.0f ? AxesMaskNY : AxesMaskY),
-                                        false);
-                }
-                if (float_isZero(dv.z, EPSILON_ZERO) != false) {
-                    utils_axes_mask_set(&rb->contact,
-                                        (uint8_t)(dv.z > 0.0f ? AxesMaskNZ : AxesMaskZ),
-                                        false);
-                }
-            }
+            // (4) update contact mask
             if (fabsf(wNormal.x) >= fabsf(wNormal.y) && fabsf(wNormal.x) >= fabsf(wNormal.z)) {
                 if (wNormal.x > 0.0f) {
                     utils_axes_mask_set(&rb->contact, AxesMaskNX, true);
