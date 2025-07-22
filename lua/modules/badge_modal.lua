@@ -150,12 +150,14 @@ mod.createModalContent = function(_, config)
 			editIconBtn:setParent(cell)
 
 			-- Tag
-			local identifierLabel =
-				ui:createText("The identifier is used in code to unlock the badge. (a-z & 0-9 characters only)", {
+			local identifierLabel = nil
+			if config.mode == "create" then
+				identifierLabel = ui:createText("The identifier is used in code to unlock the badge. (a-z & 0-9 characters only, players don't see it)", {
 					size = "small",
 					color = Color(150, 150, 150),
 				})
-			identifierLabel:setParent(cell)
+				identifierLabel:setParent(cell)
+			end
 
 			local tagTextOrEdit = nil
 			if config.mode == "create" then
@@ -163,7 +165,7 @@ mod.createModalContent = function(_, config)
 			elseif config.mode == "edit" then
 				-- config.badgeObj.tag must exist in this case
 				tag = config.badgeObj.tag
-				tagTextOrEdit = ui:createText("Identifier: " .. tag, {
+				tagTextOrEdit = ui:createText("Badge Identifier: " .. tag, {
 					size = "small",
 					color = Color.White,
 				})
@@ -250,13 +252,13 @@ mod.createModalContent = function(_, config)
 				scroll.Width = self.Width
 
 				local contentWidth = self.Width - theme.padding * 2
-				identifierLabel.object.MaxWidth = contentWidth
+				if identifierLabel ~= nil then
+					identifierLabel.object.MaxWidth = contentWidth
+				end
 
 				-- compute content height
 				local contentHeight = theme.padding
 					+ badgeShape.Height
-					+ theme.padding
-					+ identifierLabel.Height
 					+ theme.padding
 					+ tagTextOrEdit.Height
 					+ theme.padding
@@ -266,6 +268,11 @@ mod.createModalContent = function(_, config)
 					+ theme.padding
 					+ submitFormBtn.Height
 					+ theme.padding
+
+				if identifierLabel ~= nil then
+					contentHeight += identifierLabel.Height
+					contentHeight += theme.padding
+				end
 
 				cell.Width = contentWidth
 				cell.Height = contentHeight
@@ -292,8 +299,10 @@ mod.createModalContent = function(_, config)
 				tagTextOrEdit.pos = { theme.padding, y }
 
 				-- identifier label
-				y = y - theme.padding - identifierLabel.Height
-				identifierLabel.pos = { theme.padding, y }
+				if identifierLabel ~= nil then
+					y = y - theme.padding - identifierLabel.Height
+					identifierLabel.pos = { theme.padding, y }
+				end
 
 				-- name edit + button
 				y = y - theme.padding - nameEdit.Height
