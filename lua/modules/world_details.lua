@@ -237,6 +237,13 @@ mod.createModalContent = function(_, config)
 					cell.rarityLabel = rarityLabel
 					rarityLabel:setParent(cell)
 
+					cell.onRemove = function()
+						for _, req in ipairs(reqs) do
+							req:Cancel()
+						end
+						reqs = {}
+					end
+
 					cell.onRelease = function(_)
 						-- show badge creation form in the world details modal
 						badgeModalContent = badgeModal:createModalContent({
