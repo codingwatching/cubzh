@@ -600,7 +600,7 @@ mod.getWorlds = function(self, config, callback)
 		sortBy = "updatedAt:desc", -- likes:desc
 		page = 1,
 		perPage = 50,
-		fields = { "title", "created", "updated", "views", "likes" },
+		fields = { "title", "created", "updated", "views", "likes", "maxPlayers" },
 	}
 
 	ok, err = pcall(function()
@@ -1094,7 +1094,7 @@ mod.listBadgesForWorld = function(_, worldId, cb)
 	local url = mod.kApiAddr .. "/worlds/" .. worldId .. "/badges"
 	local req = HTTP:Get(url, function(res)
 		if res.StatusCode ~= 200 then
-			return cb("Error (" .. tostring(res.StatusCode) .. "): " .. res.Body:ToString())
+			return cb(mod:error(res.StatusCode, "status code: " .. res.StatusCode))
 		end
 		local badges = JSON:Decode(res.Body)
 		cb(nil, badges)
@@ -1125,7 +1125,7 @@ end
 -- cb(thumbnail, error)
 mod.getBadgeThumbnail = function(self, config)
 	if self ~= mod then
-		error("api:getBadgeThumbnail(config): use `:`", 2)
+		error("api:getBadgeThumbnail(config): use `:`")
 	end
 
 	local defaultConfig = {
@@ -1145,14 +1145,14 @@ mod.getBadgeThumbnail = function(self, config)
 	end)
 
 	if not ok then
-		error("api:getBadgeThumbnail(config): config error (" .. err .. ")", 2)
+		error("api:getBadgeThumbnail(config): config error (" .. err .. ")")
 	end
 
 	if config.worldID == "" then
-		error("api:getBadgeThumbnail(config): config.worldID should not be empty", 2)
+		error("api:getBadgeThumbnail(config): config.worldID should not be empty")
 	end
 	if config.callback == nil then
-		error("api:getBadgeThumbnail(config): config.callback should be a function", 2)
+		error("api:getBadgeThumbnail(config): config.callback should be a function")
 	end
 
 	local urlStr = self:getBadgeThumbnailUrl(config.badgeID, config.width)

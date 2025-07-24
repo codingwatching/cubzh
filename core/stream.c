@@ -127,6 +127,59 @@ Stream *stream_new_file_read(FILE *fd) {
     return s;
 }
 
+bool stream_get_buffer_and_size(Stream *s, const char **buf, size_t *size) {
+    if (s->type == STREAM_TYPE_BUFFER_READ) {
+        StreamData_BUFFER_READ *data = (StreamData_BUFFER_READ *)(s->data);
+        *buf = data->buffer;
+        *size = data->bufferSize;
+        return true;
+    } else if (s->type == STREAM_TYPE_FILE_READ) {
+        StreamData_FILE *data = (StreamData_FILE *)(s->data);
+        FILE *fd = data->file;
+
+        // Get file size
+        fseek(fd, 0, SEEK_END);
+        long fileSize = ftell(fd);
+        if (fileSize == -1) {
+            fclose(fd);
+            return false;
+        }
+        fseek(fd, 0, SEEK_SET);
+
+        char *fileBuf = malloc((unsigned long)fileSize + 1);
+        if (buf == NULL) {
+            fclose(fd);
+            return false;
+        }
+
+        size_t bytesRead = fread(fileBuf, 1, (unsigned long)fileSize, fd);
+        if (ferror(fd) || bytesRead != fileSize) {
+            free(fileBuf);
+            fclose(fd);
+            return false;
+        }
+
+        fileBuf[bytesRead] = '\0';
+
+        free(data);
+        fclose(fd);
+
+        // changing Stream type
+        s->type = STREAM_TYPE_BUFFER_READ;
+        StreamData_BUFFER_READ *newData = malloc(sizeof(StreamData_BUFFER_READ));
+        newData->bufferSize = (size_t)fileSize;
+        newData->buffer = fileBuf;
+        newData->cursor = newData->buffer;
+
+        s->data = (void *)newData;
+
+        *buf = newData->buffer;
+        *size = newData->bufferSize;
+        return true;
+    }
+    return false;
+}
+
 bool stream_buffer_unload(Stream *s, char **buf, size_t *written, size_t *bufSize) {
     if (s->type != STREAM_TYPE_BUFFER_WRITE)
         return false;

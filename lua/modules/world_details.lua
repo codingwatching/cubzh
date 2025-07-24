@@ -57,15 +57,38 @@ mod.createModalContent = function(_, config)
 	local badgesFetched = {}
 
 	badges = {
-		createCell = nil, -- first cell: button to create a new badge
+		cells = {},
 	}
+
+	local function removeAllCells()
+		for _, cell in ipairs(badges.cells) do
+			cell:remove()
+		end
+		badges.cells = {}
+	end
+
+	local t = 0
+	local r = Rotation()
+	local l = LocalEvent:Listen(LocalEvent.Name.Tick, function(dt)
+		t += dt * 1.5
+		r.Y = math.pi + math.sin(t) * 0.4
+		r.X = math.cos(t * 1.1) * 0.3
+		for _, cell in ipairs(badges.cells) do
+			if cell.badge ~= nil then
+				cell.badge.LocalRotation:Set(r)
+			end
+		end
+	end)
+	table.insert(listeners, l)
+
+	local PADDING = theme.padding
 
 	-- Constants for badges list
 	-- (similar to friends list in cubzh.lua)
 	local CONFIG = {
-		BADGE_CELL_WIDTH = 80,
-		BADGE_CELL_HEIGHT = 120,
-		BADGES_CELL_PADDING = 10,
+		BADGE_CELL_WIDTH = 90,
+		BADGE_CELL_HEIGHT = 140,
+		BADGES_CELL_PADDING = PADDING,
 	}
 
 	local function badgeCellResizeFn(self)
@@ -81,12 +104,18 @@ mod.createModalContent = function(_, config)
 			firstIndexOfContent = 2
 		end
 
+		if index >= firstIndexOfContent + #badgesFetched then
+			return nil
+		end
+
+		local cell = badges.cells[index]
+
 		-- index of the "Create badge" cell
 		if index < firstIndexOfContent then
-			if badges.createCell == nil then
-				badges.createCell = ui:frameScrollCellWithBevel()
-				badges.createCell.Width = CONFIG.BADGE_CELL_WIDTH
-				badges.createCell.parentDidResize = badgeCellResizeFn
+			if cell == nil then
+				cell = ui:frameScrollCellWithBevel()
+				cell.Width = CONFIG.BADGE_CELL_WIDTH
+				cell.parentDidResize = badgeCellResizeFn
 
 				local image = ui:frame({
 					image = {
@@ -98,6 +127,8 @@ mod.createModalContent = function(_, config)
 				image.object.Color = Color(180, 180, 180)
 				image.Width = CONFIG.BADGE_CELL_WIDTH * 0.6
 				image.Height = image.Width
+				cell.image = image
+				image:setParent(cell)
 
 				local label = ui:createText(loc("New\nBadge"), {
 					color = Color(180, 180, 180),
@@ -106,24 +137,14 @@ mod.createModalContent = function(_, config)
 					outlineColor = Color(10, 10, 10),
 					alignment = "center",
 				})
-				label:setParent(badges.createCell)
-				label.pos = {
-					CONFIG.BADGE_CELL_WIDTH * 0.5 - label.Width * 0.5,
-					CONFIG.BADGE_CELL_HEIGHT * 0.5 * 0.5 - label.Height * 0.5,
-				}
+				cell.label = label
+				label:setParent(cell)
 
-				local vSpaceForImage = CONFIG.BADGE_CELL_HEIGHT - (label.pos.Y + label.Height)
-				image.pos = {
-					CONFIG.BADGE_CELL_WIDTH * 0.5 - image.Width * 0.5,
-					CONFIG.BADGE_CELL_HEIGHT - vSpaceForImage * 0.5 - image.Height * 0.5,
-				}
-				image:setParent(badges.createCell)
-
-				badges.createCell.onPress = function(_)
+				cell.onPress = function(_)
 					Client:HapticFeedback()
 				end
 
-				badges.createCell.onRelease = function(_)
+				cell.onRelease = function(_)
 					-- show badge creation form in the world details modal
 					badgeModalContent = badgeModal:createModalContent({
 						uikit = ui,
@@ -137,80 +158,172 @@ mod.createModalContent = function(_, config)
 						print("❌ no modal found")
 					end
 				end
+
+				badges.cells[index] = cell
 			end
-			return badges.createCell
+
+			local label = cell.label
+			local image = cell.image
+
+			label.pos = {
+				CONFIG.BADGE_CELL_WIDTH * 0.5 - label.Width * 0.5,
+				CONFIG.BADGE_CELL_HEIGHT * 0.5 * 0.5 - label.Height * 0.5,
+			}
+
+			local vSpaceForImage = CONFIG.BADGE_CELL_HEIGHT - (label.pos.Y + label.Height)
+			image.pos = {
+				CONFIG.BADGE_CELL_WIDTH * 0.5 - image.Width * 0.5,
+				CONFIG.BADGE_CELL_HEIGHT - vSpaceForImage * 0.5 - image.Height * 0.5,
+			}
+
+			return cell
 		else -- display a badge cell
 			local fetchedBadgeIndex = index + 1 - firstIndexOfContent
 			if fetchedBadgeIndex <= #badgesFetched then
-				-- display a badge cell
 				local badge = badgesFetched[fetchedBadgeIndex]
 
-				local cell = ui:frameScrollCellWithBevel()
-				cell.Width = CONFIG.BADGE_CELL_WIDTH
-				cell.parentDidResize = badgeCellResizeFn
+				if cell == nil then
+					cell = ui:frame({ color = Color(255, 255, 255, 0) })
+					cell.Width = CONFIG.BADGE_CELL_WIDTH
+					cell.parentDidResize = badgeCellResizeFn
+
+					local badgeShape = ui:frame()
+					cell.badgeShape = badgeShape
+					badgeShape.Width = CONFIG.BADGE_CELL_WIDTH
+					badgeShape.Height = CONFIG.BADGE_CELL_WIDTH
+					badgeShape:setParent(cell)
+
+					local showBadgeUnlocked = createMode or badge.userDidUnlock
+
+					local reqs = require("badge"):createBadgeObject({
+						badgeId = badge.badgeID,
+						locked = not showBadgeUnlocked,
+						frontOnly = true,
+						callback = function(badgeObject)
+							cell.badge = badgeObject
+
+							local s = ui:createShape(badgeObject, { spherized = false })
+							s.Width = badgeShape.Width
+							s.Height = badgeShape.Height
+							s:setParent(cell)
+
+							s.pos = badgeShape.pos
+							badgeShape:remove()
+							badgeShape = s
+							cell.badgeShape = s
+						end,
+					})
+					-- TODO: cancel reqs when cell is destroyed
+
+					local nameLabel = ui:createText(badge.name, {
+						color = Color.White,
+						size = "small",
+						outline = 0.4,
+						outlineColor = Color(10, 10, 10),
+						alignment = "center",
+					})
+					cell.nameLabel = nameLabel
+					nameLabel:setParent(cell)
+
+					local rarity = badge.rarity
+					if rarity == nil then
+						rarity = 0
+					end
+					local rarityLabel = ui:createText(string.format("rarity: %.1f%%", rarity * 100), {
+						color = Color.White,
+						size = "small",
+						alignment = "center",
+					})
+					cell.rarityLabel = rarityLabel
+					rarityLabel:setParent(cell)
+
+					cell.onRemove = function()
+						for _, req in ipairs(reqs) do
+							req:Cancel()
+						end
+						reqs = {}
+					end
+
+					cell.onRelease = function(_)
+						if createMode then -- edit badge
+							-- show badge creation form in the world details modal
+							badgeModalContent = badgeModal:createModalContent({
+								uikit = ui,
+								mode = "edit",
+								badgeObj = badge,
+							})
+							local m = content:getModalIfContentIsActive()
+							if m ~= nil then
+								m:push(badgeModalContent)
+							else
+								print("❌ no modal found")
+							end
+						else -- display badge
+							-- show badge creation form in the world details modal
+							badgeModalContent = badgeModal:createModalContent({
+								uikit = ui,
+								mode = "display",
+								badgeObj = badge,
+								locked = not showBadgeUnlocked,
+							})
+							local m = content:getModalIfContentIsActive()
+							if m ~= nil then
+								m:push(badgeModalContent)
+							else
+								print("❌ no modal found")
+							end
+						end
+					end
+
+					badges.cells[index] = cell
+				end
+
+				local rarityLabel = cell.rarityLabel
+				local nameLabel = cell.nameLabel
+				local badgeShape = cell.badgeShape
 
 				local y = CONFIG.BADGE_CELL_HEIGHT
 
-				local iconImage = ui:frame({
-					image = {
-						data = Data:FromBundle("images/icon-plus.png"),
-						alpha = true,
-						filtering = true,
-					},
-				})
-				iconImage.object.Color = Color(180, 180, 180)
-				iconImage.Width = CONFIG.BADGE_CELL_WIDTH * 0.6
-				iconImage.Height = iconImage.Width
-				iconImage:setParent(cell)
-				y = y - theme.padding - iconImage.Height
-				iconImage.pos = {
-					CONFIG.BADGE_CELL_WIDTH * 0.5 - iconImage.Width * 0.5,
+				nameLabel.object.Scale = 1
+				if nameLabel.Width > cell.Width then
+					nameLabel.object.Scale = cell.Width / nameLabel.Width
+				end
+
+				rarityLabel.object.Scale = 0.8
+				if rarityLabel.Width > cell.Width then
+					rarityLabel.object.Scale = cell.Width / rarityLabel.Width
+				end
+
+				local vSpace = y - badgeShape.Height - PADDING * 2
+				local textHeight = nameLabel.Height + rarityLabel.Height
+				if textHeight > vSpace then
+					local scale = vSpace / textHeight
+					nameLabel.object.Scale *= scale
+					rarityLabel.object.Scale *= scale
+				end
+
+				y = y - badgeShape.Height
+
+				cell.badgeShape.pos = {
+					CONFIG.BADGE_CELL_WIDTH * 0.5 - cell.badgeShape.Width * 0.5,
 					y,
 				}
 
-				local nameLabel = ui:createText(badge.name, {
-					color = Color.White,
-					size = "small",
-					outline = 0.4,
-					outlineColor = Color(10, 10, 10),
-					alignment = "center",
-				})
-				nameLabel:setParent(cell)
-				y = y - theme.padding - nameLabel.Height
+				y = y - PADDING - nameLabel.Height
 				nameLabel.pos = {
 					CONFIG.BADGE_CELL_WIDTH * 0.5 - nameLabel.Width * 0.5,
 					y,
 				}
 
-				local tagLabel = ui:createText(badge.tag, {
-					color = Color.White,
-					size = "small",
-					outline = 0.4,
-					outlineColor = Color(10, 10, 10),
-					alignment = "center",
-				})
-				tagLabel:setParent(cell)
-				y = y - theme.padding - tagLabel.Height
-				tagLabel.pos = {
-					CONFIG.BADGE_CELL_WIDTH * 0.5 - tagLabel.Width * 0.5,
+				y = y - rarityLabel.Height
+				rarityLabel.pos = {
+					CONFIG.BADGE_CELL_WIDTH * 0.5 - rarityLabel.Width * 0.5,
 					y,
 				}
 
 				if badge.userDidUnlock == true then
 					nameLabel.Color = Color.Green
-					tagLabel.Color = Color.Green
 				end
-
-				-- -- Download badge icon
-				api:getBadgeThumbnail({
-					badgeID = badge.badgeID,
-					callback = function(icon, err)
-						if err ~= nil then
-							return
-						end
-						iconImage:setImage(icon)
-					end,
-				})
 
 				return cell
 			end
@@ -218,7 +331,9 @@ mod.createModalContent = function(_, config)
 		return nil -- no cell for index (this line may not be needed)
 	end
 
-	local badgesScrollUnloadCell = function(_, _) end
+	local badgesScrollUnloadCell = function(_, cell)
+		cell:setParent(nil)
+	end
 
 	local privateFields = {}
 
@@ -251,6 +366,7 @@ mod.createModalContent = function(_, config)
 		for _, listener in ipairs(listeners) do
 			listener:Resume()
 		end
+		fetchBadgesAndUpdateUI()
 	end
 
 	content.willResignActive = function()
@@ -270,15 +386,15 @@ mod.createModalContent = function(_, config)
 		end
 		btnLaunch:setParent(worldDetails)
 
-		-- TODO: only display servers button if multiplayer
-
-		btnServers = ui:buttonNeutral({ content = "Servers", textSize = "default" })
-		btnServers.onRelease = function()
-			local config = { worldID = world.id, title = world.title, uikit = ui }
-			local list = require("server_list"):create(config)
-			content:push(list)
+		if world.maxPlayers ~= nil and world.maxPlayers > 1 then
+			btnServers = ui:buttonSecondary({ content = "Servers", textSize = "small" })
+			btnServers.onRelease = function()
+				local config = { worldID = world.id, title = world.title, uikit = ui }
+				local list = require("server_list"):create(config)
+				content:push(list)
+			end
+			btnServers:setParent(worldDetails)
 		end
-		btnServers:setParent(worldDetails)
 	end
 
 	local cell = ui:frame() -- { color = Color(100, 100, 100) }
@@ -365,18 +481,19 @@ mod.createModalContent = function(_, config)
 	end
 	title:setParent(cell)
 
-	local descriptionTitle = ui:createText("Description", { color = Color.White, size = "default" })
-	descriptionTitle:setParent(cell)
+	-- local descriptionTitle = ui:createText("Description", { color = Color.White, size = "default" })
+	-- descriptionTitle:setParent(cell)
 
 	local badgesTitle = ui:createText("Badges", { color = Color.White, size = "default" })
 	badgesTitle:setParent(cell)
 
 	-- create scroll to display badges
 	local badgesScroll = ui:scroll({
-		backgroundColor = Color(26, 26, 30),
+		backgroundColor = theme.buttonTextColor,
+		-- backgroundColor = Color(26, 26, 30),
 		padding = {
-			top = 0,
-			bottom = 0,
+			top = CONFIG.BADGES_CELL_PADDING,
+			bottom = CONFIG.BADGES_CELL_PADDING,
 			left = CONFIG.BADGES_CELL_PADDING,
 			right = CONFIG.BADGES_CELL_PADDING,
 		},
@@ -387,16 +504,29 @@ mod.createModalContent = function(_, config)
 	})
 	badgesScroll:setParent(cell)
 
-	fetchBadgesAndUpdateUI = function()
+	function fetchBadgesAndUpdateUI()
 		api:listBadgesForWorld(world.id, function(err, badges)
 			if err ~= nil or badges == nil then
 				print("🐞 [badges] could not list badges for world", world.id, err)
 				return
 			end
 
+			table.sort(badges, function(a, b)
+				-- unlocked first
+				if a.userDidUnlock and not b.userDidUnlock then
+					return true
+				elseif not a.userDidUnlock and b.userDidUnlock then
+					return false
+				end
+				-- both same unlock status, sort by rarity (most common first, i.e. higher rarity value first)
+				local ar = a.rarity or 0
+				local br = b.rarity or 0
+				return ar > br
+			end)
 			badgesFetched = badges
 
 			badgesScroll:flush()
+			removeAllCells()
 			badgesScroll:refresh()
 		end)
 	end
@@ -404,7 +534,7 @@ mod.createModalContent = function(_, config)
 	-- TODO: gaetan: should this be done this way?
 	badgesScroll.parentDidResize = function(self)
 		self.Width = self.parent.Width - theme.padding * 2
-		self.Height = CONFIG.BADGE_CELL_HEIGHT -- + CONFIG.BADGES_CELL_PADDING * 2
+		self.Height = CONFIG.BADGE_CELL_HEIGHT + CONFIG.BADGES_CELL_PADDING * 2
 	end
 
 	if createMode then
@@ -434,7 +564,7 @@ mod.createModalContent = function(_, config)
 						callback = function(thumbnail, err)
 							if err == nil then
 								world.thumbnail = thumbnail
-								privateFields:refreshWorld()
+								refreshWorld()
 							end
 						end,
 					})
@@ -497,7 +627,7 @@ mod.createModalContent = function(_, config)
 	description = ui:createText("description", { color = TEXT_COLOR, size = "small" })
 	description:setParent(cell)
 
-	likeBtn = ui:buttonNeutral({ content = "🤍 …", textSize = "small" })
+	likeBtn = ui:buttonSecondary({ content = "🤍 …", textSize = "small" })
 	likeBtn:setParent(cell)
 
 	reportBtn = ui:button({
@@ -584,7 +714,7 @@ mod.createModalContent = function(_, config)
 	scroll:setParent(worldDetails)
 
 	-- refreshes UI with what's in local config.world / world
-	privateFields.refreshWorld = function()
+	local function refreshWorld()
 		if world.thumbnail ~= nil then
 			iconArea:setImage(world.thumbnail)
 		end
@@ -695,7 +825,7 @@ mod.createModalContent = function(_, config)
 	end
 
 	-- send request to gather world information
-	privateFields.loadWorld = function()
+	local function loadWorld()
 		local req = api:getWorld(world.id, {
 			"authorName",
 			"authorId",
@@ -724,7 +854,7 @@ mod.createModalContent = function(_, config)
 			world.updated = worldInfo.updated
 			world.maxPlayers = worldInfo.maxPlayers
 
-			privateFields:refreshWorld()
+			refreshWorld()
 		end)
 		table.insert(requests, req)
 
@@ -735,14 +865,12 @@ mod.createModalContent = function(_, config)
 				callback = function(thumbnail, err)
 					if err == nil then
 						world.thumbnail = thumbnail
-						privateFields:refreshWorld()
+						refreshWorld()
 					end
 				end,
 			})
 			table.insert(requests, req)
 		end
-
-		fetchBadgesAndUpdateUI()
 	end
 
 	local w = 400
@@ -837,8 +965,8 @@ mod.createModalContent = function(_, config)
 			+ padding
 			+ viewAndLikesHeight -- views and likes
 			+ padding
-			+ descriptionTitle.Height
-			+ padding
+			-- + descriptionTitle.Height
+			-- + padding
 			+ description.Height
 			+ theme.paddingBig
 			+ badgesTitle.Height
@@ -918,8 +1046,8 @@ mod.createModalContent = function(_, config)
 		end
 
 		-- description
-		y = y - padding - descriptionTitle.Height
-		descriptionTitle.pos = { padding, y }
+		-- y = y - padding - descriptionTitle.Height
+		-- descriptionTitle.pos = { padding, y }
 		y = y - padding - description.Height
 		description.pos = { padding, y }
 
@@ -948,13 +1076,19 @@ mod.createModalContent = function(_, config)
 		if btnLaunch then
 			scroll.Height = self.Height - btnLaunch.Height - padding * 2
 
-			local bottomButtonsWidth = btnServers.Width + padding + btnLaunch.Width
+			if btnServers then
+				btnLaunch.Width = self.Width - btnServers.Width - padding * 3
+				btnServers.Height = btnLaunch.Height
 
-			btnServers.pos = {
-				width * 0.5 - bottomButtonsWidth * 0.5,
-				padding + btnLaunch.Height * 0.5 - btnServers.Height * 0.5,
-			}
-			btnLaunch.pos = { btnServers.pos.X + btnServers.Width + padding, padding }
+				btnServers.pos = {
+					padding,
+					padding,
+				}
+				btnLaunch.pos = { btnServers.pos.X + btnServers.Width + padding, padding }
+			else
+				btnLaunch.Width = self.Width - padding * 2
+				btnLaunch.pos = { self.Width * 0.5 - btnLaunch.Width * 0.5, padding }
+			end
 			scroll.pos.Y = btnLaunch.pos.Y + btnLaunch.Height + padding
 		else
 			scroll.Height = self.Height
@@ -966,8 +1100,8 @@ mod.createModalContent = function(_, config)
 		scroll:refresh()
 	end
 
-	privateFields:refreshWorld()
-	privateFields:loadWorld()
+	refreshWorld()
+	loadWorld()
 
 	return content
 end

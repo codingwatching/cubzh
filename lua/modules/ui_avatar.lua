@@ -204,13 +204,10 @@ uiavatar.getHead = function(_, usernameOrId, size, uikit, config)
 		local headCopy = Shape(cachedHead, { recurse = true })
 		headCopy.setEyes = cachedHead.setEyes
 
-		local uiHead = ui:createShape(headCopy, { spherized = true })
+		local uiHead = ui:createShape(headCopy, { spherized = false })
 		uiHead:setParent(node)
 		node.head = uiHead
 		node.head.Width = node.Width
-
-		local center = Number3(node.head.shape.Width, node.head.shape.Height, node.head.shape.Depth)
-		node.head.shape.Pivot = node.head.shape:BlockToLocal(center)
 	else
 		local head
 		head, requests = avatar:getPlayerHead({ usernameOrId = usernameOrId })
@@ -223,9 +220,6 @@ uiavatar.getHead = function(_, usernameOrId, size, uikit, config)
 		uiHead:setParent(node)
 		node.head = uiHead
 		local ratio = node.head.Width / node.head.Height
-
-		local center = Number3(node.head.shape.Width, node.head.shape.Height, node.head.shape.Depth)
-		node.head.shape.Pivot = node.head.shape:BlockToLocal(center)
 
 		node.head.parentDidResize = function(self)
 			self.Width = node.Width

@@ -328,6 +328,8 @@ function showAlert(config)
 
 	if config.positiveCallback then
 		alertModal:setPositiveCallback(config.positiveLabel or "OK", config.positiveCallback)
+	elseif config.negativeCallback or config.neutralCallback then
+		alertModal:setPositiveCallback("", nil)
 	end
 	if config.negativeCallback then
 		alertModal:setNegativeCallback(config.negativeLabel or "No", config.negativeCallback)
@@ -409,7 +411,7 @@ function triggerCallbacks()
 		if isActive then
 			blockEvents()
 			System.PointerForceShown = true
-			removeBadge()
+			-- removeBadge()
 		else
 			unblockEvents()
 			System.PointerForceShown = false
@@ -875,6 +877,8 @@ local function refreshNotificationIcon(category)
 				ui:createShape(bundle:Shape("shapes/friends_icon"), { spherized = false, doNotFlip = true })
 		end
 		notificationIcon = notificationIconSocial
+	elseif category == "badge" then
+		notificationIcon = notificationIconBadge -- not supposed to be nil
 	else
 		if notificationIconGeneric == nil then
 			notificationIconGeneric =
@@ -968,6 +972,7 @@ end
 
 notificationFrame:setParent(nil)
 
+-- title argument is not used for now
 function showNotification(_, text, category)
 	if noticationTimer ~= nil then
 		noticationTimer:Cancel()
@@ -979,6 +984,8 @@ function showNotification(_, text, category)
 
 	if category == "money" then
 		sfx("coin_1", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
+	elseif category == "badge" then
+		sfx("achievement", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 	else
 		sfx("buttonpositive_3", { Volume = 0.5, Pitch = 1.0, Spatialized = false })
 	end
@@ -1041,39 +1048,39 @@ function showSubTopBar()
 			alpha = true,
 		},
 	})
-	
+
 	subTopBar:setParent(background)
 	subTopBar.Height = 30
 	subTopBar.Width = 80
 	subTopBar.pos = { 0, 0 }
-	
+
 	local STBBluxIcon1 = ui:frame({ image = {
 		data = Data:FromBundle("images/icon-blux.png"),
 		alpha = true,
 	} })
 	STBBluxIcon1:setParent(subTopBar)
-	
+
 	local STBBluxIcon2 = ui:frame({ image = {
 		data = Data:FromBundle("images/icon-blux.png"),
 		alpha = true,
 	} })
 	STBBluxIcon2:setParent(subTopBar)
-	
-	STBLabel1 = ui:createText("-", { size = "small", color =Color(253, 222, 44) })
+
+	STBLabel1 = ui:createText("-", { size = "small", color = Color(253, 222, 44) })
 	STBLabel1.object.Scale = 0.8
 	STBLabel1:setParent(subTopBar)
 	STBLabel1.pos = { theme.paddingTiny, theme.paddingTiny }
-	
+
 	STBLabel2 = ui:createText(" (1", { size = "small", color = Color(150, 150, 150) })
 	STBLabel2.object.Scale = 0.8
 	STBLabel2:setParent(subTopBar)
 	STBLabel2.pos = { theme.paddingTiny, theme.paddingTiny }
-	
+
 	STBLabel3 = ui:createText("/request)", { size = "small", color = Color(150, 150, 150) })
 	STBLabel3.object.Scale = 0.8
 	STBLabel3:setParent(subTopBar)
 	STBLabel3.pos = { theme.paddingTiny, theme.paddingTiny }
-	
+
 	subTopBar.layout = function()
 		subTopBar.Height = STBLabel1.Height + theme.paddingTiny * 2
 		STBBluxIcon1.Width = subTopBar.Height * 0.8 STBBluxIcon1.Height = STBBluxIcon1.Width
@@ -1090,7 +1097,7 @@ function showSubTopBar()
 
 		subTopBar.pos = { topBar.pos.X, topBar.pos.Y - subTopBar.Height - theme.paddingTiny }
 	end
-	
+
 	local subTopBarReq = nil
 	subTopBar.refreshBalance = function(self)
 		if subTopBarReq ~= nil then
@@ -1105,7 +1112,7 @@ function showSubTopBar()
 			subTopBar:layout()
 		end)
 	end
-	
+
 	subTopBar:layout()
 	subTopBar:refreshBalance()
 end
@@ -1142,29 +1149,6 @@ end
 
 cubzhBtn = ui:createFrame(_DEBUG and _DebugColor() or Color.transparent)
 cubzhBtn:setParent(topBar)
-
-uiBadge = require("ui_badge")
-
-cubzhBtnBadge = nil
-
-function showBadge(str)
-	removeBadge()
-	cubzhBtnBadge = uiBadge:create({ text = str, ui = ui })
-	cubzhBtnBadge.internalParentDidResize = cubzhBtnBadge.parentDidResize
-	cubzhBtnBadge.parentDidResize = function(self)
-		self.pos.X = self.parent.Width * 0.5
-		self.pos.Y = 0
-		self:internalParentDidResize()
-	end
-	cubzhBtnBadge:setParent(cubzhBtn)
-end
-
-function removeBadge()
-	if cubzhBtnBadge ~= nil then
-		cubzhBtnBadge:remove()
-		cubzhBtnBadge = nil
-	end
-end
 
 if System.IsHomeAppRunning then
 	local settingsIcon = ui:frame({ image = {
@@ -2300,7 +2284,7 @@ function getCubzhMenuModalContent()
 		image = {
 			data = Data:FromBundle("images/icon-discord.png"),
 			alpha = true,
-		}
+		},
 	})
 
 	local c = ui:frame()
@@ -3050,6 +3034,35 @@ end)
 
 LocalEvent:Listen(LocalEvent.Name.DidReceivePushNotification, function(title, body, category, _)
 	showNotification(title, body, category)
+end)
+
+local badgeRequests
+local notificationIconBadgeObject
+LocalEvent:Listen(LocalEvent.Name.BadgeUnlocked, function(info)
+	-- print("Badge UnLocked:", info.badgeId, info.badgeName or "-")
+	local text = info.badgeName or "-"
+
+	if notificationIconBadge == nil then
+		if badgeRequests == nil then
+			badgeRequests = require("badge"):createBadgeObject({
+				badgeId = info.badgeId,
+				locked = false,
+				frontOnly = false,
+				callback = function(badgeObject)
+					createBadgeObjectRequests = nil
+					notificationIconBadgeObject = badgeObject
+					notificationIconBadge = ui:createShape(notificationIconBadgeObject, { spherized = false, doNotFlip = true })
+					showNotification(nil, text, "badge")
+				end,
+			})
+		end
+	else 
+		local req = notificationIconBadgeObject:setBadgeId(info.badgeId, function()
+			badgeRequests = nil
+			showNotification(nil, text, "badge")
+		end)
+		badgeRequests = { req }
+	end
 end)
 
 -- sign up / sign in flow

@@ -40,6 +40,12 @@ Stream *stream_new_file_write(FILE *fd);
 // Expecting a file opened with "rb" flag
 Stream *stream_new_file_read(FILE *fd);
 
+// returns full buffer and size
+// NOTE: if Stream is a StreamData_FILE, the entire
+// file is loaded in memory and the stream becomes a StreamData_BUFFER
+// NOTE (2): doesn't work with stream in write mode
+bool stream_get_buffer_and_size(Stream *s, const char **buf, size_t *size);
+
 // READ
 
 bool stream_read(Stream *s, void *outValue, size_t itemSize, size_t nbItems);

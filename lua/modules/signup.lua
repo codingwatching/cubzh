@@ -733,9 +733,9 @@ signup.startFlow = function(self, config)
 				functions.createOpenSettingsBtn = function()
 					local padding = theme.padding
 					local buttonContent = ui:frame()
-					local line1 = ui:createText("⚙️ Open Settings", { font = Font.Pixel, size = "default" })
+					local line1 = ui:createText("⚙️ Open Settings", { size = "default" })
 					line1:setParent(buttonContent)
-					local line2 = ui:createText("➡️ Turn ON Notifications", { font = Font.Pixel, size = "default" })
+					local line2 = ui:createText("➡️ Turn ON Notifications", { size = "default" })
 					line2:setParent(buttonContent)
 					buttonContent.parentDidResize = function(self)
 						line1.object.MaxWidth = self.parent.Width - padding * 2
@@ -768,23 +768,29 @@ signup.startFlow = function(self, config)
 				functions.createTurnOnPushNotificationsBtn = function()
 					local padding = theme.padding
 					local buttonContent = ui:frame()
-					local line1 = ui:createText("Turn ON Notifications!", { font = Font.Pixel, size = "big" })
+					local line1 = ui:createText("Turn ON Notifications!", { size = "big" })
 					line1:setParent(buttonContent)
-					local line2 = ui:createText("+100 🇵 reward!", { font = Font.Pixel, size = "default" })
-					line2:setParent(buttonContent)
+					-- local line2 = ui:createText("+100 🇵 reward!", { size = "default" })
+					-- line2:setParent(buttonContent)
 					buttonContent.parentDidResize = function(self)
 						line1.object.MaxWidth = self.parent.Width - padding * 2
-						line2.object.MaxWidth = self.parent.Width - padding * 2
-						self.Width = math.max(line1.Width, line2.Width)
-						self.Height = line1.Height + padding + line2.Height
-						line2.pos = {
-							self.Width * 0.5 - line2.Width * 0.5,
-							0,
-						}
+						self.Width = line1.Width
+						self.Height = line1.Height
 						line1.pos = {
 							self.Width * 0.5 - line1.Width * 0.5,
-							line2.pos.Y + line2.Height + padding,
+							0,
 						}
+						-- line2.object.MaxWidth = self.parent.Width - padding * 2
+						-- self.Width = math.max(line1.Width, line2.Width)
+						-- self.Height = line1.Height + padding + line2.Height
+						-- line2.pos = {
+						-- 	self.Width * 0.5 - line2.Width * 0.5,
+						-- 	0,
+						-- }
+						-- line1.pos = {
+						-- 	self.Width * 0.5 - line1.Width * 0.5,
+						-- 	line2.pos.Y + line2.Height + padding,
+						-- }
 					end
 
 					local btn = ui:buttonPositive({
@@ -862,13 +868,13 @@ signup.startFlow = function(self, config)
 
 				local title = ui:createText("One last thing! 💬", {
 					color = Color.White,
-					font = Font.Pixel,
 					size = "big",
 				})
 				title:setParent(drawer)
 
-				local text = ui:createText("You'll get a much better experience with push notifications. ❗️", {
+				local text = ui:createText("You'll get a much better experience with push notifications. 🙂", {
 					color = Color.White,
+					size = "small",
 					alignment = "center",
 				})
 				text:setParent(drawer)
