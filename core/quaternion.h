@@ -85,7 +85,7 @@ Quaternion *float4_to_quaternion(float4 *f);
 float quaternion_angle_between(Quaternion *q1, Quaternion *q2);
 void quaternion_rotate_vector(Quaternion *q, float3 *v);
 void quaternion_op_mult_euler(float3 *euler1, const float3 *euler2);
-Quaternion *quaternion_from_to_vectors(const float3 *from, const float3 *to);
+Quaternion *quaternion_from_to_vectors(const float3 *from, const float3 *to, const float3 *up);
 
 #ifdef __cplusplus
 } // extern "C"

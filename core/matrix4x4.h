@@ -92,6 +92,7 @@ void matrix4x4_set_from_euler_xyz(Matrix4x4 *m, const float x, const float y, co
 Matrix4x4 *matrix4x4_new_from_euler_zyx(const float x, const float y, const float z);
 void matrix4x4_set_from_euler_zyx(Matrix4x4 *m, const float x, const float y, const float z);
 Matrix4x4 *matrix4x4_new_rotation(const Matrix4x4 *m);
+Matrix4x4 *matrix4x4_new_axes(const float3 *x, const float3 *y, const float3 *z);
 void matrix4x4_get_rotation(const Matrix4x4 *m, Matrix4x4 *rot);
 void matrix4x4_get_euler(const Matrix4x4 *rot, float3 *euler);
 
