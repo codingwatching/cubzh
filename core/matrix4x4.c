@@ -661,6 +661,13 @@ Matrix4x4 *matrix4x4_new_rotation(const Matrix4x4 *m) {
     return rot;
 }
 
+Matrix4x4 *matrix4x4_new_axes(const float3 *x, const float3 *y, const float3 *z) {
+    return matrix4x4_new(x->x, y->x, z->x, 0.0f,
+                         x->y, y->y, z->y, 0.0f,
+                         x->z, y->z, z->z, 0.0f,
+                         0.0f, 0.0f, 0.0f, 1.0f);
+}
+
 void matrix4x4_get_rotation(const Matrix4x4 *m, Matrix4x4 *rot) {
     matrix4x4_copy(rot, m);
 

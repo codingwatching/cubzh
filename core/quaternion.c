@@ -488,7 +488,7 @@ void quaternion_op_mult_euler(float3 *euler1, const float3 *euler2) {
     quaternion_to_euler(&q1, euler1);
 }
 
-Quaternion *quaternion_from_to_vectors(const float3 *from, const float3 *to) {
+Quaternion *quaternion_from_to_vectors(const float3 *from, const float3 *to, const float3 *up) {
     float3 nfrom = *from, nto = *to;
     float3_normalize(&nfrom);
     float3_normalize(&nto);
@@ -498,6 +498,38 @@ Quaternion *quaternion_from_to_vectors(const float3 *from, const float3 *to) {
 
     // from/to represent the same rotation, return identity
     if (float_isEqual(d, 1.0f, EPSILON_ZERO)) {
+        return q;
+    }
+
+    // rotate around given up vector instead of shortest rotation
+    if (up != NULL) {
+        float3 nup = *up;
+        float3_normalize(&nup);
+
+        float3 rightFrom = float3_cross_product3(&nup, &nfrom);
+        float3 rightTo = float3_cross_product3(&nup, &nto);
+
+        // from/up or to/up are collinear, revert to shortest rotation
+        if (float_isZero(float3_sqr_length(&rightFrom), EPSILON_ZERO) ||
+            float_isZero(float3_sqr_length(&rightTo), EPSILON_ZERO)) {
+
+            goto shortest_rotation;
+        }
+
+        float3_normalize(&rightFrom);
+        float3_normalize(&rightTo);
+
+        const float3 upFrom = float3_cross_product3(&nfrom, &rightFrom);
+        const float3 upTo = float3_cross_product3(&nto, &rightTo);
+
+        Matrix4x4 *mtxFrom = matrix4x4_new_axes(&rightFrom, &upFrom, &nfrom);
+        Matrix4x4 *mtxTo = matrix4x4_new_axes(&rightTo, &upTo, &nto);
+        matrix4x4_op_multiply_2(mtxTo, matrix4x4_op_transpose(mtxFrom));
+
+        rotation_matrix_to_quaternion(mtxFrom, q);
+
+        matrix4x4_free(mtxFrom);
+        matrix4x4_free(mtxTo);
         return q;
     }
     // from/to are 180° apart, shortest path is undefined, return rotation around arbitrary axis
@@ -510,9 +542,13 @@ Quaternion *quaternion_from_to_vectors(const float3 *from, const float3 *to) {
         axis_angle_to_quaternion(&axis, PI_F, q);
         return q;
     } else {
+        goto shortest_rotation;
+    }
+
+    shortest_rotation: {
         float3 axis = float3_cross_product3(&nfrom, &nto);
         float3_normalize(&axis);
         axis_angle_to_quaternion(&axis, acosf(d), q);
         return q;
-    }
+    };
 }
