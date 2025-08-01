@@ -188,9 +188,12 @@ function createUI(system)
 		return _groups
 	end
 
+	-- objects in System.World are not accessible from coders' world
+	local world = if system then System.World else World
+
 	-- Orthographic camera, to render UI
 	local camera = Camera()
-	camera:SetParent(World)
+	camera:SetParent(world)
 	camera.On = true
 	camera.Far = UI_FAR
 	_setLayers(camera)
@@ -206,7 +209,7 @@ function createUI(system)
 		sharedUIRootFrame = rootFrame
 	end
 
-	rootFrame:SetParent(World)
+	rootFrame:SetParent(world)
 	rootFrame.LocalPosition = { -Screen.Width * 0.5, -Screen.Height * 0.5, UI_FAR }
 
 	local function _setupUIObject(object, collides)
@@ -1245,7 +1248,12 @@ function createUI(system)
 	end
 
 	ui.show = function(_)
-		rootFrame:SetParent(World)
+		if rootFrame == systemUIRootFrame then
+			if System == nil then return end -- shouldn't be touching that if world doesn't have access to System
+			rootFrame:SetParent(System.World)
+		else
+			rootFrame:SetParent(World)
+		end
 	end
 
 	ui.turnOff = function(_)
