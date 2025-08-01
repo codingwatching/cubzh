@@ -211,6 +211,7 @@ local sun = Light()
 sun.CastsShadows = true
 sun.On = true
 sun.Type = LightType.Directional
+sun.PriorityGroup = 255 -- last priority, to not interfere with coders' created light(s)
 World:AddChild(sun)
 ambience.sun = sun
 
