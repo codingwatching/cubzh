@@ -15,7 +15,7 @@ extern "C" {
 
 typedef struct _Light Light;
 
-#define LIGHT_DEFAULT_PRIORITY 255
+#define LIGHT_DEFAULT_PRIORITY 128
 #define LIGHT_DEFAULT_RANGE 30.0f
 #define LIGHT_DEFAULT_HARDNESS 0.5f
 #define LIGHT_DEFAULT_ANGLE 0.7f
