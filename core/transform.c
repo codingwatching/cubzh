@@ -428,6 +428,8 @@ bool transform_ensure_rigidbody(Transform *t,
             mesh_fit_collider_to_bounding_box((Mesh*)t->ptr);
         } else if (t->type == ShapeTransform) {
             shape_fit_collider_to_bounding_box((Shape*)t->ptr);
+        } else if (t->type == QuadTransform) {
+            quad_fit_collider_to_bounding_box((Quad*)t->ptr);
         }
     }
     return isNew;
