@@ -212,9 +212,8 @@ void quad_check_and_clear_drawmodes(Quad *q) {
 
 void quad_set_width(Quad *q, float value) {
     q->width = value;
-    if (float_isZero(q->anchorX, EPSILON_ZERO) == false) {
-        transform_set_physics_dirty(q->transform);
-    }
+    quad_fit_collider_to_bounding_box(q);
+    transform_set_physics_dirty(q->transform);
 }
 
 float quad_get_width(const Quad *q) {
@@ -223,9 +222,8 @@ float quad_get_width(const Quad *q) {
 
 void quad_set_height(Quad *q, float value) {
     q->height = value;
-    if (float_isZero(q->anchorY, EPSILON_ZERO) == false) {
-        transform_set_physics_dirty(q->transform);
-    }
+    quad_fit_collider_to_bounding_box(q);
+    transform_set_physics_dirty(q->transform);
 }
 
 float quad_get_height(const Quad *q) {
@@ -461,6 +459,14 @@ void quad_set_9slice_corner_width(Quad *q, float value) {
 
 float quad_get_9slice_corner_width(const Quad *q) {
     return _quad_get_flag(q, QUAD_FLAG_9SLICE) ? q->offsetV : QUAD_DEFAULT_9SLICE_CORNER_WIDTH;
+}
+
+void quad_fit_collider_to_bounding_box(const Quad *q) {
+    RigidBody *rb = transform_get_rigidbody(q->transform);
+    if (rb == NULL || rigidbody_is_collider_custom_set(rb))
+        return;
+    Box bb = { { 0.0f, 0.0f, 0.0f }, { q->width, q->height, EPSILON_COLLISION } };
+    rigidbody_set_collider(rb, &bb, false);
 }
 
 // MARK: - Draw modes -

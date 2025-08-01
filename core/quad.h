@@ -93,6 +93,7 @@ void quad_set_9slice_scale(Quad *q, float value);
 float quad_get_9slice_scale(const Quad *q);
 void quad_set_9slice_corner_width(Quad *q, float value);
 float quad_get_9slice_corner_width(const Quad *q);
+void quad_fit_collider_to_bounding_box(const Quad *q);
 
 // MARK: - Draw modes -
 
