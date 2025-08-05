@@ -32,8 +32,6 @@ uniform vec4 u_color1;
 #endif
 
 void main() {
-	vec4 color = v_color0;
-
 #if QUAD_VARIANT_MRT_LIGHTING || QUAD_VARIANT_TEX
 	//vec3 wnormal = normalize(-u_model[0][2].xyz);
 
@@ -56,11 +54,13 @@ void main() {
 	
 	vec4 tex = texture2D(s_fb1, uv);
 #if QUAD_VARIANT_ALPHA
-	color *= mix(tex.rgba, tex.aaar, greyscale);
+	vec4 color = mix(tex.rgba, tex.aaar, greyscale) * v_color0;
 #else
-	color *= mix(tex.rgba, tex.rrra, greyscale);
+	vec4 color = mix(tex.rgba, tex.rrra, greyscale) * vec4(v_color0.rgb * v_color0.a, 1.0);
 #endif // QUAD_VARIANT_ALPHA
 	color *= additiveFactor;
+#else
+	vec4 color = v_color0;
 #endif // QUAD_VARIANT_TEX
 
 #if QUAD_VARIANT_CUTOUT
