@@ -28,12 +28,13 @@
 #define QUAD_DEFAULT_9SLICE_CORNER_WIDTH -1.0f
 
 #define QUAD_DRAWMODES_FLAG_NONE 0
-#define QUAD_DRAWMODES_FLAG_ADDITIVE 1
-#define QUAD_DRAWMODES_FLAG_BILLBOARD_SHIFT QUAD_DRAWMODES_FLAG_ADDITIVE
-#define QUAD_DRAWMODES_FLAG_BILLBOARD_MASK 14 // 2nd to 4th bit
+#define QUAD_DRAWMODES_FLAG_BLENDING_SHIFT 0
+#define QUAD_DRAWMODES_FLAG_BLENDING_MASK 3 // 1st to 2nd bit
+#define QUAD_DRAWMODES_FLAG_BILLBOARD_SHIFT 2
+#define QUAD_DRAWMODES_FLAG_BILLBOARD_MASK 28 // 3rd to 5th bit
 
 typedef struct {
-    uint8_t additiveFactor; /* 1 byte */
+    uint8_t blendingFactor; /* 1 byte */
     uint8_t flags;          /* 1 byte */
 
     char pad[3];
@@ -189,7 +190,7 @@ uint32_t quad_get_data_hash(const Quad *q) {
 void quad_toggle_drawmodes(Quad *q, bool toggle) {
     if (toggle && q->drawmodes == NULL) {
         q->drawmodes = (QuadDrawmodes*)malloc(sizeof(QuadDrawmodes));
-        q->drawmodes->additiveFactor = QUAD_ADDITIVE_FACTOR_DEFAULT;
+        q->drawmodes->blendingFactor = QUAD_BLENDING_FACTOR_DEFAULT;
         q->drawmodes->flags = QUAD_DRAWMODES_FLAG_NONE;
     } else if (toggle == false && q->drawmodes != NULL) {
         free(q->drawmodes);
@@ -477,7 +478,7 @@ void quad_drawmode_set_billboard(Quad *q, BillboardMode mode) {
             quad_toggle_drawmodes(q, true);
         }
         q->drawmodes->flags &= ~QUAD_DRAWMODES_FLAG_BILLBOARD_MASK;
-        q->drawmodes->flags |= (uint8_t)(mode << QUAD_DRAWMODES_FLAG_BILLBOARD_SHIFT);
+        q->drawmodes->flags |= ((uint8_t)mode << QUAD_DRAWMODES_FLAG_BILLBOARD_SHIFT);
     } else if (q->drawmodes != NULL) {
         q->drawmodes->flags &= ~QUAD_DRAWMODES_FLAG_BILLBOARD_MASK;
     }
@@ -487,24 +488,31 @@ BillboardMode quad_drawmode_get_billboard(const Quad *q) {
     return q->drawmodes != NULL ? ((BillboardMode)((q->drawmodes->flags & QUAD_DRAWMODES_FLAG_BILLBOARD_MASK) >> QUAD_DRAWMODES_FLAG_BILLBOARD_SHIFT)) : BillboardMode_None;
 }
 
-void quad_drawmode_set_additive(Quad *q, bool toggle) {
-    _quad_drawmode_toggle_flag(q, QUAD_DRAWMODES_FLAG_ADDITIVE, toggle);
+void quad_drawmode_set_blending(Quad *q, BlendingMode mode) {
+    if (mode != BlendingMode_Default) {
+        if (q->drawmodes == NULL) {
+            quad_toggle_drawmodes(q, true);
+        }
+        q->drawmodes->flags &= ~QUAD_DRAWMODES_FLAG_BLENDING_MASK;
+        q->drawmodes->flags |= ((uint8_t)mode << QUAD_DRAWMODES_FLAG_BLENDING_SHIFT);
+    } else if (q->drawmodes != NULL) {
+        q->drawmodes->flags &= ~QUAD_DRAWMODES_FLAG_BLENDING_MASK;
+    }
 }
 
-bool quad_drawmode_is_additive(const Quad *q) {
-    return q->drawmodes != NULL ? (q->drawmodes->flags & QUAD_DRAWMODES_FLAG_ADDITIVE) != 0 : false;
+BlendingMode quad_drawmode_get_blending(const Quad *q) {
+    return q->drawmodes != NULL ? ((BlendingMode)((q->drawmodes->flags & QUAD_DRAWMODES_FLAG_BLENDING_MASK) >> QUAD_DRAWMODES_FLAG_BLENDING_SHIFT)) : BlendingMode_Default;
 }
 
-void quad_drawmode_set_additive_factor(Quad *q, uint8_t value) {
+void quad_drawmode_set_blending_factor(Quad *q, uint8_t value) {
     if (q->drawmodes == NULL) {
         quad_toggle_drawmodes(q, true);
     }
-    q->drawmodes->additiveFactor = value;
+    q->drawmodes->blendingFactor = value;
 }
 
-uint8_t quad_drawmode_get_additive_factor(const Quad *q) {
-    return q->drawmodes != NULL && (q->drawmodes->flags & QUAD_DRAWMODES_FLAG_ADDITIVE) != 0 ?
-        q->drawmodes->additiveFactor : QUAD_ADDITIVE_FACTOR_DEFAULT;
+uint8_t quad_drawmode_get_blending_factor(const Quad *q) {
+    return q->drawmodes != NULL ? q->drawmodes->blendingFactor : QUAD_BLENDING_FACTOR_DEFAULT;
 }
 
 // MARK: - Utils -
@@ -515,15 +523,15 @@ float quad_utils_get_diagonal(const Quad *q) {
 
 bool quad_utils_get_visibility(const Quad *q, bool *isOpaque) {
     const bool transparentTex = q->size > 0 && _quad_get_flag(q, QUAD_FLAG_ALPHABLEND);
-    const bool additive = quad_drawmode_is_additive(q);
+    const bool defaultBlending = quad_drawmode_get_blending(q) == BlendingMode_Default;
     if (_quad_get_flag(q, QUAD_FLAG_VCOLOR)) {
         const uint16_t alpha = (uint16_t)(q->rgba[0] >> 24) + (uint16_t)(q->rgba[1] >> 24) +
                                (uint16_t)(q->rgba[2] >> 24) + (uint16_t)(q->rgba[3] >> 24);
-        *isOpaque = additive == false && transparentTex == false && alpha == 1020;
+        *isOpaque = defaultBlending && transparentTex == false && alpha == 1020;
         return alpha > 0;
     } else {
         const uint8_t alpha = (uint8_t)(*q->rgba >> 24);
-        *isOpaque = additive == false && transparentTex == false && alpha == 255;
+        *isOpaque = defaultBlending && transparentTex == false && alpha == 255;
         return alpha > 0;
     }
 }

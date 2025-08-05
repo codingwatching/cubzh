@@ -18,7 +18,14 @@ extern "C" {
 
 #define QUAD_CUTOUT_NONE -1.0f
 #define QUAD_CUTOUT_DEFAULT 1.0f
-#define QUAD_ADDITIVE_FACTOR_DEFAULT 1
+#define QUAD_BLENDING_FACTOR_DEFAULT 1.0f
+
+typedef enum {
+    BlendingMode_Default,
+    BlendingMode_Additive,
+    BlendingMode_Multiplicative,
+    BlendingMode_Subtractive
+} BlendingMode;
 
 typedef enum {
     BillboardMode_None,
@@ -99,10 +106,10 @@ void quad_fit_collider_to_bounding_box(const Quad *q);
 
 void quad_drawmode_set_billboard(Quad *q, BillboardMode mode);
 BillboardMode quad_drawmode_get_billboard(const Quad *q);
-void quad_drawmode_set_additive(Quad *q, bool toggle);
-bool quad_drawmode_is_additive(const Quad *q);
-void quad_drawmode_set_additive_factor(Quad *q, uint8_t value);
-uint8_t quad_drawmode_get_additive_factor(const Quad *q);
+void quad_drawmode_set_blending(Quad *q, BlendingMode mode);
+BlendingMode quad_drawmode_get_blending(const Quad *q);
+void quad_drawmode_set_blending_factor(Quad *q, uint8_t value);
+uint8_t quad_drawmode_get_blending_factor(const Quad *q);
 
 // MARK: - Utils -
 
