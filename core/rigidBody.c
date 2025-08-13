@@ -233,7 +233,7 @@ bool _rigidbody_dynamic_tick(Scene *scene,
     // or make it all accessible in Lua w/ pass-through rigidbodies & settable drag property / air
     // drag in config
 
-    const float drag = CLAMP01(1.0f - PHYSICS_AIR_DRAG_DEFAULT * dt_f);
+    const float drag = CLAMP01F(1.0f - PHYSICS_AIR_DRAG_DEFAULT * dt_f);
     float3_op_scale(rb->velocity, drag);
 
     // ------------------------
