@@ -261,10 +261,8 @@ void scene_refresh(Scene *sc, const TICK_DELTA_SEC_T dt, void *callbackData) {
                 transform_refresh(t, false, false);
 
                 // Update r-tree (top-first) after physics changes
-                if (rb != NULL) {
-                    transform_get_or_compute_world_aligned_collider(t, &collider, false);
-                    _scene_update_rtree(sc, rb, t, &collider);
-                }
+                transform_get_or_compute_world_aligned_collider(t, &collider, false);
+                _scene_update_rtree(sc, rb, t, &collider);
             }
         }
 
