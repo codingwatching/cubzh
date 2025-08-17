@@ -1,7 +1,7 @@
 {
     "APIHost": "https://api.cu.bzh:443",
     "GameServerTag": "f809f0cb",
-    "Version": "0.1.25",
+    "Version": "0.1.26",
     "Commit": "",
     "Deps": {
         "libluau": {
