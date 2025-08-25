@@ -134,7 +134,13 @@ Quad *quad_new_copy(const Quad* q) {
     copy->layers = q->layers;
     copy->flags = q->flags;
     copy->sortOrder = q->sortOrder;
-    *copy->rgba = *q->rgba;
+    if (_quad_get_flag(q, QUAD_FLAG_VCOLOR)) {
+        free(copy->rgba);
+        copy->rgba = (uint32_t *)malloc(4 * sizeof(uint32_t));
+        memcpy(copy->rgba, q->rgba, 4 * sizeof(uint32_t));
+    } else {
+        *copy->rgba = *q->rgba;
+    }
 
     return copy;
 }
