@@ -3,15 +3,17 @@ type: "Number2"
 description: A Number2 contains 3 [number] values (X & Y). It can represent different things in 2D space, like points or positions.
 
 constructors: 
-  - description: "Creates a Number2 with values x and y."
-    arguments:
-    - name: "x"
-      type: "number"
-    - name: "y"
-      type: "number"
-    samples:
-      - code: |
-          local myNumber2 = Number2(1, 2)
+  - description: |
+        A Number2 can be created,
+        - without parameter, equivalent to `Number2(0, 0)`
+        - with given x and y values
+    argument-sets:
+      -
+      -
+        - name: "x"
+          type: "number"
+        - name: "y"
+          type: "number"
 
 properties:
   - name: "Height"
@@ -127,8 +129,10 @@ functions:
         type: "number"
   
   - name: "Set"
+    return: 
+      - type: "Number2"
     description: |
-        Sets this `Number2`'s components to the given values.
+        Sets this `Number2`'s components to the given values, and return it.
     argument-sets:
         - 
           - name: "xy"
