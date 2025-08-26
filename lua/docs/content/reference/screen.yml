@@ -34,13 +34,17 @@ properties:
       description: |
           Screen's density. This is the factor used for points scaling accross Blip.
           
-          You may use this value as a scaling factor for some UI elements, when their look&feel needs to be consistent accross devices. An example of that would be 9-slice scaling for [Quad](reference/quad) objects.
+          You ordinarily shouldn't need to use this value, except for specific cases where elements need to manually be scaled to look consistent accross devices. Note that you do not need to use this when using an orthographic camera with the default projection size, since it will automatically enforce this scaling factor.
     - name: "SafeArea"
       type: "table"
       description: |
           Returns the margin on each side of the screen where, ideally, no UI element should be placed as they may overlap with some device features like a camera notch.
 
           It is a table of four values using the following keys: `Top`, `Bottom`, `Left`, `Right`
+    - name: "Orientation"
+      type: "string"
+      description: |
+          Screen orientation for mobile devices, one of `all`, `landscape`, or `portrait`. Can be set to lock the screen to the desired orientation.
 
 functions:
     - name: "DidResize"
