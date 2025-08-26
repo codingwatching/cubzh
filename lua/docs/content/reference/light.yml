@@ -90,7 +90,7 @@ properties:
     - name: "PriorityGroup"
       type: "integer"
       description: |
-          `PriorityGroup` is a way to create light groups in order of importance from `0` to `255` (default group).
+          `PriorityGroup` is a way to create light groups in order of importance from `0` to `255` (default group is `128`).
 
           If your world is played on a mobile or lower-end device, the maximum number of simultaneaous lights on screen may vary based on hardware capabilities.
 
