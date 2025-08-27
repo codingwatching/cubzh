@@ -55,7 +55,7 @@ properties:
     - name: "BackgroundColor"
       type: "Color"
       description: |
-          Color of the background frame, white by default. Set alpha to zero to disable.
+          Color of the background frame, disabled by default. Set alpha to zero to disable.
 
     - name: "Anchor"
       type: "Number2"
@@ -187,6 +187,15 @@ properties:
             t.DrawMode = {
               outline = { weight=0.5, color=Color(10, 15, 200) }
             }
+    
+    - name: "SortOrder"
+      type: "integer"
+      description: |
+          Overrides rendering order for this text amongst other objects within its rendering pass, which is dictated by which features and font are in use. Can be set to an integer value between `0` (default) and `255`. A value of `0` means no override.
+
+          Objects with overriden sort order are rendered from sort order `1` to sort order `255`, ignoring any normal ordering. You may assign the same sort order to multiple objects, in which case they are rendered unordered within that shared sort order.
+
+          ⚠️ Note that enabling this will disable depth testing. This is an advanced feature, and it is not recommended to use if you aren't absolutely sure of having a need for it.
 
 functions:
     - name: "GetCharacterSize"
