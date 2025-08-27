@@ -34,10 +34,27 @@ properties:
     description: |
         [This] maximum point representing the upper extent along the axes.
 
+  - name: "Width"
+    type: "number"
+    description: |
+        Width of the box, shortcut to `box.Size.X`.
+
+  - name: "Height"
+    type: "number"
+    description: |
+        Height of the box, shortcut to `box.Size.Y`.
+  
+  - name: "Depth"
+    type: "number"
+    description: |
+        Depth of the box, shortcut to `box.Size.Z`.
+
   - name: "Size"
     type: "Number3"
     description: |
         Size of the box from its minimum point. This automatically sets [This].[Max](/reference/box#property-max).
+
+        Can be set to a `number` for a uniform size.
 
   - name: "Center"
     type: "Number3"
@@ -53,6 +70,8 @@ functions:
         Returns a copy of the [Box].
 
   - name: "Fit"
+    return:
+        - type: "Box"
     arguments:
       - name: "target"
         type: "Object"
@@ -60,18 +79,20 @@ functions:
         type: "table"
         optional: true
     description: |
-        Sets the box to a bounding box fitting the given target's model.
+        Sets the box to a bounding box fitting the given target's model, and return it.
 
         Config table can contain any of the following: `{ recurse=boolean, localBox=boolean }`,
         - `recurse`: the box will also fit all of target's descendants models. Default is `false`.
         - `localBox`: result box will be in `target`'s parent local space. Default is `false`, returning a box in world space.
 
   - name: "Merge"
+    return:
+        - type: "Box"
     arguments:
       - name: "b"
         type: "Box"
     description: |
-        Sets the box to the combination of both boxes.
+        Sets the box to the combination of both boxes, and return it.
   
   - name: "Cast"
     arguments:
