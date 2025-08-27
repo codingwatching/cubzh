@@ -141,16 +141,22 @@ functions:
 
   - name: "SetLookRotation"
     description: |
-        Sets this `Rotation` from a direction vector. It will be set to the rotation between identity and the given vector.
+        Sets this `Rotation` from a direction vector. It will be set to the rotation between identity and the given vector. An optional up vector can be given to ensure the orientation.
     arguments:
       - name: "vector"
         type: "Number3"
+      - name: "up"
+        type: "Number3"
+        optional: true
 
   - name: "SetFromToRotation"
     description: |
-        Sets this `Rotation` from two vectors. It will be set to the rotation going from the first vector to the second vector.
+        Sets this `Rotation` from two vectors. It will be set to the rotation going from the first vector to the second vector. An optional up vector can be given to ensure the orientation.
     arguments:
       - name: "fromVector"
         type: "Number3"
       - name: "toVector"
         type: "Number3"
+      - name: "up"
+        type: "Number3"
+        optional: true
