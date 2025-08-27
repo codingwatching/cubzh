@@ -107,7 +107,7 @@ properties:
 
         In the current version, whether or not a mesh uses a metallic-roughness map, an albedo texture, an emissive texture and a normal map depends on the file it was imported from. There is currently no way to access or change these textures.
 
-        Note that the mesh metallic-roughness will only be used if [Config.UsePBR](/reference/config/property-usepbr) is `true`.
+        Note that the mesh metallic-roughness will only be used if [Config.UsePBR](/reference/config#property-usepbr) is `true`.
         
         Metallic-roughness is a lighting model that describes how a surface will look when under the effect of a [Light], it is made of three components,
         - the `albedo` is the base color. It usually comes from an albedo texture.

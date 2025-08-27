@@ -173,7 +173,7 @@ properties:
       description: |
         Enable and configure draw modes using this property. Setting this to `nil` disables all draw modes.
 
-        As of version 0.1.12, one draw mode is supported: `{ outline={ <options> } }`
+        Currently, one draw mode is supported: `{ outline=<table of options> }`
         
         Outline options are,
         - `weight` as a number between 0.0 and 1.0, disabling the outline at 0.0 to the maximum weight allowed by the font at 1.0.
