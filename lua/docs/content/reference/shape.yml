@@ -165,6 +165,22 @@ properties:
       type: "string"
       description: |
           Original item name of this shape. If it was created programmatically, item name is `nil`.
+    
+    - name: "DrawMode"
+      type: "table"
+      description: |
+        Enable and configure draw modes using this property. Setting this to `nil` disables all draw modes.
+
+        Currently, one draw mode is supported: `{ color=<Color or table of options> }`,
+        - `color` as a [Color](/reference/color), applied multiplicatively to the whole shape. Alternatively, it can be set to a table of options (see below).
+
+        Color options are,
+        - `multiplicative` as a [Color](/reference/color), applied multiplicatively to the whole shape.
+        - `additive` as a [Color](/reference/color), applied additively to the whole shape.
+
+        The additive and multiplicative colors are a shortcut to modify shape colors as a whole, but it could also be done by adding or multiplying each colors of the shape palette.
+
+        All these options can be set at runtime or animated individually.
 
 functions:
     - name: "GetBlock"

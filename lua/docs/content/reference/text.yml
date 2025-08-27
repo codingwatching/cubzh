@@ -177,7 +177,7 @@ properties:
         
         Outline options are,
         - `weight` as a number between 0.0 and 1.0, disabling the outline at 0.0 to the maximum weight allowed by the font at 1.0.
-        - `color` as a [Color](/reference/color) object.
+        - `color` as a [Color](/reference/color).
 
         All these options can be set at runtime or animated individually.
 
