@@ -58,3 +58,8 @@ properties:
       samples:
           - code: |
               Dev.DisplayFPS = true
+
+    - name: "CanRunCommands"
+      type: "boolean"
+      description: |
+          True if the world is launched in developer mode and the local player is its author.

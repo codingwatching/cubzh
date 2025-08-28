@@ -94,14 +94,6 @@ properties:
               print("action3 released")
             end
 
-    - name: "Camera"
-      type: "Camera"
-      description: "See [Camera]."
-
-    - name: "Clouds"
-      type: "Clouds"
-      description: "See [Clouds]."
-
     - name: "DirectionalPad"
       type: "function"
       description: |
@@ -138,7 +130,7 @@ properties:
     - name: "AnalogPad"
       type: "function"
       description: |
-          Triggered when the "analog pad" changes position.
+          Triggered when the "analog pad" changes position. It is turned off when [Pointer] is hidden (see [Pointer].[Hide](/reference/pointer#functions-hide)).
 
           The "analog pad" maps to the mouse movements when using a mouse. When using a touch screen, it is activated when moving the finger after a touch down that isn't caught by any other screen component (like [DirectionalPad](/reference/client#property-directionalpad)).
 
@@ -164,10 +156,6 @@ properties:
             Client.DirectionalPad = function(x, y)
                 Player.Motion = (Player.Forward * y + Player.Right * x) * 50
             end
-
-    - name: "Fog"
-      type: "Fog"
-      description: "See [Fog]."
     
     - name: "OnChat"
       type: "function"
@@ -221,21 +209,44 @@ properties:
               Player.Position = {Map.Width / 2, Map.Height + 10, Map.Depth / 2}
             end
 
-    - name: "Player"
-      type: "Player"
-      description: "See [Player]."
-
     - name: "Tick"
       type: "function"
       description: |
-          Executed ~30 times per second. Provides the elapsed time in seconds as parameter.
+          Tick is a [function] executed each frame. Provides the elapsed time in seconds as parameter.
+
+          The exact number of frames per second may fluctuate and depend on the device. It is typically around 60 frames per second.
       samples:
         - code: |
-            -- executed ~30 times per second on each user device
             Client.Tick = function(dt)
-              print("elapsed:", dt, "seconds")
+              print("elapsed:", dt, "seconds since last frame")
             end
 
-    - name: "Pointer"
-      type: "Pointer"
-      description: "See [Pointer]."
+    - name: "QualityTier"
+      type: "string"
+      description: |
+          Returns an aggregated quality tier as one of `low`, `medium` or `high`. You may use this to turn OFF some non-gameplay essential visual effects depending on the quality tier of the player.
+      samples:
+        - code: |
+            if Client.QualityTier == "high" then
+              addSomeExtraVFX()
+            end
+    
+    - name: "IsMobile"
+      type: "boolean"
+      description: |
+          Returns true if the player is on a mobile device. You may use this to implement separate UI.
+
+    - name: "HasTouchScreen"
+      type: "boolean"
+      description: |
+          Returns true if the player's device uses a touch screen. You may use this to implement separate inputs/control schemes.
+
+    - name: "Connected"
+      type: "boolean"
+      description: |
+          Returns true if the player is connected to the world server.
+
+    - name: "AppVersion"
+      type: "string"
+      description: |
+          Returns the current app version.

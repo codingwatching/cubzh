@@ -3,14 +3,19 @@ type: "Number3"
 description: A Number3 contains 3 [number] values (X, Y & Z). It can represent different things in 3D space (points, vectors, forces).
 
 constructors: 
-  - description: "Creates a Number3 with values x, y and z."
-    arguments:
-    - name: "x"
-      type: "number"
-    - name: "y"
-      type: "number"
-    - name: "z"
-      type: "number"
+  - description: |
+        A Number3 can be created,
+        - without parameter, equivalent to `Number2(0, 0, 0)`
+        - with given x, y, and z values
+    argument-sets:
+      -
+      -
+        - name: "x"
+          type: "number"
+        - name: "y"
+          type: "number"
+        - name: "z"
+          type: "number"
     samples:
       - code: |
           local myNumber3 = Number3(1, 2, 3)
@@ -229,8 +234,10 @@ functions:
         type: "number"
   
   - name: "Set"
+    return: 
+        - type: "Number3"
     description: |
-        Sets this `Number3`'s components to the given values.
+        Sets this `Number3`'s components to the given values, and return it.
     argument-sets:
         - 
           - name: "xyz"

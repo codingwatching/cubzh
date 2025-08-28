@@ -62,9 +62,9 @@ properties:
     - name: "Image"
       type: "Data"
       description: |
-          Assign with a compatible image [Data](reference/data) to display it on the quad, with default settings. Set it to `false` or `nil` to clear it.
+          Assign with a compatible image [Data](reference/data) to display it on the quad, with default settings. The effective resolution of the texture depends on the quad model [This].[Size](/reference/quad#property-size), while the scale can be used to upscale or downscale the texture. 
         
-          When getting this value, it returns `true` if the quad is currently textured.
+          When getting this value, it returns `true` if the quad is currently textured. Set it to `false` or `nil` to remove the texture from this quad.
 
           Alternatively, you can assign a table to have full control over its options:
           `{ data, slice9, slice9Scale, slice9Width, alpha, cutout, filtering }`,
@@ -120,7 +120,10 @@ properties:
     
     - name: "Size"
       type: "Number2"
-      description: "Returns the size of the quad model. Equivalent to `Number2(quad.Width, quad.Height)`."
+      description: |
+          Returns the size of the quad model. Equivalent to `Number2(quad.Width, quad.Height)`.
+
+          Can be set to a `number` for a uniform size.
 
     - name: "Anchor"
       type: "Number2"
@@ -175,3 +178,37 @@ properties:
           Activates masking for this quad. Any children of a quad mask will only be visible within the quad's area on screen.
 
           Nested masks are supported to a maximum depth of 7. Up to 31 individual masks can be active at a time, nested masks do not count towards this limit.
+
+    - name: "SortOrder"
+      type: "integer"
+      description: |
+          Overrides rendering order for this quad amongst other objects within its rendering pass, which is dictated by the features in use on this quad. Can be set to an integer value between `0` (default) and `255`. A value of `0` means no override.
+
+          Objects with overriden sort order are rendered from sort order `1` to sort order `255`, ignoring any normal ordering. You may assign the same sort order to multiple objects, in which case they are rendered unordered within that shared sort order.
+
+          ⚠️ Note that enabling this will disable depth testing. This is an advanced feature, and it is not recommended to use if you aren't absolutely sure of having a need for it.
+    
+    - name: "DrawMode"
+      type: "table"
+      description: |
+        Enable and configure draw modes using this property. Setting this to `nil` disables all draw modes.
+
+        Currently, two draw modes are supported: `{ blending=<value or table of options>, billboard=<value> }`,
+        - `blending` can be set to one of "additive", "multiplicative", or "subtractive", which will override this quad's default blending. Alternatively, it can be set to a table of options (see below).
+        - `billboard` can be set to `true` to enable screen billboard. Alternatively, it can be set to a specific billboarding method: "screen" (equivalent to `true`, screen billboard without rotation), "horizontal" (locked horizontally), "vertical" (locked vertically), or "screenX"/"screenY"/"screenZ" (use X/Y/Z world rotation)
+        
+        Blending options are,
+        - `mode` to set the blending mode with "additive", "multiplicative" or "subtractive".
+        - `factor` as an integer between `1` and `255`, applied multiplicatively to the final color. Use this to amplify the desired blending, you can then modulate it by setting/animating the quad alpha value.
+
+        Note that billboarded quads cannot be shadowcasters, but can be lit, and that quads using an overriden blending mode are always rendered on top of transparent objects.
+
+        All these options can be set at runtime or animated individually.
+      samples:
+        - code: |
+            -- make a particle (i.e. billboard additive)
+            q.Image = Data:FromBundle("images/particles/dot.png")
+            q.DrawMode = { blending="additive", billboard=true }
+
+            -- make a quad with amplified blending
+            q.DrawMode = { blending={ mode="additive", factor=2} }

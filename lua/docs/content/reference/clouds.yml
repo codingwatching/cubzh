@@ -43,6 +43,8 @@ properties:
       type: "Number3"
       description: |
         Size of the volume dedicated to clouds generation. This will set [Clouds.Max](#property-max) according to given size.
+
+        Can be set to a `number` for a uniform size.
         
         Note: currently, vertical size isn't used.
     

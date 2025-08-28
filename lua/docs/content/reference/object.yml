@@ -36,7 +36,7 @@ properties:
       description: |
           Collision groups the [This] belongs to. 
 
-          ⚠️ It doesn't mean the [This] will collide with other [Object]s in these groups. 
+          ⚠️ It doesn't mean the [This] will collide with other [Object]s in these groups.
 
           If the [This] belongs to group number `3` for example, it means all [Object]s that have group number `3` in their [Object].[CollidesWithGroups](#property-collideswithgroups) property will collide with it.
 
@@ -45,46 +45,79 @@ properties:
           - [Player]s collide with the [Map] only
 
           That can all be configured differently depending on your needs.
+          
+          Collision groups are best used as buckets created for gameplay needs, for example,
+          - a group for "hittable" objects that can be damaged by the player's weapon
+          - a group for recyclable Objects that are disabled and thrown back into their pool when they reach a certain trigger collider
+          - a group for static scenery objects that moving objects will bump into
+          - a group for objects that can get hit by raycasts executed for some specific game mechanic
+          It may well be the case that one object belongs to several or all of these groups, depending on the gameplay associated with it.
+
+          In general, it is bad practice to assign or add all collision groups from one object to another (unless making exact copies), as it isn't future-proof if you later add more groups. Instead, you should assign individual groups depending on what this new object should contribute to in your world.
 
       samples:
         - code: |
-            local object1 = Object()
-            local object2 = Object()
-            object1.Physics = PhysicsMode.Dynamic
-            object2.Physics = PhysicsMode.Dynamic
+            -- these are the group numbers assigned by default to Map, Player, and all Objects
+            local GROUP_MAP = 1
+            local GROUP_PLAYER = 2
+            local GROUP_OBJECT = 3
 
-            -- making sure 2 objects collide with each other
-            -- NOTE: by default:
-            -- Map.CollisionGroups == {1},
-            -- Player.CollisionGroups == {2},
-            -- Object.CollisionGroups == {3}
-            object1.CollisionGroups = {5}
-            object2.CollisionGroups = {5}
-            object1.CollidesWithGroups = {1, 5} -- collides with Map + objects in group 5
-            object2.CollidesWithGroups = {1, 5} -- collides with Map + objects in group 5
+            -- by default, this object will collide with the map and other objects
+            local o = Object()
+            o.Physics = PhysicsMode.Dynamic
 
-            -- would also work this way if you don't 
-            -- remember Map's group (which can be changed too by the way)
-            object1.CollidesWithGroups = Map.CollisionGroups + {5}
+            -- when in doubt, print the groups of your objects
+            print(Map.CollisionGroups, Map.CollidesWithGroups)
+            print(o.CollisionGroups, o.CollidesWithGroups)
 
-            -- making an object collides with the Map and Players
-            local object = Object()
-            object.CollidesWithGroups = Map.CollisionGroups + Player.CollisionGroups
+            -- let's say our world needs an extra group for a gameplay mechanic, for example, a group for objects that can be hit by player's weapon (which could perform a raycast in that group)
+            local GROUP_HITTABLE = 4
 
-            -- for Player (local player) to collide with other players and the Map
-            Player.CollidesWithGroups = Map.CollisionGroups + Player.CollisionGroups
+            -- here, the object would collide with anything that cares about GROUP_OBJECT or GROUP_HITTABLE, in addition to itself wanting to collide with GROUP_MAP and GROUP_PLAYER
+            o.CollisionGroups = { GROUP_OBJECT, GROUP_HITTABLE }
+            o.CollidesWithGroups = { GROUP_MAP, GROUP_PLAYER }
+
+            -- when adding new obstacle/scenery objects to our scene, you can simply re-use the GROUP_MAP as a way to say "this is part of the environment that is collidable"
+            -- here, maybe this object only acts as an obstacle and doesn't contribute to anything else
+            someBigRock.CollisionGroups = GROUP_MAP
+            someBigRock.CollidesWithGroups = nil
+
+            -- doing this effectively prevents all physics interaction on an object
+            o.CollisionGroups = nil
+            o.CollidesWithGroups = nil
+
+            -- note that there is redundancy with CollisionGroups and CollidesWithGroups, so you can organize your groups however seems more convenient for you
+            -- for example the following setups will all result in object1 and object2 colliding with each other
+            object1.CollisionGroups = GROUP_OBJECT
+            object1.CollidesWithGroups = nil
+            object2.CollisionGroups = GROUP_OBJECT
+            object2.CollidesWithGroups = GROUP_OBJECT
+
+            object1.CollisionGroups = GROUP_OBJECT
+            object1.CollidesWithGroups = GROUP_OBJECT
+            object2.CollisionGroups = GROUP_OBJECT
+            object2.CollidesWithGroups = nil
+
+            object1.CollisionGroups = GROUP_OBJECT
+            object1.CollidesWithGroups = GROUP_OBJECT
+            object2.CollisionGroups = GROUP_OBJECT
+            object2.CollidesWithGroups = GROUP_OBJECT
+
+            object1.CollisionGroups = GROUP_OBJECT
+            object1.CollidesWithGroups = nil
+            object2.CollisionGroups = nil
+            object2.CollidesWithGroups = GROUP_OBJECT
 
     - name: "CollidesWithGroups"
       type: "CollisionGroups"
       description: |
-          Collision groups the [This] collides with. 
+          Collision groups the [This] collides with. See [This].[CollisionGroups](#property-collisiongroups).
 
           By default:
           - [Object]s collide with the [Map] and other [Object]s
           - [Player]s collide with the [Map] and the [Object]s
 
           That can all be configured differently depending on your needs.
-
       samples:
         - code: |
             local object = Object()
@@ -247,12 +280,15 @@ properties:
     - name: "Tick"
       type: "function"
       description: |
-          Tick is a [function] executed ~30 times per second when set ([nil] by default). Provides the [This] and elapsed time in seconds as parameters.
+          Tick is a [function] executed each frame when set ([nil] by default). Provides the [This] and elapsed time in seconds as parameters.
+
+          For general purposes, you may consider using [Client.Tick](reference/client#functions-tick) instead. It is functionally the same, but is executed once for your world per frame, rather than once per frame per object.
+
+          The exact number of frames per second may fluctuate and depend on the device. It is typically around 60 frames per second.
       samples:
         - code: |
-            -- executed ~30 times per second on each user device
             myObject.Tick = function(object, dt)
-              print("elapsed:", dt, "seconds")
+              print("elapsed:", dt, "seconds since last frame")
             end
 
     - name: "LocalRotation"
@@ -267,8 +303,7 @@ properties:
       description: |
           Velocity of the [This] in world coordinates per second.
 
-          ⚠️ `Velocity` only affects [This] when [This].[Physics](#property-physics) is `PhysicsMode.Dynamic`. 
-          Whenever [Physics](#property-physics) is set to `PhysicsMode.Disabled`, `Velocity` is set to `{0,0,0}`.
+          ⚠️ `Velocity` only affects [This] when [This].[Physics](#property-physics) is `PhysicsMode.Dynamic`.
       samples:
         - code: |
             -- makes myObject jump:
@@ -277,18 +312,11 @@ properties:
     - name: "Motion"
       type: "Number3"
       description: |
-          Be aware, this `Motion` property is a hack regarding laws of physics. (sorry Isaac)
+          `Motion` is an instantaneous displacement that contributes to moving [This] every frame, without changing [This].[Velocity](#property-velocity) directly, and without being affected by collision responses and other forces. It is expressed in world coordinates per second.
 
-          But it's very practical to move objects without worrying about forces at play.
+          It's very useful to quickly implement character movement. This is what's being used by default when you're moving around with your avatar (see [Client.DirectionalPad](/reference/client#property-directionalpad)). It's the reason why you can stop moving horizontally while in the air.
 
-          This is what's being used by default when you're moving around with your avatar (see [Client.DirectionalPad](/reference/client#property-directionalpad)). It's the reason why you can stop moving horizontally while in the air.
-
-          Basically, `Motion` is an instantaneous displacement that contributes to moving [This] every frame, without changing [This].[Velocity](#property-velocity) directly.
-
-          `Motion` is expressed in world coordinates per second.
-
-          ⚠️ `Motion` only affects [This] when [This].[Physics](#property-physics) is `PhysicsMode.Dynamic`. 
-          Whenever [Physics](#property-physics) is set to `PhysicsMode.Disabled`, `Motion` is set to `{0,0,0}`.
+          ⚠️ `Motion` only affects [This] when [This].[Physics](#property-physics) is `PhysicsMode.Dynamic`.
       samples:
         - code: |
             local speed = 10
@@ -297,24 +325,35 @@ properties:
             -- If the Camera rotates after this, it won't change where myObject is heading.
 
     - name: "LocalScale"
-      type: "number"
+      type: "Number3"
       description: |
-          Scale of the [Object], in its parent.
+          Scale of the [Object], in its parent local space. Can be set to a `number` for a uniform scale.
 
           Nested [Object] local scales are combined to obtain the "world scale" ([Object.LossyScale](#property-lossyscale)), the [Object]'s final scale.
       samples:
         - code: |
-            myObject.LocalScale = 2 -- the Object is now 2 times bigger
+            -- make the object twice as big
+            myObject.LocalScale = 2
+
+            -- equivalent to
+            myObject.LocalScale = Number3(2, 2, 2)
+            myObject.LocalScale = { 2, 2, 2 }
         - code: |
-            topLevelObject.LocalScale = 2
-            local o = Object()
-            o.LocalScale = 0.5
-            topLevelObject:AddChild(o) -- o becomes a child of topLevelObject
-            -- o ends up being displayed with a scale of 1
+            -- demonstrate how scales are combined in the hierarchy
+            local parentObject = Object()
+            parentObject:SetParent(World)
+            parentObject.LocalScale = 2
+
+            local childObject = Object()
+            childObject:SetParent(parentObject)
+            childObject.LocalScale = 0.5
+
+            -- here, the scales would cancel each other: 2 x 0.5 = 1
+            print(childObject.LossyScale) -- returns (1,1,1)
 
     - name: "LossyScale"
       read-only: true
-      type: "number"
+      type: "Number3"
       description: |
           Convenience property that attempts to match the actual world scale as much as it can. Note that [Object]s that have multiple levels of nested rotations and scales will return a skewed lossy scale.
 
@@ -425,6 +464,9 @@ functions:
         
           The `keepWorld` optional parameter, `false` by default, dictates whether to maintain the child's world or local position and rotation. Keeping world will ensure the object doesn't move in the scene, adjusting its local position/rotation accordingly; keeping local will have the object move in the scene in order to maintain an equivalent local position/rotation relative to its new parent.
 
+          It's a good practice to set child/parent relationships before setting positions, if you do not want to use the `keepWorld` parameter.
+
+          Note that there is a cyclic hierarchy protection that will prevent you from creating parenting loops.
       samples:
         - code: |
             local o = Object()
@@ -465,7 +507,7 @@ functions:
 
           The `config` table accepts two boolean options:
           - `deepFirst`: if `true`, traverses depth-first instead of root-first. Default `false`.
-          - `includeRoot`: if `true`, includes [This] in the recursion. Default `false`.
+          - `includeRoot`: if `true`, includes [This] in the recursion. Default `true`.
       arguments:
         - name: "callback"
           type: "function"
@@ -567,7 +609,9 @@ functions:
         
           The `keepWorld` optional parameter, `false` by default, dictates whether to maintain the child's world or local position and rotation. Keeping world will ensure the object doesn't move in the scene, adjusting its local position/rotation accordingly; keeping local will have the object move in the scene in order to maintain an equivalent local position/rotation relative to its new parent.
 
-          It's also a good practice to set child/parent relationships before setting positions.
+          It's a good practice to set child/parent relationships before setting positions, if you do not want to use the `keepWorld` parameter.
+
+          Note that there is a cyclic hierarchy protection that will prevent you from creating parenting loops.
 
       arguments:
         - name: "parent"
