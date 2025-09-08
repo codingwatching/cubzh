@@ -1027,6 +1027,18 @@ mod.aiChatCompletions = function(messages, temperatureOrCb, cb)
 	local headers = {}
 	headers["Content-Type"] = "application/json"
 
+	-- AI can insert annotations which can be empty arrays.
+	-- The JSON encoder encodes those empty arrays as `{}` instead of `[]`
+	-- and that is not valid for the API.
+	-- Ommiting them is ok though so setting them to nil fixes the issue.
+	for _, m in messages do
+		if m.annotations then
+			if #m.annotations == 0 then
+				m.annotations = nil
+			end
+		end
+	end
+
 	local body = {}
 	body.model = "gpt-4o-mini"
 	body.messages = messages
@@ -1089,6 +1101,22 @@ end
 
 -- Badges
 
+local function badgeFixFields(badge)
+	if badge.userDidUnlock ~= nil then
+		badge.unlocked = badge.userDidUnlock
+		badge.userDidUnlock = nil
+	else
+		badge.unlocked = false
+	end
+	if badge.userUnlockedAt ~= nil then
+		badge.unlockedAt = badge.userUnlockedAt
+		badge.userUnlockedAt = nil
+	end
+	if badge.rarity == nil then
+		badge.rarity = 0
+	end
+end
+
 -- Callback signature: cb(error, badges)
 mod.listBadgesForWorld = function(_, worldId, cb)
 	local url = mod.kApiAddr .. "/worlds/" .. worldId .. "/badges"
@@ -1097,6 +1125,24 @@ mod.listBadgesForWorld = function(_, worldId, cb)
 			return cb(mod:error(res.StatusCode, "status code: " .. res.StatusCode))
 		end
 		local badges = JSON:Decode(res.Body)
+		for _, badge in badges do
+			badgeFixFields(badge)
+		end
+		cb(nil, badges)
+	end)
+	return req
+end
+
+mod.listBadgesForUser = function(_, userID, cb)
+	local url = mod.kApiAddr .. "/users/" .. userID .. "/badges"
+	local req = HTTP:Get(url, function(res)
+		if res.StatusCode ~= 200 then
+			return cb(mod:error(res.StatusCode, "status code: " .. res.StatusCode))
+		end
+		local badges = JSON:Decode(res.Body)
+		for _, badge in badges do
+			badgeFixFields(badge)
+		end
 		cb(nil, badges)
 	end)
 	return req

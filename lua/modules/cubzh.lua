@@ -1884,7 +1884,7 @@ function home()
 				end,
 			},
 			{
-				title = loc("✨ Featured"),
+				title = loc("✨ Recommended Games"),
 				cellSize = CONFIG.WORLD_CELL_HEIGHT,
 				loadCell = function(index, dataFetcher)
 					if index <= dataFetcher.nbEntities then
@@ -1972,22 +1972,22 @@ function home()
 					requestRecentCreators(dataFetcher)
 				end,
 			},
-			{
-				title = loc("🤠 Playing solo"),
-				cellSize = CONFIG.WORLD_CELL_HEIGHT,
-				loadCell = function(index, dataFetcher)
-					if index <= dataFetcher.nbEntities then
-						local world = dataFetcher.entities[index]
-						return getOrCreateWorldCell(world, "solo")
-					end
-				end,
-				unloadCell = function(_, cell)
-					recycleWorldCell(cell)
-				end,
-				extraSetup = function(dataFetcher)
-					requestWorlds(dataFetcher, { category = "solo" })
-				end,
-			},
+			-- {
+			-- 	title = loc("🤠 Playing solo"),
+			-- 	cellSize = CONFIG.WORLD_CELL_HEIGHT,
+			-- 	loadCell = function(index, dataFetcher)
+			-- 		if index <= dataFetcher.nbEntities then
+			-- 			local world = dataFetcher.entities[index]
+			-- 			return getOrCreateWorldCell(world, "solo")
+			-- 		end
+			-- 	end,
+			-- 	unloadCell = function(_, cell)
+			-- 		recycleWorldCell(cell)
+			-- 	end,
+			-- 	extraSetup = function(dataFetcher)
+			-- 		requestWorlds(dataFetcher, { category = "solo" })
+			-- 	end,
+			-- },
 			{
 				title = loc("🍏 New Items"),
 				buttonLabel = loc("all items"),
@@ -2008,22 +2008,22 @@ function home()
 					requestItems(dataFetcher, { sortBy = "updatedAt:desc" })
 				end,
 			},
-			{
-				title = loc("❤️ Top Rated"),
-				cellSize = CONFIG.WORLD_CELL_HEIGHT,
-				loadCell = function(index, dataFetcher)
-					if index <= dataFetcher.nbEntities then
-						local world = dataFetcher.entities[index]
-						return getOrCreateWorldCell(world, "top_rated")
-					end
-				end,
-				unloadCell = function(_, cell)
-					recycleWorldCell(cell)
-				end,
-				extraSetup = function(dataFetcher)
-					requestWorlds(dataFetcher, { sortBy = "likes:desc" })
-				end,
-			},
+			-- {
+			-- 	title = loc("❤️ Top Rated"),
+			-- 	cellSize = CONFIG.WORLD_CELL_HEIGHT,
+			-- 	loadCell = function(index, dataFetcher)
+			-- 		if index <= dataFetcher.nbEntities then
+			-- 			local world = dataFetcher.entities[index]
+			-- 			return getOrCreateWorldCell(world, "top_rated")
+			-- 		end
+			-- 	end,
+			-- 	unloadCell = function(_, cell)
+			-- 		recycleWorldCell(cell)
+			-- 	end,
+			-- 	extraSetup = function(dataFetcher)
+			-- 		requestWorlds(dataFetcher, { sortBy = "likes:desc" })
+			-- 	end,
+			-- },
 			{
 				title = loc("⚔️ Popular Items"),
 				buttonLabel = loc("all items"),
@@ -2457,24 +2457,43 @@ function home()
 			Menu:sendHomeDebugEvent("User presses FRIENDS button")
 			Menu:ShowFriends()
 		end
+		
+		local badge = require("notifications"):createBadge({
+			count = 0,
+			type = "notifications",
+			textSize = "default",
+			height = 18,
+			padding = 3,
+			vPadding = 0,
+		})
 
-		local badge = require("notifications"):createBadge({ count = 0 })
+		badge.internalParentDidResize = badge.parentDidResize
+		badge.parentDidResize = function(self)
+			self:internalParentDidResize()
+			badge.LocalPosition.Z = -1
+			self.pos.X = self.parent.Width - self.Width * 0.5
+			self.pos.Y = self.parent.Height * 0.6 - self.Height * 0.5
+		end
+
 		badge:setParent(btnFriends.icon)
 
 		local function refreshFriendsBadge()
 			if friendNotificationsReq ~= nil then
 				friendNotificationsReq:Cancel()
 			end
-			friendNotificationsReq = require("user"):getUnreadNotificationCount({
-				category = "social",
-				callback = function(count, err)
-					friendNotificationsReq = nil
-					if err ~= nil then
-						return
-					end
-					badge:setCount(count)
-				end,
-			})
+
+			friendNotificationsReq = api:getReceivedFriendRequests({ fields = { "id" } }, function(requests, err)
+				friendNotificationsReq = nil
+				if err ~= nil then
+					badge:setCount(0)
+					return
+				end
+				if requests == nil then
+					badge:setCount(0)
+					return
+				end
+				badge:setCount(#requests)
+			end)
 		end
 
 		if friendNotificationCountListeners == nil then

@@ -5,7 +5,7 @@ local TEXT_COLOR = Color(200, 200, 200)
 mod.createModalContent = function(_, config)
 	local api = require("api")
 	local badgeModal = require("badge_modal")
-	local loc = require("localize")
+	-- local loc = require("localize")
 	local modal = require("modal")
 	local theme = require("uitheme").current
 	local time = require("time")
@@ -52,288 +52,6 @@ mod.createModalContent = function(_, config)
 	local requests = {}
 	local likeRequest
 	local refreshTimer
-	local listeners = {}
-	-- array of badges fetched from the server
-	local badgesFetched = {}
-
-	badges = {
-		cells = {},
-	}
-
-	local function removeAllCells()
-		for _, cell in ipairs(badges.cells) do
-			cell:remove()
-		end
-		badges.cells = {}
-	end
-
-	local t = 0
-	local r = Rotation()
-	local l = LocalEvent:Listen(LocalEvent.Name.Tick, function(dt)
-		t += dt * 1.5
-		r.Y = math.pi + math.sin(t) * 0.4
-		r.X = math.cos(t * 1.1) * 0.3
-		for _, cell in ipairs(badges.cells) do
-			if cell.badge ~= nil then
-				cell.badge.LocalRotation:Set(r)
-			end
-		end
-	end)
-	table.insert(listeners, l)
-
-	local PADDING = theme.padding
-
-	-- Constants for badges list
-	-- (similar to friends list in cubzh.lua)
-	local CONFIG = {
-		BADGE_CELL_WIDTH = 90,
-		BADGE_CELL_HEIGHT = 140,
-		BADGES_CELL_PADDING = PADDING,
-	}
-
-	local function badgeCellResizeFn(self)
-		if self.parent.Height == nil then
-			return
-		end
-		self.Height = self.parent.Height
-	end
-
-	local function badgesScrollLoadCell(index)
-		local firstIndexOfContent = 1
-		if createMode then
-			firstIndexOfContent = 2
-		end
-
-		if index >= firstIndexOfContent + #badgesFetched then
-			return nil
-		end
-
-		local cell = badges.cells[index]
-
-		-- index of the "Create badge" cell
-		if index < firstIndexOfContent then
-			if cell == nil then
-				cell = ui:frameScrollCellWithBevel()
-				cell.Width = CONFIG.BADGE_CELL_WIDTH
-				cell.parentDidResize = badgeCellResizeFn
-
-				local image = ui:frame({
-					image = {
-						data = Data:FromBundle("images/icon-plus.png"),
-						alpha = true,
-						filtering = true,
-					},
-				})
-				image.object.Color = Color(180, 180, 180)
-				image.Width = CONFIG.BADGE_CELL_WIDTH * 0.6
-				image.Height = image.Width
-				cell.image = image
-				image:setParent(cell)
-
-				local label = ui:createText(loc("New\nBadge"), {
-					color = Color(180, 180, 180),
-					size = "small",
-					outline = 0.4,
-					outlineColor = Color(10, 10, 10),
-					alignment = "center",
-				})
-				cell.label = label
-				label:setParent(cell)
-
-				cell.onPress = function(_)
-					Client:HapticFeedback()
-				end
-
-				cell.onRelease = function(_)
-					-- show badge creation form in the world details modal
-					badgeModalContent = badgeModal:createModalContent({
-						uikit = ui,
-						mode = "create",
-						worldId = world.id,
-					})
-					local m = content:getModalIfContentIsActive()
-					if m ~= nil then
-						m:push(badgeModalContent)
-					else
-						print("❌ no modal found")
-					end
-				end
-
-				badges.cells[index] = cell
-			end
-
-			local label = cell.label
-			local image = cell.image
-
-			label.pos = {
-				CONFIG.BADGE_CELL_WIDTH * 0.5 - label.Width * 0.5,
-				CONFIG.BADGE_CELL_HEIGHT * 0.5 * 0.5 - label.Height * 0.5,
-			}
-
-			local vSpaceForImage = CONFIG.BADGE_CELL_HEIGHT - (label.pos.Y + label.Height)
-			image.pos = {
-				CONFIG.BADGE_CELL_WIDTH * 0.5 - image.Width * 0.5,
-				CONFIG.BADGE_CELL_HEIGHT - vSpaceForImage * 0.5 - image.Height * 0.5,
-			}
-
-			return cell
-		else -- display a badge cell
-			local fetchedBadgeIndex = index + 1 - firstIndexOfContent
-			if fetchedBadgeIndex <= #badgesFetched then
-				local badge = badgesFetched[fetchedBadgeIndex]
-
-				if cell == nil then
-					cell = ui:frame({ color = Color(255, 255, 255, 0) })
-					cell.Width = CONFIG.BADGE_CELL_WIDTH
-					cell.parentDidResize = badgeCellResizeFn
-
-					local badgeShape = ui:frame()
-					cell.badgeShape = badgeShape
-					badgeShape.Width = CONFIG.BADGE_CELL_WIDTH
-					badgeShape.Height = CONFIG.BADGE_CELL_WIDTH
-					badgeShape:setParent(cell)
-
-					local showBadgeUnlocked = createMode or badge.userDidUnlock
-
-					local reqs = require("badge"):createBadgeObject({
-						badgeId = badge.badgeID,
-						locked = not showBadgeUnlocked,
-						frontOnly = true,
-						callback = function(badgeObject)
-							cell.badge = badgeObject
-
-							local s = ui:createShape(badgeObject, { spherized = false })
-							s.Width = badgeShape.Width
-							s.Height = badgeShape.Height
-							s:setParent(cell)
-
-							s.pos = badgeShape.pos
-							badgeShape:remove()
-							badgeShape = s
-							cell.badgeShape = s
-						end,
-					})
-					-- TODO: cancel reqs when cell is destroyed
-
-					local nameLabel = ui:createText(badge.name, {
-						color = Color.White,
-						size = "small",
-						outline = 0.4,
-						outlineColor = Color(10, 10, 10),
-						alignment = "center",
-					})
-					cell.nameLabel = nameLabel
-					nameLabel:setParent(cell)
-
-					local rarity = badge.rarity
-					if rarity == nil then
-						rarity = 0
-					end
-					local rarityLabel = ui:createText(string.format("rarity: %.1f%%", rarity * 100), {
-						color = Color.White,
-						size = "small",
-						alignment = "center",
-					})
-					cell.rarityLabel = rarityLabel
-					rarityLabel:setParent(cell)
-
-					cell.onRemove = function()
-						for _, req in ipairs(reqs) do
-							req:Cancel()
-						end
-						reqs = {}
-					end
-
-					cell.onRelease = function(_)
-						if createMode then -- edit badge
-							-- show badge creation form in the world details modal
-							badgeModalContent = badgeModal:createModalContent({
-								uikit = ui,
-								mode = "edit",
-								badgeObj = badge,
-							})
-							local m = content:getModalIfContentIsActive()
-							if m ~= nil then
-								m:push(badgeModalContent)
-							else
-								print("❌ no modal found")
-							end
-						else -- display badge
-							-- show badge creation form in the world details modal
-							badgeModalContent = badgeModal:createModalContent({
-								uikit = ui,
-								mode = "display",
-								badgeObj = badge,
-								locked = not showBadgeUnlocked,
-							})
-							local m = content:getModalIfContentIsActive()
-							if m ~= nil then
-								m:push(badgeModalContent)
-							else
-								print("❌ no modal found")
-							end
-						end
-					end
-
-					badges.cells[index] = cell
-				end
-
-				local rarityLabel = cell.rarityLabel
-				local nameLabel = cell.nameLabel
-				local badgeShape = cell.badgeShape
-
-				local y = CONFIG.BADGE_CELL_HEIGHT
-
-				nameLabel.object.Scale = 1
-				if nameLabel.Width > cell.Width then
-					nameLabel.object.Scale = cell.Width / nameLabel.Width
-				end
-
-				rarityLabel.object.Scale = 0.8
-				if rarityLabel.Width > cell.Width then
-					rarityLabel.object.Scale = cell.Width / rarityLabel.Width
-				end
-
-				local vSpace = y - badgeShape.Height - PADDING * 2
-				local textHeight = nameLabel.Height + rarityLabel.Height
-				if textHeight > vSpace then
-					local scale = vSpace / textHeight
-					nameLabel.object.Scale *= scale
-					rarityLabel.object.Scale *= scale
-				end
-
-				y = y - badgeShape.Height
-
-				cell.badgeShape.pos = {
-					CONFIG.BADGE_CELL_WIDTH * 0.5 - cell.badgeShape.Width * 0.5,
-					y,
-				}
-
-				y = y - PADDING - nameLabel.Height
-				nameLabel.pos = {
-					CONFIG.BADGE_CELL_WIDTH * 0.5 - nameLabel.Width * 0.5,
-					y,
-				}
-
-				y = y - rarityLabel.Height
-				rarityLabel.pos = {
-					CONFIG.BADGE_CELL_WIDTH * 0.5 - rarityLabel.Width * 0.5,
-					y,
-				}
-
-				if badge.userDidUnlock == true then
-					nameLabel.Color = Color.Green
-				end
-
-				return cell
-			end
-		end
-		return nil -- no cell for index (this line may not be needed)
-	end
-
-	local badgesScrollUnloadCell = function(_, cell)
-		cell:setParent(nil)
-	end
 
 	local privateFields = {}
 
@@ -343,19 +61,21 @@ mod.createModalContent = function(_, config)
 		end
 		requests = {}
 
-		for _, listener in ipairs(listeners) do
-			listener:Remove()
-		end
-		listeners = {}
-
 		if refreshTimer ~= nil then
 			refreshTimer:Cancel()
 			refreshTimer = nil
 		end
 	end
 
+	local badgesNeedRefresh = false
+	local badgesNeedRefreshListener = LocalEvent:Listen("badgesNeedRefresh", function()
+		badgesNeedRefresh = true
+		-- badges will be refreshed when content becomes active
+	end)
+
 	worldDetails.onRemove = function(_)
 		cancelRequestsTimersAndListeners()
+		badgesNeedRefreshListener:Remove()
 	end
 
 	content.title = ""
@@ -363,23 +83,25 @@ mod.createModalContent = function(_, config)
 	content.node = worldDetails
 
 	content.didBecomeActive = function()
-		for _, listener in ipairs(listeners) do
-			listener:Resume()
-		end
 		fetchBadgesAndUpdateUI()
 	end
 
-	content.willResignActive = function()
-		for _, listener in ipairs(listeners) do
-			listener:Pause()
-		end
-	end
+	content.willResignActive = function() end
 
 	local btnLaunch
 	local btnServers
 
 	if not createMode then
-		btnLaunch = ui:buttonPositive({ content = "Start", textSize = "big", padding = 10 })
+		local playIcon = ui:frame({
+			image = {
+				data = Data:FromBundle("images/icon-play-white.png"),
+				alpha = true,
+			},
+		})
+		playIcon.Width = 36
+		playIcon.Height = 36
+
+		btnLaunch = ui:buttonPositive({ content = playIcon })
 		btnLaunch.onRelease = function()
 			System:DebugEvent("User presses Start button to launch world", { ["world-id"] = world.id })
 			URL:Open("https://app.cu.bzh?worldID=" .. world.id)
@@ -411,6 +133,7 @@ mod.createModalContent = function(_, config)
 	local editIconBtn
 	local description
 	local views
+	local serverSize
 	local creationDate
 	local updateDate
 	local serverSizeText
@@ -481,60 +204,193 @@ mod.createModalContent = function(_, config)
 	end
 	title:setParent(cell)
 
-	-- local descriptionTitle = ui:createText("Description", { color = Color.White, size = "default" })
-	-- descriptionTitle:setParent(cell)
-
-	local badgesTitle = ui:createText("Badges", { color = Color.White, size = "default" })
+	local badgesTitle = ui:createText("🏅 Badges", { color = Color.White, size = "default" })
 	badgesTitle:setParent(cell)
 
-	-- create scroll to display badges
-	local badgesScroll = ui:scroll({
-		backgroundColor = theme.buttonTextColor,
-		-- backgroundColor = Color(26, 26, 30),
-		padding = {
-			top = CONFIG.BADGES_CELL_PADDING,
-			bottom = CONFIG.BADGES_CELL_PADDING,
-			left = CONFIG.BADGES_CELL_PADDING,
-			right = CONFIG.BADGES_CELL_PADDING,
-		},
-		cellPadding = CONFIG.BADGES_CELL_PADDING,
-		direction = "right",
-		loadCell = badgesScrollLoadCell,
-		unloadCell = badgesScrollUnloadCell,
+	local badgesScroll = require("badge"):createScroll({
+		worldID = world.id,
+		playerID = nil,
+		showBadgesUnlocked = createMode,
+		createBadgeButton = createMode,
+		centerContent = not createMode,
+		ui = ui,
+		loaded = function(self, nbBadges)
+			if badgesTitle:isVisible() == false and nbBadges > 0 then
+				badgesTitle:show()
+				self:show()
+				worldDetails:refresh()
+			end
+		end,
+		onOpen = function(badgeInfo)
+			if createMode then -- edit badge
+				-- show badge creation form in the world details modal
+				badgeModalContent = badgeModal:createModalContent({
+					uikit = ui,
+					mode = "edit",
+					badgeInfo = badgeInfo,
+				})
+				local m = content:getModalIfContentIsActive()
+				if m ~= nil then
+					m:push(badgeModalContent)
+				end
+			else -- display badge
+				-- show badge creation form in the world details modal
+				badgeModalContent = badgeModal:createModalContent({
+					uikit = ui,
+					mode = "display",
+					badgeInfo = badgeInfo,
+					locked = not badgeInfo.unlocked,
+				})
+				local m = content:getModalIfContentIsActive()
+				if m ~= nil then
+					m:push(badgeModalContent)
+				end
+			end
+		end,
+		onCreate = function()
+			badgeModalContent = badgeModal:createModalContent({
+				uikit = ui,
+				mode = "create",
+				worldId = world.id,
+			})
+			local m = content:getModalIfContentIsActive()
+			if m ~= nil then
+				m:push(badgeModalContent)
+			end
+		end,
 	})
 	badgesScroll:setParent(cell)
 
-	function fetchBadgesAndUpdateUI()
-		api:listBadgesForWorld(world.id, function(err, badges)
-			if err ~= nil or badges == nil then
-				print("🐞 [badges] could not list badges for world", world.id, err)
-				return
-			end
-
-			table.sort(badges, function(a, b)
-				-- unlocked first
-				if a.userDidUnlock and not b.userDidUnlock then
-					return true
-				elseif not a.userDidUnlock and b.userDidUnlock then
-					return false
-				end
-				-- both same unlock status, sort by rarity (most common first, i.e. higher rarity value first)
-				local ar = a.rarity or 0
-				local br = b.rarity or 0
-				return ar > br
-			end)
-			badgesFetched = badges
-
-			badgesScroll:flush()
-			removeAllCells()
-			badgesScroll:refresh()
-		end)
+	if config.mode ~= "create" then
+		badgesTitle:hide()
+		badgesScroll:hide()
 	end
 
-	-- TODO: gaetan: should this be done this way?
-	badgesScroll.parentDidResize = function(self)
-		self.Width = self.parent.Width - theme.padding * 2
-		self.Height = CONFIG.BADGE_CELL_HEIGHT + CONFIG.BADGES_CELL_PADDING * 2
+	function fetchBadgesAndUpdateUI()
+		if not badgesNeedRefresh then
+			return
+		end
+		badgesNeedRefresh = false
+		badgesScroll:fetch()
+	end
+
+	-- refreshes UI with what's in local config.world / world
+	local function refreshWorld()
+		if world.thumbnail ~= nil then
+			iconArea:setImage(world.thumbnail)
+		end
+
+		if config.mode == "create" then
+			if world.description == nil or world.description == "" then
+				description.empty = true
+				description.Text = "Worlds are easier to find with a description!"
+				description.Color = theme.textColorSecondary
+			else
+				description.empty = false
+				description.Text = world.description
+				description.Color = TEXT_COLOR
+			end
+
+			if world.maxPlayers then
+				serverSizeText.Text = "Server Size: " .. world.maxPlayers
+				serverSizeSlider:setValue(world.maxPlayers)
+			end
+		else
+			description.Text = world.description or ""
+			description.Color = TEXT_COLOR
+		end
+
+		if likeBtn then
+			likeBtn.Text = (world.liked == true and "❤️ " or "🤍 ")
+				.. (world.likes and math.floor(world.likes) or 0)
+
+			likeBtn.onRelease = function()
+				world.liked = not world.liked
+
+				if world.liked == true then
+					world.likes = world.likes ~= nil and world.likes + 1 or 1
+				else
+					world.likes = world.likes ~= nil and world.likes - 1 or 0
+				end
+
+				if likeRequest then
+					likeRequest:Cancel()
+				end
+				likeRequest = systemApi:likeWorld(world.id, world.liked, function(_)
+					-- TODO: this request should return the refreshed number of likes
+				end)
+				table.insert(requests, likeRequest)
+
+				local nbLikes = (world.likes and math.floor(world.likes) or 0)
+				likeBtn.Text = (world.liked == true and "❤️ " or "🤍 ") .. nbLikes
+
+				privateFields.alignViewsAndLikes()
+			end
+		end
+
+		views.Text = "👁 " .. (world.views and math.floor(world.views) or 0)
+
+		if world.maxPlayers and serverSize then
+			if world.maxPlayers == 1 then
+				serverSize.Text = "👤 solo game (no server)"
+			else
+				serverSize.Text = "👥 " .. world.maxPlayers .. " players per server"
+			end
+		end
+
+		if world.created then
+			local n, unitType = time.ago(world.created)
+			if n == 1 then
+				unitType = unitType:sub(1, #unitType - 1)
+			end
+			if math.floor(n) == n then
+				creationDate.Text = string.format("🌎 published %d %s ago", math.floor(n), unitType)
+			else
+				creationDate.Text = string.format("🌎 published %.1f %s ago", n, unitType)
+			end
+		end
+
+		if world.updated then
+			local n, unitType = time.ago(world.updated)
+			if n == 1 then
+				unitType = unitType:sub(1, #unitType - 1)
+			end
+			if math.floor(n) == n then
+				updateDate.Text = string.format("✨ updated %d %s ago", math.floor(n), unitType)
+			else
+				updateDate.Text = string.format("✨ updated %.1f %s ago", n, unitType)
+			end
+		end
+
+		-- update author text/button
+		if author then
+			author.Text = " @" .. (world.authorName or "…")
+		elseif authorBtn and world.authorName then
+			authorBtn.Text = "@" .. world.authorName
+			authorBtn.onRelease = function(_)
+				local profileConfig = {
+					username = world.authorName,
+					userID = world.authorId,
+					uikit = ui,
+				}
+				local profileContent = require("profile"):create(profileConfig)
+				content:push(profileContent)
+			end
+		end
+
+		content.title = ""
+
+		-- update description text
+		if description ~= nil then
+			description.Text = world.description or ""
+		end
+
+		local modal = content:getModalIfContentIsActive()
+		if modal ~= nil then
+			modal:refreshContent()
+		end
+
+		worldDetails:refresh()
 	end
 
 	if createMode then
@@ -603,6 +459,11 @@ mod.createModalContent = function(_, config)
 
 	local secondaryTextColor = Color(150, 150, 150)
 
+	if config.mode ~= "create" then
+		serverSize = ui:createText("👤 …", { color = secondaryTextColor, size = "small" })
+		serverSize:setParent(cell)
+	end
+
 	creationDate = ui:createText("🌎 published … ago", secondaryTextColor, "small")
 	creationDate:setParent(cell)
 
@@ -613,8 +474,7 @@ mod.createModalContent = function(_, config)
 	by:setParent(cell)
 
 	if createMode then
-		local str = " @" .. Player.Username
-		author = ui:createText(str, Color.Green, "small")
+		author = ui:createText(" @" .. Player.Username, Color.Green, "small")
 		author:setParent(cell)
 	else
 		authorBtn = ui:buttonLink({ content = "@…", textSize = "small" })
@@ -693,10 +553,7 @@ mod.createModalContent = function(_, config)
 	end
 
 	local scroll = ui:scroll({
-		-- backgroundColor = Color(255, 0, 0),
 		backgroundColor = theme.buttonTextColor,
-		-- backgroundColor = Color(0, 255, 0, 0.3),
-		-- gradientColor = Color(37, 23, 59), -- Color(155, 97, 250),
 		padding = {
 			top = theme.padding,
 			bottom = theme.padding,
@@ -712,117 +569,6 @@ mod.createModalContent = function(_, config)
 		unloadCell = function(_, _) end,
 	})
 	scroll:setParent(worldDetails)
-
-	-- refreshes UI with what's in local config.world / world
-	local function refreshWorld()
-		if world.thumbnail ~= nil then
-			iconArea:setImage(world.thumbnail)
-		end
-
-		if config.mode == "create" then
-			if world.description == nil or world.description == "" then
-				description.empty = true
-				description.Text = "Worlds are easier to find with a description!"
-				description.Color = theme.textColorSecondary
-			else
-				description.empty = false
-				description.Text = world.description
-				description.Color = TEXT_COLOR
-			end
-
-			if world.maxPlayers then
-				serverSizeText.Text = "Server Size: " .. world.maxPlayers
-				serverSizeSlider:setValue(world.maxPlayers)
-			end
-		else
-			description.Text = world.description or ""
-			description.Color = TEXT_COLOR
-		end
-
-		if likeBtn then
-			likeBtn.Text = (world.liked == true and "❤️ " or "🤍 ")
-				.. (world.likes and math.floor(world.likes) or 0)
-
-			likeBtn.onRelease = function()
-				world.liked = not world.liked
-
-				if world.liked == true then
-					world.likes = world.likes ~= nil and world.likes + 1 or 1
-				else
-					world.likes = world.likes ~= nil and world.likes - 1 or 0
-				end
-
-				if likeRequest then
-					likeRequest:Cancel()
-				end
-				likeRequest = systemApi:likeWorld(world.id, world.liked, function(_)
-					-- TODO: this request should return the refreshed number of likes
-				end)
-				table.insert(requests, likeRequest)
-
-				local nbLikes = (world.likes and math.floor(world.likes) or 0)
-				likeBtn.Text = (world.liked == true and "❤️ " or "🤍 ") .. nbLikes
-
-				privateFields.alignViewsAndLikes()
-			end
-		end
-
-		views.Text = "👁 " .. (world.views and math.floor(world.views) or 0)
-
-		if world.created then
-			local n, unitType = time.ago(world.created)
-			if n == 1 then
-				unitType = unitType:sub(1, #unitType - 1)
-			end
-			if math.floor(n) == n then
-				creationDate.Text = string.format("🌎 published %d %s ago", math.floor(n), unitType)
-			else
-				creationDate.Text = string.format("🌎 published %.1f %s ago", n, unitType)
-			end
-		end
-
-		if world.updated then
-			local n, unitType = time.ago(world.updated)
-			if n == 1 then
-				unitType = unitType:sub(1, #unitType - 1)
-			end
-			if math.floor(n) == n then
-				updateDate.Text = string.format("✨ updated %d %s ago", math.floor(n), unitType)
-			else
-				updateDate.Text = string.format("✨ updated %.1f %s ago", n, unitType)
-			end
-		end
-
-		-- update author text/button
-		if author then
-			author.Text = " @" .. (world.authorName or "…")
-		elseif authorBtn and world.authorName then
-			authorBtn.Text = "@" .. world.authorName
-			authorBtn.onRelease = function(_)
-				local profileConfig = {
-					username = world.authorName,
-					userID = world.authorId,
-					uikit = ui,
-				}
-				local profileContent = require("profile"):create(profileConfig)
-				content:push(profileContent)
-			end
-		end
-
-		content.title = ""
-
-		-- update description text
-		if description ~= nil then
-			description.Text = world.description or ""
-		end
-
-		local modal = content:getModalIfContentIsActive()
-		if modal ~= nil then
-			modal:refreshContent()
-		end
-
-		worldDetails:refresh()
-	end
 
 	-- send request to gather world information
 	local function loadWorld()
@@ -927,6 +673,7 @@ mod.createModalContent = function(_, config)
 		iconArea.Height = iconSize
 		iconMask.Width = iconSize
 		iconMask.Height = iconSize
+		badgesScroll.Width = width
 
 		description.object.MaxWidth = width - padding * 2
 
@@ -965,17 +712,22 @@ mod.createModalContent = function(_, config)
 			+ padding
 			+ viewAndLikesHeight -- views and likes
 			+ padding
-			-- + descriptionTitle.Height
-			-- + padding
 			+ description.Height
 			+ theme.paddingBig
-			+ badgesTitle.Height
+			+ singleLineHeight -- server size
 			+ padding
-			+ badgesScroll.Height
-			+ theme.paddingBig
 			+ singleLineHeight -- publication date
 			+ padding
 			+ singleLineHeight -- update date
+			+ theme.paddingBig
+
+		if badgesTitle:isVisible() then
+			contentHeight += badgesTitle.Height + padding
+		end
+
+		if badgesScroll:isVisible() then
+			contentHeight += badgesScroll.Height + padding
+		end
 
 		if serverSizeText then
 			local h = math.max(serverSizeText.Height, serverSizeSlider.Height)
@@ -992,8 +744,6 @@ mod.createModalContent = function(_, config)
 		local y = contentHeight - iconArea.Height
 
 		-- icon
-		-- iconArea.pos.X = 0
-		-- iconArea.pos.Y = y
 		iconMask.pos.X = 0
 		iconMask.pos.Y = y
 
@@ -1046,8 +796,6 @@ mod.createModalContent = function(_, config)
 		end
 
 		-- description
-		-- y = y - padding - descriptionTitle.Height
-		-- descriptionTitle.pos = { padding, y }
 		y = y - padding - description.Height
 		description.pos = { padding, y }
 
@@ -1057,12 +805,22 @@ mod.createModalContent = function(_, config)
 		end
 
 		-- badges
-		y = y - theme.paddingBig - badgesTitle.Height
-		badgesTitle.pos = { padding, y }
-		y = y - padding - badgesScroll.Height
-		badgesScroll.pos = { padding, y }
+		if badgesTitle:isVisible() then
+			y = y - theme.paddingBig - badgesTitle.Height
+			badgesTitle.pos = { padding, y }
+		end
+		if badgesScroll:isVisible() then
+			y = y - padding - badgesScroll.Height
+			badgesScroll.pos = { padding, y }
+		end
 
 		-- info
+		if serverSize then
+			y = y - theme.paddingBig - singleLineHeight * 0.5
+			serverSize.pos = { padding, y - serverSize.Height * 0.5 }
+			y = y - singleLineHeight * 0.5
+		end
+
 		y = y - theme.paddingBig - singleLineHeight * 0.5
 		creationDate.pos = { padding, y - creationDate.Height * 0.5 }
 		y = y - singleLineHeight * 0.5

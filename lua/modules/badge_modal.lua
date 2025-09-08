@@ -2,25 +2,68 @@
 -- Modal content for badge creation and editing
 --
 
-local mod = {}
-
 local ICON_SIZE = 100
+local SECONDARY_TEXT_COLOR = Color(200, 200, 200)
+
+-- ----------------------------
+-- Types
+-- ----------------------------
+
+-- define Luau type for onOpen callback
+-- TODO: decide what arguments to pass to the callback
+type OnOpenFunc = () -> ()
+
+-- define Luau type BadgeInfo
+type BadgeInfo = {
+	badgeID: string,
+	worldID: string,
+	tag: string,
+	name: string,
+	description: string,
+	rarity: number,
+	createdAt: string,
+	updatedAt: string,
+	unlocked: boolean,
+	unlockedAt: string,
+}
+
+-- define Luau type BadgeModalConfig
+type BadgeModalConfig = {
+	uikit: any,
+	onOpen: OnOpenFunc,
+	mode: string,
+	badgeInfo: BadgeInfo?,
+	worldId: string?,
+	locked: boolean,
+	worldLink: boolean,
+}
+
+-- ----------------------------
+-- Module
+-- ----------------------------
+
+local mod = {}
 
 mod.createModalContent = function(_, config)
 	local modal = require("modal")
 	local badge = require("badge")
 	local theme = require("uitheme")
 	local loc = require("localize")
+	local time = require("time")
 	local system_api = require("system_api", System)
+	local api = require("api")
+
+	local getWorldInfoReq = nil
 
 	-- default config
-	local defaultConfig = {
+	local defaultConfig: BadgeModalConfig = {
 		uikit = require("uikit"), -- allows to provide specific instance of uikit
-		onOpen = nil,
-		mode = nil, -- "display" or "create" or "edit"
-		badgeObj = nil, -- must be provided if mode is "edit"
+		onOpen = nil, -- TODO: call this somewhere in the code
+		mode = "display", -- "display" or "create" or "edit"
+		badgeInfo = nil, -- must be provided if mode is "edit"
 		worldId = nil, -- must be provided if mode is "create"
 		locked = true,
+		worldLink = false,
 	}
 
 	-- merge provided config with default config
@@ -29,7 +72,7 @@ mod.createModalContent = function(_, config)
 			acceptTypes = {
 				onOpen = { "function" },
 				mode = { "string" },
-				badgeObj = { "table" },
+				badgeInfo = { "table" },
 				worldId = { "string" },
 				locked = { "boolean" },
 			},
@@ -38,6 +81,9 @@ mod.createModalContent = function(_, config)
 	if not ok then
 		error("badge_modal:createModalContent(config) - config error: " .. err, 2)
 	end
+
+	-- check that config.badgeInfo is a valid BadgeInfo
+	local _: BadgeInfo = config.badgeInfo
 
 	local badgeAnimationListener = nil
 	local badgeObject = nil
@@ -86,6 +132,8 @@ mod.createModalContent = function(_, config)
 			local tag
 			local name
 			local description
+			local unlockTime
+			local worldLink
 
 			-- unique cell of the scroll
 			local cell = ui:frame()
@@ -93,10 +141,7 @@ mod.createModalContent = function(_, config)
 
 			-- scroll (root element of the modal content)
 			local scroll = ui:scroll({
-				-- backgroundColor = Color(255, 0, 0),
 				backgroundColor = theme.buttonTextColor,
-				-- backgroundColor = Color(0, 255, 0, 0.3),
-				-- gradientColor = Color(37, 23, 59), -- Color(155, 97, 250),
 				padding = {
 					top = theme.padding,
 					bottom = theme.padding,
@@ -121,8 +166,8 @@ mod.createModalContent = function(_, config)
 			badgeShape:setParent(cell)
 
 			local badgeId = nil
-			if config.badgeObj ~= nil then
-				badgeId = config.badgeObj.badgeID
+			if config.badgeInfo ~= nil then
+				badgeId = config.badgeInfo.badgeID
 			end
 			local req = badge:createBadgeObject({
 				badgeId = badgeId,
@@ -171,22 +216,12 @@ mod.createModalContent = function(_, config)
 			if config.mode == "create" then
 				tagTextOrEdit = ui:createTextInput("", "identifier")
 			elseif config.mode == "edit" then
-				-- config.badgeObj.tag must exist in this case
-				tag = config.badgeObj.tag
+				-- config.badgeInfo.tag must exist in this case
+				tag = config.badgeInfo.tag
 				tagTextOrEdit = ui:createText("Badge Identifier: " .. tag, {
 					size = "small",
 					color = Color.White,
 				})
-			elseif config.mode == "display" then
-				-- display the badge unlock status and date
-				-- local text = "not unlocked yet"
-				-- if not config.locked then
-				-- 	text = "unlocked on " .. config.badgeObj.userUnlockedAt -- this field doesn't exist yet
-				-- end
-				-- tagTextOrEdit = ui:createText(text, {
-				-- 	size = "small",
-				-- 	color = Color.White,
-				-- })
 			end
 			if tagTextOrEdit ~= nil then
 				tagTextOrEdit:setParent(cell)
@@ -195,9 +230,9 @@ mod.createModalContent = function(_, config)
 			-- Name
 			local nameTextOrEdit = nil
 			if config.mode == "create" or config.mode == "edit" then
-				nameTextOrEdit = ui:createTextInput("", "Badge Name")
+				nameTextOrEdit = ui:createTextInput(config.badgeInfo.name or "", "Badge Name")
 			elseif config.mode == "display" then
-				name = config.badgeObj.name
+				name = config.badgeInfo.name
 				nameTextOrEdit = ui:createText(name, {
 					size = "default",
 					color = Color.White,
@@ -208,15 +243,77 @@ mod.createModalContent = function(_, config)
 			-- Description
 			local descriptionTextOrEdit = nil
 			if config.mode == "create" or config.mode == "edit" then
-				descriptionTextOrEdit = ui:createTextInput("", "Description")
+				descriptionTextOrEdit = ui:createTextInput(config.badgeInfo.description or "", "Description")
 			elseif config.mode == "display" then
-				description = config.badgeObj.description
+				description = config.badgeInfo.description
 				descriptionTextOrEdit = ui:createText(description, {
 					size = "small",
 					color = Color.White,
 				})
 			end
 			descriptionTextOrEdit:setParent(cell)
+
+			-- unlock time
+			if config.mode == "display" and config.badgeInfo.unlockedAt ~= nil then
+				local osTime = time.iso8601_to_os_time(config.badgeInfo.unlockedAt)
+				local t, units = time.ago(osTime, {
+					years = false,
+					months = false,
+					seconds_label = "s",
+					minutes_label = "m",
+					hours_label = "h",
+					days_label = "d",
+				})
+
+				local format
+
+				if units == "s" then
+					format = loc("%ds ago", "time elapsed in days, where %d is the number of days")
+				elseif units == "m" then
+					format = loc("%dm ago", "time elapsed in minutes, where %d is the number of minutes")
+				elseif units == "h" then
+					format = loc("%dh ago", "time elapsed in hours, where %d is the number of hours")
+				else
+					format = loc("%dd ago", "time elapsed in days, where %d is the number of days")
+				end
+
+				local creationTime = string.format(format, t)
+
+				unlockTime = ui:createText("🔓 " .. creationTime, {
+					size = "small",
+					color = SECONDARY_TEXT_COLOR,
+				})
+				unlockTime:setParent(cell)
+			end
+
+			if config.badgeInfo.worldID ~= nil and config.worldLink then
+				worldLink = ui:buttonLink({
+					content = "🌎 …",
+					textSize = "small",
+				})
+				worldLink:setParent(cell)
+
+				getWorldInfoReq = api:getWorld(config.badgeInfo.worldID, {
+					"title",
+				}, function(worldInfo, err)
+					if err ~= nil then
+						return
+					end
+					worldLink.Text = "🌎 " .. worldInfo.title
+					node:refresh()
+
+					worldLink.onRelease = function()
+						local m = content:getModalIfContentIsActive()
+						if m ~= nil then
+							local content = require("world_details"):createModalContent({
+								uikit = ui,
+								world = worldInfo,
+							})
+							m:push(content)
+						end
+					end
+				end)
+			end
 
 			-- Create Badge Button
 			local submitBtnText = nil
@@ -331,6 +428,27 @@ mod.createModalContent = function(_, config)
 
 				local y = contentHeight
 
+				if unlockTime ~= nil then
+					unlockTime.pos = {
+						contentWidth - unlockTime.Width - theme.padding,
+						y - unlockTime.Height - theme.padding,
+					}
+				end
+
+				if worldLink ~= nil then
+					if unlockTime ~= nil then
+						worldLink.pos = {
+							contentWidth - worldLink.Width - theme.padding,
+							unlockTime.pos.Y - worldLink.Height - theme.padding,
+						}
+					else
+						worldLink.pos = {
+							contentWidth - worldLink.Width - theme.padding,
+							y - worldLink.Height - theme.padding,
+						}
+					end
+				end
+
 				-- badge preview
 				y = y - theme.padding - badgeShape.Height
 				badgeShape.pos = { theme.padding, y }
@@ -411,6 +529,7 @@ mod.createModalContent = function(_, config)
 							}, System)
 						else
 							-- badge created successfully, going back to world details
+							LocalEvent:Send("badgesNeedRefresh")
 							Menu:ShowAlert({
 								message = loc("Badge Created! ✅"),
 								neutralLabel = loc("OK"),
@@ -422,21 +541,21 @@ mod.createModalContent = function(_, config)
 					end)
 				elseif config.mode == "edit" then
 					system_api:updateBadge({
-						badgeID = config.badgeObj.badgeID,
+						badgeID = config.badgeInfo.badgeID,
 						icon = badgeObject:getBadgeImageData(),
 						name = name,
 						description = description,
 					}, function(err)
 						if err then
-							print("Edit badge error:", err)
+							Menu:ShowAlert({
+								message = loc("Sorry, something went wrong. 😕"),
+								neutralLabel = loc("OK"),
+								neutralCallback = function() end,
+							}, System)
+							return
 						end
-						-- if err then
-						-- 	Menu:ShowAlert({
-						-- 		message = loc("Sorry, something went wrong. 😕"),
-						-- 		neutralLabel = loc("OK"),
-						-- 		neutralCallback = function() end,
-						-- 	}, System)
-						-- end
+						LocalEvent:Send("badgesNeedRefresh")
+						content:pop()
 					end)
 				elseif config.mode == "display" then
 					content:pop()
@@ -470,6 +589,10 @@ mod.createModalContent = function(_, config)
 	end
 
 	content.willResignActive = function()
+		if getWorldInfoReq ~= nil then
+			getWorldInfoReq:Cancel()
+			getWorldInfoReq = nil
+		end
 		removeBadgeAnimation()
 	end
 

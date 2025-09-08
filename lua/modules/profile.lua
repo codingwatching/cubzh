@@ -9,14 +9,17 @@ modal = require("modal")
 theme = require("uitheme").current
 uiAvatar = require("ui_avatar")
 str = require("str")
+badgeModal = require("badge_modal")
 
 -- CONSTANTS
 
 local AVATAR_MAX_SIZE = 300
 local AVATAR_MIN_SIZE = 200
 local ACTIVE_NODE_MARGIN = theme.paddingBig
-
 local AVATAR_NODE_RATIO = 1
+
+local SHOW_DELETE_ACCOUNT_BTN = false
+-- SHOW_DELETE_ACCOUNT_BTN = Player.Username == "aduermael" or Player.Username == "gaetan"
 
 --- Creates a profile modal content
 --- positionCallback(function): position of the popup
@@ -81,10 +84,7 @@ profile.create = function(_, config)
 	cell:setParent(nil)
 
 	local scroll = ui:scroll({
-		-- backgroundColor = Color(255, 0, 0),
 		backgroundColor = theme.buttonTextColor,
-		-- backgroundColor = Color(0, 255, 0, 0.3),
-		-- gradientColor = Color(37, 23, 59), -- Color(155, 97, 250),
 		padding = {
 			top = theme.padding,
 			bottom = theme.padding,
@@ -112,6 +112,7 @@ profile.create = function(_, config)
 	end
 
 	local avatarNode = uiAvatar:get({ usernameOrId = userID, ui = ui })
+	-- avatarNode.color = Color(255, 0, 0, 0.7) -- debug
 	avatarNode:setParent(cell)
 
 	local avatarRot = Number3(0, math.pi, 0)
@@ -151,8 +152,9 @@ profile.create = function(_, config)
 	end
 
 	local blockBtn
+	local deleteAccountBtn
 	if not isLocal then
-		blockBtn = ui:button({ 
+		blockBtn = ui:button({
 			content = "",
 			textSize = "small",
 			borders = false,
@@ -169,7 +171,7 @@ profile.create = function(_, config)
 			end
 			Menu:ShowAlert({
 				message = msg,
-				positiveCallback = function() 
+				positiveCallback = function()
 					userInfo.blocked = not userInfo.blocked
 					if userInfo.blocked then
 						systemApi:blockUser(userID, function(success, blockedUsers)
@@ -190,6 +192,38 @@ profile.create = function(_, config)
 			}, System)
 		end
 		blockBtn:setParent(cell)
+
+		if SHOW_DELETE_ACCOUNT_BTN then
+			deleteAccountBtn = ui:button({
+				content = "💀 Delete Account",
+				textSize = "small",
+				borders = false,
+				padding = false,
+				textColor = theme.errorTextColor,
+				color = Color(0, 0, 0, 0),
+			})
+			deleteAccountBtn.onRelease = function()
+				Menu:ShowAlert({
+					message = "Are you sure you want to delete this account?",
+					positiveCallback = function()
+						systemApi:moderationDeleteAccount(config.userID, function(err)
+							if err == nil then
+								Menu:ShowAlert({ message = "Account deleted successfully!" }, System)
+							else
+								Menu:ShowAlert({ message = "Failed to delete account." }, System)
+								print("❌", err)
+							end
+							local m = content:getModalIfContentIsActive()
+							if m ~= nil then
+								m:close()
+							end
+						end)
+					end,
+					negativeCallback = function() end,
+				}, System)
+			end
+			deleteAccountBtn:setParent(cell)
+		end
 	end
 
 	-- functions to create each node
@@ -301,9 +335,6 @@ profile.create = function(_, config)
 		friendText:setParent(node)
 		friendText:hide()
 
-		local reputation = ui:createText("🏆 0", Color.White)
-		reputation:setParent(node)
-
 		local friends = ui:createText("👥 0", Color.White)
 		friends:setParent(node)
 
@@ -333,11 +364,39 @@ profile.create = function(_, config)
 
 			btn.label = label
 			btn.icon = icon
-			
+
 			btn:setParent(node)
 			btn:hide()
 			socialBtns[config.key] = btn
 		end
+
+		local badgesScroll = require("badge"):createScroll({
+			worldID = nil,
+			userID = userID,
+			ui = ui,
+			loaded = function(self, nbBadges)
+				if self:isVisible() == false and nbBadges > 0 then
+					self:show()
+					node:refresh()
+					scroll:parentDidResize()
+				end
+			end,
+			onOpen = function(badgeInfo)
+				badgeModalContent = badgeModal:createModalContent({
+					uikit = ui,
+					mode = "display",
+					badgeInfo = badgeInfo,
+					locked = not badgeInfo.unlocked,
+					worldLink = true,
+				})
+				local m = content:getModalIfContentIsActive()
+				if m ~= nil then
+					m:push(badgeModalContent)
+				end
+			end,
+		})
+		badgesScroll:setParent(node)
+		badgesScroll:hide()
 
 		node.parentDidResize = function(self)
 			self:refresh()
@@ -349,7 +408,7 @@ profile.create = function(_, config)
 
 			self.Width = parent.Width
 
-			local totalHeight = reputation.Height
+			local totalHeight = created.Height + padding * 2
 
 			if editAvatarBtn then
 				totalHeight = totalHeight + editAvatarBtn.Height + padding
@@ -380,6 +439,10 @@ profile.create = function(_, config)
 				totalHeight = totalHeight + editLinksBtn.Height + padding
 			end
 
+			if badgesScroll ~= nil and badgesScroll:isVisible() then
+				totalHeight = totalHeight + badgesScroll.Height + padding
+			end
+
 			self.Height = totalHeight
 
 			local cursorY = self.Height
@@ -390,15 +453,10 @@ profile.create = function(_, config)
 			end
 
 			-- stats
-			cursorY = cursorY - reputation.Height - padding
-			local bottomLineWidth = reputation.Width
-				+ theme.paddingBig
-				+ friends.Width
-				+ theme.paddingBig
-				+ created.Width
+			cursorY = cursorY - created.Height - padding
+			local bottomLineWidth = friends.Width + theme.paddingBig + created.Width
 
-			reputation.pos = { self.Width * 0.5 - bottomLineWidth * 0.5, cursorY }
-			friends.pos = { reputation.pos.X + reputation.Width + theme.paddingBig, cursorY }
+			friends.pos = { self.Width * 0.5 - bottomLineWidth * 0.5, cursorY }
 			created.pos = { friends.pos.X + friends.Width + theme.paddingBig, cursorY }
 
 			if bioText.Text ~= "" then
@@ -432,6 +490,12 @@ profile.create = function(_, config)
 			if editLinksBtn then
 				cursorY = cursorY - editLinksBtn.Height - padding
 				editLinksBtn.pos = { self.Width * 0.5 - editLinksBtn.Width * 0.5, cursorY }
+			end
+
+			if badgesScroll then
+				badgesScroll.Width = self.Width
+				cursorY = cursorY - badgesScroll.Height - padding
+				badgesScroll.pos = { self.Width * 0.5 - badgesScroll.Width * 0.5, cursorY }
 			end
 		end
 
@@ -485,9 +549,7 @@ profile.create = function(_, config)
 				if value ~= nil and value ~= "" then
 					if string.len(value) > nbMaxChars then
 						-- config.icon
-						displayStr = config.prefix
-							.. string.sub(value, 1, nbMaxChars - 1)
-							.. "…"
+						displayStr = config.prefix .. string.sub(value, 1, nbMaxChars - 1) .. "…"
 					else
 						displayStr = config.prefix .. value
 					end
@@ -785,7 +847,7 @@ profile.create = function(_, config)
 						end
 					end)
 				end
-			end			
+			end
 		end
 
 		functions.refreshBottomButtons()
@@ -845,7 +907,6 @@ profile.create = function(_, config)
 	end
 
 	functions.checkFriendRelationShip()
-	
 
 	functions.refresh = function()
 		if activeNode == nil then
@@ -939,25 +1000,31 @@ profile.create = function(_, config)
 		avatarNode.Height = avatarNodeHeight
 
 		local cellContentHeight = avatarNodeHeight
-		local availableHeight = self.Height
+		local availableHeight = self.Height - theme.padding * 2
 
 		if activeNode.parent ~= nil then
-			cellContentHeight = cellContentHeight + activeNode.Height + padding
+			cellContentHeight = cellContentHeight + activeNode.Height
 		end
 
 		cell.Height = math.max(availableHeight, cellContentHeight)
 
 		local y = cell.Height
 		if blockBtn ~= nil then
-			blockBtn.pos = { 
-				0, 
+			blockBtn.pos = {
+				0,
 				y - blockBtn.Height,
 			}
+			if deleteAccountBtn ~= nil then
+				deleteAccountBtn.pos = {
+					blockBtn.pos.X + blockBtn.Width + padding * 2,
+					y - deleteAccountBtn.Height,
+				}
+			end
 		end
 
 		y = cellContentHeight
 		if availableHeight > cellContentHeight then
-			y += (availableHeight - cellContentHeight) * 0.7
+			y += (availableHeight - cellContentHeight) * 0.5
 		end
 
 		y = y - avatarNode.Height
@@ -967,7 +1034,7 @@ profile.create = function(_, config)
 		}
 
 		if infoNode.parent ~= nil then
-			y = y - infoNode.Height - padding
+			y = y - infoNode.Height
 			infoNode.pos = { 0, y }
 		end
 
